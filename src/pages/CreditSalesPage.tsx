@@ -61,7 +61,6 @@ export const CreditSalesPage: React.FC = () => {
       {/* Top Header */}
       <PageHeader
         title="Credit Sales"
-        subtitle="Sync จากระบบ Credit Sales ล่าสุด 26 ก.ย. 12:45"
         actionButton={
           <button
             onClick={() => setIsCallListModalOpen(true)}

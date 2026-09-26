@@ -37,7 +37,6 @@ export const TierLoyaltyPage: React.FC = () => {
       {/* Top Header */}
       <PageHeader
         title="Tier & Loyalty"
-        subtitle="วัดจากยอดสุทธิ 12 เดือนย้อนหลัง หรือจำนวน Order · ข้อมูล ณ 26 ก.ย. 2026"
         actionButton={
           <button
             onClick={() => setIsEditRulesModalOpen(true)}

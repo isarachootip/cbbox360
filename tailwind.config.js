@@ -33,9 +33,9 @@ export default {
           DEFAULT: '#E6ECF4',
         },
         text: {
-          primary: '#1D2125',
-          secondary: '#5E636B',
-          body2: '#3F444B',
+          primary: '#111827',
+          secondary: '#4B5563',
+          body2: '#1F2937',
         },
         warn: {
           bg: '#FDF6E9',

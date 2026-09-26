@@ -41,11 +41,11 @@ export const PlaceholderPage: React.FC = () => {
     }
   };
 
-  const { title, subtitle, icon: Icon } = getPageInfo();
+  const { title, icon: Icon } = getPageInfo();
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-bg-app select-none">
-      <PageHeader title={title} subtitle={subtitle} />
+      <PageHeader title={title} />
 
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="max-w-md w-full bg-white rounded-card border border-border p-8 text-center shadow-card space-y-4">
@@ -55,11 +55,6 @@ export const PlaceholderPage: React.FC = () => {
 
           <div>
             <h3 className="text-base font-bold text-text-primary">{title}</h3>
-            <p className="text-xs text-text-secondary mt-1">{subtitle}</p>
-          </div>
-
-          <div className="p-3 bg-bg-subtle rounded-lg border border-border text-xs text-text-secondary">
-            🚀 โมดูลนี้เป็น Plug-in Activity Module ของ CusBox360 ซึ่งพร้อมเปิดให้เชื่อมต่อตาม Roadmap
           </div>
         </div>
       </div>

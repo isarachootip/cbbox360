@@ -118,7 +118,6 @@ export const SegmentsPage: React.FC = () => {
       {/* Top Header */}
       <PageHeader
         title="Segments"
-        subtitle="ลูกค้าทั้งหมด 48,200 คน · คำนวณใหม่ทุกคืน 02:00"
         actionButton={
           <button
             onClick={() => setIsNewModalOpen(true)}

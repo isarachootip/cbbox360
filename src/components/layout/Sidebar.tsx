@@ -33,7 +33,7 @@ export const Sidebar: React.FC = () => {
 
   const cdpNavItems = [
     {
-      name: 'ลูกค้า (Customer 360)',
+      name: 'Customer 360',
       path: `/customers/${selectedCustomerId || 'C00123'}`,
       activeMatch: '/customers',
       icon: Users,
@@ -94,19 +94,19 @@ export const Sidebar: React.FC = () => {
 
   const adminNavItems = [
     {
-      name: 'User Management (จัดการผู้ใช้)',
+      name: 'User Management',
       path: '/users',
       activeMatch: '/users',
       icon: UserCog,
     },
     {
-      name: 'Connectors (การเชื่อมต่อ)',
+      name: 'Connectors',
       path: '/connectors',
       activeMatch: '/connectors',
       icon: Network,
     },
     {
-      name: 'ตั้งค่าระบบ (Settings)',
+      name: 'Settings',
       path: '/settings',
       activeMatch: '/settings',
       icon: Settings,
