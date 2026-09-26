@@ -74,16 +74,20 @@ export const LoginPage: React.FC = () => {
         {/* ================= LEFT SIDE: LOGIN FORM ================= */}
         <div className="p-8 md:p-10 flex flex-col justify-between">
           <div>
-            {/* Logo */}
-            <div className="flex items-center gap-2.5 mb-8">
-              <div className="h-9 px-2.5 rounded-lg bg-brand text-white font-bold text-sm flex items-center justify-center tracking-wider shadow-sm">
-                CB360
+            {/* Framed Logo */}
+            <div className="flex items-center gap-3 mb-8">
+              <div className="h-12 w-12 rounded-xl bg-white border border-border shadow-sm flex items-center justify-center p-1.5 overflow-hidden flex-shrink-0">
+                <img
+                  src="/logo.png"
+                  alt="CustBox360 Logo"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
-                <span className="font-extrabold text-xl text-[#0F2B4D] tracking-tight block leading-none">
-                  CusBox360
+                <span className="font-extrabold text-2xl text-[#0F2B4D] tracking-tight block leading-none">
+                  CustBox360
                 </span>
-                <span className="text-[10px] text-sidebar-label tracking-wide font-medium">
+                <span className="text-[11px] text-sidebar-label tracking-wide font-medium mt-0.5 block">
                   Customer Data Platform & Activity Plug-ins
                 </span>
               </div>

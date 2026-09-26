@@ -143,14 +143,23 @@ export const Sidebar: React.FC = () => {
   return (
     <aside className="w-[232px] flex-shrink-0 bg-sidebar-bg border-r border-sidebar-border h-screen flex flex-col justify-between p-[18px_12px] select-none z-30">
       <div className="flex flex-col gap-5 overflow-y-auto custom-scrollbar">
-        {/* Logo */}
-        <div className="flex items-center gap-2.5 px-2">
-          <div className="h-8 px-2 rounded-lg bg-brand text-white font-bold text-[13px] flex items-center justify-center tracking-wider shadow-sm">
-            CB360
+        {/* Framed Logo */}
+        <div className="flex items-center gap-2.5 px-1 py-1">
+          <div className="h-10 w-10 rounded-xl bg-white border border-sidebar-border shadow-sm flex items-center justify-center p-1 overflow-hidden flex-shrink-0">
+            <img
+              src="/logo.png"
+              alt="CustBox360 Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
-          <span className="font-bold text-[18px] text-[#0F2B4D] tracking-tight">
-            CusBox360
-          </span>
+          <div className="flex flex-col min-w-0">
+            <span className="font-extrabold text-[17px] text-[#0F2B4D] tracking-tight leading-none">
+              CustBox360
+            </span>
+            <span className="text-[10px] text-sidebar-label font-medium tracking-wide mt-0.5">
+              CDP & Activity
+            </span>
+          </div>
         </div>
 
         {/* Navigation Sections */}
