@@ -236,3 +236,30 @@ export interface UserProfile {
   role: string;
   avatarBg?: string;
 }
+
+export type ConnectorCategory = 'social' | 'voice' | 'email' | 'web';
+export type ConnectorStatus = 'connected' | 'disconnected' | 'error';
+
+export interface ConnectorConfig {
+  id: string;
+  name: string;
+  iconName: string;
+  category: ConnectorCategory;
+  accountName: string;
+  accountId: string;
+  status: ConnectorStatus;
+  statusText: string;
+  lastSync: string;
+  messagesCountToday: number;
+  description: string;
+  webhookUrl: string;
+  verifyToken?: string;
+  appId?: string;
+  appSecret?: string;
+  accessToken?: string;
+  features: {
+    key: string;
+    label: string;
+    enabled: boolean;
+  }[];
+}

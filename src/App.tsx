@@ -13,6 +13,7 @@ import { SegmentsPage } from './pages/SegmentsPage';
 import { TierLoyaltyPage } from './pages/TierLoyaltyPage';
 import { ServiceCasePage } from './pages/ServiceCasePage';
 import { CreditSalesPage } from './pages/CreditSalesPage';
+import { ConnectorsPage } from './pages/ConnectorsPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 
 // Protected Route Component
@@ -46,12 +47,13 @@ export const App: React.FC = () => {
                 <Route path="credit" element={<CreditSalesPage />} />
                 <Route path="users" element={<UserManagementPage />} />
                 
-                {/* Placeholders */}
+                {/* Placeholders & Tools */}
                 <Route path="consent" element={<PlaceholderPage />} />
                 <Route path="voice" element={<PlaceholderPage />} />
-                <Route path="connectors" element={<PlaceholderPage />} />
+                <Route path="connectors" element={<ConnectorsPage />} />
                 <Route path="settings" element={<PlaceholderPage />} />
                 <Route path="settings/users" element={<UserManagementPage />} />
+                <Route path="settings/connectors" element={<ConnectorsPage />} />
 
                 {/* Catch all */}
                 <Route path="*" element={<Navigate to="/customers/C00123" replace />} />
