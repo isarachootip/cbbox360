@@ -211,6 +211,25 @@ export interface CreditLimitRequest {
   status: 'pending' | 'approved' | 'rejected';
 }
 
+export type UserRole = 'sysadmin' | 'admin' | 'SF_1' | 'SF_2' | 'SF_3' | 'supervisor';
+
+export interface UserAccount {
+  id: string;
+  username: string; // sysadmin, admin, SF_1, SF_2, SF_3, supervisor
+  password: string; // "1234"
+  name: string;
+  email: string;
+  role: UserRole;
+  roleLabel: string;
+  department: string;
+  status: 'active' | 'inactive';
+  initials: string;
+  avatarBg?: string;
+  createdAt: string;
+  lastLogin?: string;
+  permissions?: string[];
+}
+
 export interface UserProfile {
   name: string;
   initials: string;
