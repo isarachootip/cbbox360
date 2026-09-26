@@ -42,7 +42,8 @@ export const ConnectorsPage: React.FC = () => {
               accountName: 'cb360 Official (@cb360)',
               accountId: '@cb360',
               basicId: '@cb360',
-              webhookUrl: 'https://api.cb360.co.th/v1/webhooks/line/cb360',
+              appId: '2011580063',
+              webhookUrl: 'https://api.cb360.co.th/v1/webhooks/line/2011580063',
             };
           }
           return c;
@@ -586,7 +587,7 @@ export const ConnectorsPage: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        value={editForm.liffId || '1659281042-8xkL2a9Q'}
+                        value={editForm.liffId || '2011580063-8xkL2a9Q'}
                         onChange={(e) => setEditForm({ ...editForm, liffId: e.target.value })}
                         className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-[#06C755] font-mono"
                       />
@@ -598,7 +599,7 @@ export const ConnectorsPage: React.FC = () => {
                       <input
                         type="text"
                         readOnly
-                        value={`https://liff.line.me/${editForm.liffId || '1659281042-8xkL2a9Q'}`}
+                        value={`https://liff.line.me/${editForm.liffId || '2011580063-8xkL2a9Q'}`}
                         className="w-full px-3 py-1.5 bg-bg-muted border border-border rounded-lg font-mono text-[11px] text-text-secondary"
                       />
                     </div>
@@ -611,7 +612,7 @@ export const ConnectorsPage: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        value={editForm.lineLoginChannelId || '1659281043'}
+                        value={editForm.lineLoginChannelId || '2011580063'}
                         onChange={(e) => setEditForm({ ...editForm, lineLoginChannelId: e.target.value })}
                         className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-[#06C755] font-mono"
                       />
