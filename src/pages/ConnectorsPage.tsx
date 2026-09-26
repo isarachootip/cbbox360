@@ -9,6 +9,14 @@ import {
   Zap,
   Code,
   Check,
+  Eye,
+  EyeOff,
+  Send,
+  CheckCircle2,
+  ExternalLink,
+  ShieldCheck,
+  Smartphone,
+  Layers,
 } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { KpiTile } from '../components/common/KpiTile';
@@ -44,6 +52,11 @@ export const ConnectorsPage: React.FC = () => {
 
   // Edit form state
   const [editForm, setEditForm] = useState<ConnectorConfig | null>(null);
+  const [lineModalTab, setLineModalTab] = useState<'messaging' | 'liff' | 'richmenu' | 'tester'>('messaging');
+  const [showSecret, setShowSecret] = useState(false);
+  const [testLineUid, setTestLineUid] = useState('U99182049102837461528');
+  const [testLineMessage, setTestLineMessage] = useState('ยินดีต้อนรับสู่ระบบ CusBox 360 CDP · เชื่อมต่อ LINE Messaging API สำเร็จ');
+  const [isVerifyingWebhook, setIsVerifyingWebhook] = useState(false);
 
   // Simulator state
   const [simulatorChannel, setSimulatorChannel] = useState<'LINE' | 'Facebook' | '3CX'>('LINE');
@@ -130,16 +143,23 @@ export const ConnectorsPage: React.FC = () => {
   const handleOpenConfig = (conn: ConnectorConfig) => {
     setSelectedConnector(conn);
     setEditForm(JSON.parse(JSON.stringify(conn)));
+    setLineModalTab('messaging');
+    setShowSecret(false);
     setIsConfigModalOpen(true);
   };
 
-  const handleSaveConfig = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleOpenLineConfig = () => {
+    const lineConn = connectors.find((c) => c.id === 'conn-line') || connectors[0];
+    handleOpenConfig(lineConn);
+  };
+
+  const handleSaveConfig = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!editForm) return;
 
     const updated = connectors.map((c) => (c.id === editForm.id ? editForm : c));
     saveConnectors(updated);
-    showToast(`บันทึก ${editForm.name} สำเร็จ`, 'success');
+    showToast(`บันทึกการตั้งค่า ${editForm.name} สำเร็จ`, 'success');
     setIsConfigModalOpen(false);
   };
 
@@ -147,7 +167,21 @@ export const ConnectorsPage: React.FC = () => {
     showToast(`ทดสอบการเชื่อมต่อ ${conn.name}...`, 'info');
     setTimeout(() => {
       showToast(`${conn.name}: เชื่อมต่อสำเร็จ (200 OK)`, 'success');
-    }, 300);
+    }, 350);
+  };
+
+  const handleVerifyLineWebhook = () => {
+    setIsVerifyingWebhook(true);
+    showToast('กำลังตรวจสอบการเชื่อมต่อ LINE Webhook...', 'info');
+    setTimeout(() => {
+      setIsVerifyingWebhook(false);
+      showToast('LINE Webhook Status: 200 OK (SSL Verified)', 'success');
+    }, 500);
+  };
+
+  const handleSendTestLineMessage = () => {
+    if (!testLineUid.trim()) return;
+    showToast(`ส่งข้อความทดสอบไปยัง LINE UID (${testLineUid}) สำเร็จ (200 OK)`, 'success');
   };
 
   const handleCopyWebhook = (url: string) => {
@@ -174,6 +208,8 @@ export const ConnectorsPage: React.FC = () => {
     setIsSimulatorModalOpen(false);
   };
 
+  const isEditingLine = editForm?.id === 'conn-line';
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-bg-app select-none">
       {/* Top Header - CLEAN */}
@@ -181,6 +217,13 @@ export const ConnectorsPage: React.FC = () => {
         title="Connectors"
         actionButton={
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleOpenLineConfig}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+            >
+              <span className="font-extrabold text-[11px] bg-white/20 px-1 py-0.5 rounded">LINE</span>
+              <span>ตั้งค่า LINE OA</span>
+            </button>
             <button
               onClick={() => setIsSimulatorModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
@@ -258,11 +301,14 @@ export const ConnectorsPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
           {filteredConnectors.map((conn) => {
             const isConnected = conn.status === 'connected';
+            const isLine = conn.id === 'conn-line';
 
             return (
               <div
                 key={conn.id}
-                className="bg-white rounded-card border border-border p-4 shadow-card flex flex-col justify-between hover:border-brand/40 transition-all space-y-3.5"
+                className={`bg-white rounded-card border p-4 shadow-card flex flex-col justify-between transition-all space-y-3.5 ${
+                  isLine ? 'border-[#06C755]/50 hover:border-[#06C755]' : 'border-border hover:border-brand/40'
+                }`}
               >
                 {/* Header Row */}
                 <div className="flex items-start justify-between gap-2.5">
@@ -331,7 +377,9 @@ export const ConnectorsPage: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleOpenConfig(conn)}
-                      className="px-3 py-1 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors"
+                      className={`px-3 py-1 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors ${
+                        isLine ? 'bg-[#06C755] hover:bg-[#05b34c]' : 'bg-brand hover:bg-brand-hover'
+                      }`}
                     >
                       <Settings className="w-3 h-3" />
                       <span>ตั้งค่า</span>
@@ -345,13 +393,13 @@ export const ConnectorsPage: React.FC = () => {
 
       </div>
 
-      {/* ================= MODAL: CONFIGURE CONNECTOR ================= */}
+      {/* ================= MODAL: CONFIGURE CONNECTOR (SPECIALIZED FOR LINE OA & GENERIC) ================= */}
       {editForm && (
         <Modal
           isOpen={isConfigModalOpen}
           onClose={() => setIsConfigModalOpen(false)}
-          title={`ตั้งค่า ${editForm.name}`}
-          maxWidth="lg"
+          title={isEditingLine ? 'ตั้งค่า LINE Official Account & Messaging API' : `ตั้งค่า ${editForm.name}`}
+          maxWidth={isEditingLine ? 'xl' : 'lg'}
           footer={
             <>
               <button
@@ -361,119 +409,433 @@ export const ConnectorsPage: React.FC = () => {
                 ยกเลิก
               </button>
               <button
-                onClick={handleSaveConfig}
-                className="px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+                onClick={() => handleSaveConfig()}
+                className={`px-4 py-2 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors ${
+                  isEditingLine ? 'bg-[#06C755] hover:bg-[#05b34c]' : 'bg-brand hover:bg-brand-hover'
+                }`}
               >
-                บันทึก
+                บันทึกการตั้งค่า
               </button>
             </>
           }
         >
-          <form onSubmit={handleSaveConfig} className="space-y-3.5 text-xs">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-text-secondary font-medium mb-1">
-                  Account Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editForm.accountName}
-                  onChange={(e) => setEditForm({ ...editForm, accountName: e.target.value })}
-                  className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-brand font-medium"
-                />
-              </div>
-              <div>
-                <label className="block text-text-secondary font-medium mb-1">
-                  Account / Channel ID *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editForm.accountId}
-                  onChange={(e) => setEditForm({ ...editForm, accountId: e.target.value })}
-                  className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-brand font-mono"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-text-secondary font-medium mb-1">
-                  App / Client ID
-                </label>
-                <input
-                  type="text"
-                  value={editForm.appId || ''}
-                  onChange={(e) => setEditForm({ ...editForm, appId: e.target.value })}
-                  className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-brand font-mono"
-                />
-              </div>
-              <div>
-                <label className="block text-text-secondary font-medium mb-1">
-                  App / Channel Secret
-                </label>
-                <input
-                  type="password"
-                  value={editForm.appSecret || ''}
-                  onChange={(e) => setEditForm({ ...editForm, appSecret: e.target.value })}
-                  className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-brand font-mono"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-text-secondary font-medium mb-1">
-                Access Token
-              </label>
-              <textarea
-                rows={2}
-                value={editForm.accessToken || ''}
-                onChange={(e) => setEditForm({ ...editForm, accessToken: e.target.value })}
-                className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-brand font-mono text-[11px] resize-none"
-              />
-            </div>
-
-            <div className="p-3 bg-bg-muted rounded-lg border border-border space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-text-primary font-bold">Webhook URL</label>
-                <button
-                  type="button"
-                  onClick={() => handleCopyWebhook(editForm.webhookUrl)}
-                  className="text-brand hover:underline font-semibold flex items-center gap-1 text-[11px]"
-                >
-                  <Copy className="w-3 h-3" />
-                  <span>Copy</span>
-                </button>
-              </div>
-              <input
-                type="text"
-                readOnly
-                value={editForm.webhookUrl}
-                className="w-full px-3 py-1.5 bg-white border border-border rounded font-mono text-[11px] text-text-secondary"
-              />
-            </div>
-
-            <div className="space-y-2 pt-2 border-t border-divider">
-              <div className="font-bold text-text-primary text-xs">ฟังก์ชันการทำงาน</div>
-              <div className="space-y-1.5">
-                {editForm.features.map((feat) => (
-                  <label
-                    key={feat.key}
-                    className="flex items-center justify-between p-2 rounded-lg border border-border hover:bg-bg-subtle cursor-pointer transition-colors"
+          {isEditingLine ? (
+            /* LINE OFFICIAL ACCOUNT MULTI-TAB CONFIG */
+            <div className="space-y-3.5 text-xs">
+              {/* Tabs */}
+              <div className="flex border-b border-border gap-2">
+                {[
+                  { key: 'messaging', label: '1. Messaging API' },
+                  { key: 'liff', label: '2. LIFF & Login' },
+                  { key: 'richmenu', label: '3. Rich Menu & CDP' },
+                  { key: 'tester', label: '4. ทดสอบ Webhook' },
+                ].map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setLineModalTab(t.key as any)}
+                    className={`pb-2 px-2 text-xs font-semibold border-b-2 transition-all ${
+                      lineModalTab === t.key
+                        ? 'border-[#06C755] text-[#06C755]'
+                        : 'border-transparent text-text-secondary hover:text-text-primary'
+                    }`}
                   >
-                    <span className="text-text-primary font-medium">{feat.label}</span>
-                    <input
-                      type="checkbox"
-                      checked={feat.enabled}
-                      onChange={() => handleToggleFeature(feat.key)}
-                      className="w-4 h-4 text-brand rounded border-border focus:ring-brand"
-                    />
-                  </label>
+                    {t.label}
+                  </button>
                 ))}
               </div>
+
+              {/* TAB 1: MESSAGING API */}
+              {lineModalTab === 'messaging' && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-text-secondary font-medium mb-1">
+                        LINE Account Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editForm.accountName}
+                        onChange={(e) => setEditForm({ ...editForm, accountName: e.target.value })}
+                        className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-[#06C755] font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-text-secondary font-medium mb-1">
+                        LINE Basic ID / Premium ID *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editForm.basicId || editForm.accountId}
+                        onChange={(e) => setEditForm({ ...editForm, basicId: e.target.value, accountId: e.target.value })}
+                        className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-[#06C755] font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-text-secondary font-medium mb-1">
+                        Channel ID (Messaging API) *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editForm.appId || ''}
+                        onChange={(e) => setEditForm({ ...editForm, appId: e.target.value })}
+                        className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-[#06C755] font-mono"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-text-secondary font-medium">
+                          Channel Secret *
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setShowSecret(!showSecret)}
+                          className="text-text-secondary hover:text-text-primary text-[11px] flex items-center gap-1"
+                        >
+                          {showSecret ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                          <span>{showSecret ? 'ซ่อน' : 'แสดง'}</span>
+                        </button>
+                      </div>
+                      <input
+                        type={showSecret ? 'text' : 'password'}
+                        required
+                        value={editForm.appSecret || ''}
+                        onChange={(e) => setEditForm({ ...editForm, appSecret: e.target.value })}
+                        className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-[#06C755] font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-text-secondary font-medium mb-1">
+                      Channel Access Token (Long-Lived) *
+                    </label>
+                    <textarea
+                      rows={2}
+                      required
+                      value={editForm.accessToken || ''}
+                      onChange={(e) => setEditForm({ ...editForm, accessToken: e.target.value })}
+                      className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-[#06C755] font-mono text-[11px] resize-none"
+                    />
+                  </div>
+
+                  {/* Webhook URL Box */}
+                  <div className="p-3 bg-bg-muted rounded-lg border border-border space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-text-primary">Webhook URL</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold">
+                          Active (SSL)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleVerifyLineWebhook}
+                          disabled={isVerifyingWebhook}
+                          className="text-[#06C755] hover:underline font-semibold flex items-center gap-1 text-[11px]"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${isVerifyingWebhook ? 'animate-spin' : ''}`} />
+                          <span>Verify Webhook</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyWebhook(editForm.webhookUrl)}
+                          className="text-brand hover:underline font-semibold flex items-center gap-1 text-[11px]"
+                        >
+                          <Copy className="w-3 h-3" />
+                          <span>Copy</span>
+                        </button>
+                      </div>
+                    </div>
+                    <input
+                      type="text"
+                      readOnly
+                      value={editForm.webhookUrl}
+                      className="w-full px-3 py-1.5 bg-white border border-border rounded font-mono text-[11px] text-text-secondary"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: LIFF & LOGIN */}
+              {lineModalTab === 'liff' && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-text-secondary font-medium mb-1">
+                        LIFF App ID (สำหรับ Member Card / CDP)
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.liffId || '1659281042-8xkL2a9Q'}
+                        onChange={(e) => setEditForm({ ...editForm, liffId: e.target.value })}
+                        className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-[#06C755] font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-text-secondary font-medium mb-1">
+                        LIFF Endpoint URL
+                      </label>
+                      <input
+                        type="text"
+                        readOnly
+                        value={`https://liff.line.me/${editForm.liffId || '1659281042-8xkL2a9Q'}`}
+                        className="w-full px-3 py-1.5 bg-bg-muted border border-border rounded-lg font-mono text-[11px] text-text-secondary"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-text-secondary font-medium mb-1">
+                        LINE Login Channel ID
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.lineLoginChannelId || '1659281043'}
+                        onChange={(e) => setEditForm({ ...editForm, lineLoginChannelId: e.target.value })}
+                        className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-[#06C755] font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-text-secondary font-medium mb-1">
+                        LINE Login Channel Secret
+                      </label>
+                      <input
+                        type="password"
+                        value={editForm.lineLoginChannelSecret || '7f9104b2819cd827104928174a88'}
+                        onChange={(e) => setEditForm({ ...editForm, lineLoginChannelSecret: e.target.value })}
+                        className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-[#06C755] font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-divider">
+                    <label className="flex items-center justify-between p-2 rounded-lg border border-border hover:bg-bg-subtle cursor-pointer">
+                      <span className="text-text-primary font-medium">
+                        สร้างโปรไฟล์ลูกค้าใหม่ใน CDP อัตโนมัติเมื่อกด Add Friend (Follow Event)
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={true}
+                        readOnly
+                        className="w-4 h-4 text-[#06C755] rounded border-border focus:ring-[#06C755]"
+                      />
+                    </label>
+                    <label className="flex items-center justify-between p-2 rounded-lg border border-border hover:bg-bg-subtle cursor-pointer">
+                      <span className="text-text-primary font-medium">
+                        ผูก LINE UID เข้ากับเบอร์โทรศัพท์และบัตรประชาชนอัตโนมัติเมื่อยืนยันผ่าน LIFF
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={true}
+                        readOnly
+                        className="w-4 h-4 text-[#06C755] rounded border-border focus:ring-[#06C755]"
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: RICH MENU & AUTOMATIONS */}
+              {lineModalTab === 'richmenu' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-text-secondary font-medium mb-1">
+                      Rich Menu ID เริ่มต้น (Default Rich Menu)
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.richMenuId || 'richmenu-8a19284f10928374'}
+                      onChange={(e) => setEditForm({ ...editForm, richMenuId: e.target.value })}
+                      className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-[#06C755] font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="font-bold text-text-primary text-xs">ฟังก์ชันการทำงานที่เปิดใช้งาน</div>
+                    {editForm.features.map((feat) => (
+                      <label
+                        key={feat.key}
+                        className="flex items-center justify-between p-2 rounded-lg border border-border hover:bg-bg-subtle cursor-pointer transition-colors"
+                      >
+                        <span className="text-text-primary font-medium">{feat.label}</span>
+                        <input
+                          type="checkbox"
+                          checked={feat.enabled}
+                          onChange={() => handleToggleFeature(feat.key)}
+                          className="w-4 h-4 text-[#06C755] rounded border-border focus:ring-[#06C755]"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: TESTER */}
+              {lineModalTab === 'tester' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-text-secondary font-medium mb-1">
+                      เป้าหมาย LINE User ID (UID)
+                    </label>
+                    <input
+                      type="text"
+                      value={testLineUid}
+                      onChange={(e) => setTestLineUid(e.target.value)}
+                      placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-[#06C755] font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-text-secondary font-medium mb-1">
+                      ข้อความทดสอบ (Push Message)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={testLineMessage}
+                      onChange={(e) => setTestLineMessage(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-[#06C755] resize-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSendTestLineMessage}
+                      className="px-3.5 py-1.5 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg font-semibold flex items-center gap-1.5 shadow-sm"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>ส่งข้อความทดสอบ</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleVerifyLineWebhook}
+                      className="px-3.5 py-1.5 border border-border hover:bg-bg-subtle text-text-primary rounded-lg font-semibold flex items-center gap-1.5"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 text-text-secondary" />
+                      <span>Ping Webhook (200 OK)</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-          </form>
+          ) : (
+            /* GENERIC CONNECTOR CONFIG */
+            <form onSubmit={handleSaveConfig} className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-text-secondary font-medium mb-1">
+                    Account Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.accountName}
+                    onChange={(e) => setEditForm({ ...editForm, accountName: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-brand font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-text-secondary font-medium mb-1">
+                    Account / Channel ID *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.accountId}
+                    onChange={(e) => setEditForm({ ...editForm, accountId: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-brand font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-text-secondary font-medium mb-1">
+                    App / Client ID
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.appId || ''}
+                    onChange={(e) => setEditForm({ ...editForm, appId: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-brand font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-text-secondary font-medium mb-1">
+                    App / Channel Secret
+                  </label>
+                  <input
+                    type="password"
+                    value={editForm.appSecret || ''}
+                    onChange={(e) => setEditForm({ ...editForm, appSecret: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-brand font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-text-secondary font-medium mb-1">
+                  Access Token
+                </label>
+                <textarea
+                  rows={2}
+                  value={editForm.accessToken || ''}
+                  onChange={(e) => setEditForm({ ...editForm, accessToken: e.target.value })}
+                  className="w-full px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:border-brand font-mono text-[11px] resize-none"
+                />
+              </div>
+
+              <div className="p-3 bg-bg-muted rounded-lg border border-border space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-text-primary font-bold">Webhook URL</label>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyWebhook(editForm.webhookUrl)}
+                    className="text-brand hover:underline font-semibold flex items-center gap-1 text-[11px]"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>Copy</span>
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  readOnly
+                  value={editForm.webhookUrl}
+                  className="w-full px-3 py-1.5 bg-white border border-border rounded font-mono text-[11px] text-text-secondary"
+                />
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-divider">
+                <div className="font-bold text-text-primary text-xs">ฟังก์ชันการทำงาน</div>
+                <div className="space-y-1.5">
+                  {editForm.features.map((feat) => (
+                    <label
+                      key={feat.key}
+                      className="flex items-center justify-between p-2 rounded-lg border border-border hover:bg-bg-subtle cursor-pointer transition-colors"
+                    >
+                      <span className="text-text-primary font-medium">{feat.label}</span>
+                      <input
+                        type="checkbox"
+                        checked={feat.enabled}
+                        onChange={() => handleToggleFeature(feat.key)}
+                        className="w-4 h-4 text-brand rounded border-border focus:ring-brand"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </form>
+          )}
         </Modal>
       )}
 

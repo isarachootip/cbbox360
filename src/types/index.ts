@@ -257,6 +257,12 @@ export interface ConnectorConfig {
   appId?: string;
   appSecret?: string;
   accessToken?: string;
+  basicId?: string;
+  liffId?: string;
+  lineLoginChannelId?: string;
+  lineLoginChannelSecret?: string;
+  richMenuId?: string;
+  testUserId?: string;
   features: {
     key: string;
     label: string;
