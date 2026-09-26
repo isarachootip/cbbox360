@@ -16,6 +16,12 @@ import {
   Filter,
   Eye,
   EyeOff,
+  FileSpreadsheet,
+  Clock,
+  History,
+  Check,
+  X,
+  Sparkles,
 } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { KpiTile } from '../components/common/KpiTile';
@@ -36,6 +42,9 @@ export const UserManagementPage: React.FC = () => {
     switchUser,
   } = useAuth();
   const { showToast } = useToast();
+
+  // Active Main Tab
+  const [activeTab, setActiveTab] = useState<'users' | 'matrix' | 'logs'>('users');
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -204,20 +213,57 @@ export const UserManagementPage: React.FC = () => {
     }
   };
 
+  const handleExportUsers = () => {
+    showToast('สร้างไฟล์ Export ข้อมูลบัญชีผู้ใช้ในระบบเรียบร้อย (CSV)', 'info');
+  };
+
+  // Permission Matrix Data
+  const modulesList = [
+    { name: 'Customer 360 (CDP)', sysadmin: 'Full', admin: 'Full', SF_1: 'View/Edit', SF_2: 'View Only', SF_3: 'View Only', supervisor: 'Full' },
+    { name: 'Segments & Audiences', sysadmin: 'Full', admin: 'Full', SF_1: 'View Only', SF_2: 'No', SF_3: 'No', supervisor: 'Full' },
+    { name: 'Tier & Loyalty Rules', sysadmin: 'Full', admin: 'Full', SF_1: 'View Only', SF_2: 'View Only', SF_3: 'No', supervisor: 'Full' },
+    { name: 'Sales Pipeline (Deals)', sysadmin: 'Full', admin: 'Full', SF_1: 'Manage Deals', SF_2: 'View Only', SF_3: 'No', supervisor: 'Full' },
+    { name: 'Omnichannel Inbox', sysadmin: 'Full', admin: 'Full', SF_1: 'My Chats', SF_2: 'Full Inbox', SF_3: 'No', supervisor: 'Full' },
+    { name: 'Service / Case (Tickets)', sysadmin: 'Full', admin: 'Full', SF_1: 'Create Ticket', SF_2: 'Manage Tickets', SF_3: 'No', supervisor: 'Full' },
+    { name: 'Voice (3CX PBX)', sysadmin: 'Full', admin: 'Full', SF_1: 'Call/Receive', SF_2: 'Call/Receive', SF_3: 'Collection Calls', supervisor: 'Full' },
+    { name: 'Credit Sales & Limits', sysadmin: 'Full', admin: 'Full', SF_1: 'View Badge Only', SF_2: 'View Badge Only', SF_3: 'Manage Credit', supervisor: 'View/Approve' },
+    { name: 'User Management (CRUD)', sysadmin: 'Full Access', admin: 'Full Access', SF_1: 'No', SF_2: 'No', SF_3: 'No', supervisor: 'View Only' },
+    { name: 'Connectors & Webhooks', sysadmin: 'Full Config', admin: 'Full Config', SF_1: 'No', SF_2: 'No', SF_3: 'No', supervisor: 'No' },
+  ];
+
+  // Audit Logs mock data
+  const auditLogs = [
+    { id: 'log-1', time: 'วันนี้ 18:20', user: 'sysadmin', action: 'เข้าสู่ระบบ (Sign In)', ip: '192.168.1.100', status: 'Success' },
+    { id: 'log-2', time: 'วันนี้ 18:15', user: 'SF_2', action: 'ตอบกลับแชท LINE (ลูกค้า C00123)', ip: '192.168.1.104', status: 'Success' },
+    { id: 'log-3', time: 'วันนี้ 17:45', user: 'admin', action: 'ปรับปรุงการตั้งค่า Webhook (LINE OA)', ip: '192.168.1.101', status: 'Success' },
+    { id: 'log-4', time: 'วันนี้ 16:30', user: 'SF_1', action: 'สร้าง Deal ใหม่ใน Sales Pipeline (฿185,000)', ip: '192.168.1.103', status: 'Success' },
+    { id: 'log-5', time: 'วันนี้ 15:50', user: 'SF_3', action: 'อนุมัติขยายวงเงินสินเชื่อลูกค้า C00126', ip: '192.168.1.105', status: 'Success' },
+    { id: 'log-6', time: 'วันนี้ 14:10', user: 'supervisor', action: 'ตรวจสอบรายงาน CSAT ประจำสัปดาห์', ip: '192.168.1.106', status: 'Success' },
+  ];
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-bg-app select-none">
       {/* Top Header */}
       <PageHeader
-        title="การจัดการผู้ใช้งานระบบ (User Management CRUD)"
-        subtitle={`รวมทั้งหมด ${users.length} บัญชีผู้ใช้ · สิทธิ์ตามบทบาท (Role-based Access)`}
+        title="User Management (ระบบจัดการผู้ใช้และสิทธิ์)"
+        subtitle={`รวมทั้งหมด ${users.length} บัญชีผู้ใช้ · Role-based Access Control (RBAC)`}
         actionButton={
-          <button
-            onClick={handleOpenCreate}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>+ เพิ่มผู้ใช้ใหม่ (Create User)</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportUsers}
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-border bg-white hover:bg-bg-subtle text-text-primary rounded-lg text-xs font-semibold shadow-sm transition-colors"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-text-secondary" />
+              <span>Export รายชื่อ</span>
+            </button>
+            <button
+              onClick={handleOpenCreate}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>+ เพิ่มผู้ใช้ใหม่ (Create User)</span>
+            </button>
+          </div>
         }
       />
 
@@ -248,209 +294,331 @@ export const UserManagementPage: React.FC = () => {
           />
         </div>
 
-        {/* Filter and Search Bar */}
-        <div className="bg-white rounded-card border border-border p-4 shadow-card flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 flex-1 max-w-md">
-            <div className="relative w-full">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
-              <input
-                type="text"
-                placeholder="ค้นหาชื่อผู้ใช้, ชื่อ-นามสกุล, อีเมล หรือแผนก..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-bg-app border border-border rounded-lg focus:outline-none focus:border-brand focus:bg-white"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            {/* Filter by Role */}
-            <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-              <Filter className="w-3.5 h-3.5" />
-              <span>Role:</span>
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="text-xs font-semibold px-2.5 py-1 bg-bg-subtle border border-border rounded-lg text-text-primary focus:outline-none focus:border-brand cursor-pointer"
+        {/* Tabs Bar */}
+        <div className="flex items-center justify-between border-b border-border bg-white px-5 rounded-t-xl">
+          <div className="flex items-center gap-6">
+            {[
+              { key: 'users', label: '👥 บัญชีผู้ใช้งาน (User Accounts)' },
+              { key: 'matrix', label: '🛡️ โครงสร้างสิทธิ์ (Role & Permissions Matrix)' },
+              { key: 'logs', label: '📋 ประวัติการเข้าสู่ระบบ (Security & Audit Logs)' },
+            ].map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setActiveTab(t.key as any)}
+                className={`py-3 text-xs font-bold transition-all relative ${
+                  activeTab === t.key
+                    ? 'text-brand'
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
               >
-                <option value="ทั้งหมด">ทั้งหมด</option>
-                <option value="sysadmin">sysadmin</option>
-                <option value="admin">admin</option>
-                <option value="SF_1">SF_1 (Sales)</option>
-                <option value="SF_2">SF_2 (Service)</option>
-                <option value="SF_3">SF_3 (Credit)</option>
-                <option value="supervisor">supervisor</option>
-              </select>
-            </div>
-
-            {/* Filter by Status */}
-            <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-              <span>สถานะ:</span>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="text-xs font-semibold px-2.5 py-1 bg-bg-subtle border border-border rounded-lg text-text-primary focus:outline-none focus:border-brand cursor-pointer"
-              >
-                <option value="ทั้งหมด">ทั้งหมด</option>
-                <option value="active">Active (ใช้งาน)</option>
-                <option value="inactive">Inactive (ระงับ)</option>
-              </select>
-            </div>
+                {t.label}
+                {activeTab === t.key && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand rounded-t" />
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Users Table */}
-        <div className="bg-white rounded-card border border-border overflow-hidden shadow-card">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-bg-muted text-text-secondary border-b border-border">
-                <tr>
-                  <th className="px-4 py-3 font-medium">ผู้ใช้งาน (User)</th>
-                  <th className="px-4 py-3 font-medium">ชื่อผู้ใช้ (Username)</th>
-                  <th className="px-4 py-3 font-medium">รหัสผ่าน (Password)</th>
-                  <th className="px-4 py-3 font-medium">บทบาท (Role)</th>
-                  <th className="px-4 py-3 font-medium">แผนก / ฝ่ายงาน</th>
-                  <th className="px-4 py-3 font-medium text-center">สถานะ</th>
-                  <th className="px-4 py-3 font-medium">เข้าสู่ระบบล่าสุด</th>
-                  <th className="px-4 py-3 font-medium text-right">การจัดการ (Actions)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-divider">
-                {filteredUsers.map((u) => {
-                  const isCurrent = currentUser?.id === u.id;
+        {/* TAB 1: USERS LIST */}
+        {activeTab === 'users' && (
+          <div className="space-y-4">
+            {/* Filter and Search Bar */}
+            <div className="bg-white rounded-card border border-border p-4 shadow-card flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-1 max-w-md">
+                <div className="relative w-full">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                  <input
+                    type="text"
+                    placeholder="ค้นหาชื่อผู้ใช้, ชื่อ-นามสกุล, อีเมล หรือแผนก..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-1.5 text-xs bg-bg-app border border-border rounded-lg focus:outline-none focus:border-brand focus:bg-white"
+                  />
+                </div>
+              </div>
 
-                  return (
-                    <tr key={u.id} className={`hover:bg-bg-subtle transition-colors ${isCurrent ? 'bg-brand-tint/20' : ''}`}>
-                      {/* Name & Avatar */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2.5">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 text-brand-deep shadow-xs"
-                            style={{ backgroundColor: u.avatarBg || '#CFE2F8' }}
-                          >
-                            {u.initials}
-                          </div>
-                          <div>
-                            <div className="font-bold text-text-primary flex items-center gap-1.5">
-                              <span>{u.name}</span>
-                              {isCurrent && (
-                                <span className="text-[10px] bg-brand text-white px-1.5 py-0.2 rounded font-semibold">
-                                  คุณ (You)
-                                </span>
-                              )}
+              <div className="flex items-center gap-2.5">
+                {/* Filter by Role */}
+                <div className="flex items-center gap-1.5 text-xs text-text-secondary">
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>Role:</span>
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="text-xs font-semibold px-2.5 py-1 bg-bg-subtle border border-border rounded-lg text-text-primary focus:outline-none focus:border-brand cursor-pointer"
+                  >
+                    <option value="ทั้งหมด">ทั้งหมด</option>
+                    <option value="sysadmin">sysadmin</option>
+                    <option value="admin">admin</option>
+                    <option value="SF_1">SF_1 (Sales)</option>
+                    <option value="SF_2">SF_2 (Service)</option>
+                    <option value="SF_3">SF_3 (Credit)</option>
+                    <option value="supervisor">supervisor</option>
+                  </select>
+                </div>
+
+                {/* Filter by Status */}
+                <div className="flex items-center gap-1.5 text-xs text-text-secondary">
+                  <span>สถานะ:</span>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="text-xs font-semibold px-2.5 py-1 bg-bg-subtle border border-border rounded-lg text-text-primary focus:outline-none focus:border-brand cursor-pointer"
+                  >
+                    <option value="ทั้งหมด">ทั้งหมด</option>
+                    <option value="active">Active (ใช้งาน)</option>
+                    <option value="inactive">Inactive (ระงับ)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Users Table */}
+            <div className="bg-white rounded-card border border-border overflow-hidden shadow-card">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-bg-muted text-text-secondary border-b border-border">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">ผู้ใช้งาน (User)</th>
+                      <th className="px-4 py-3 font-medium">ชื่อผู้ใช้ (Username)</th>
+                      <th className="px-4 py-3 font-medium">รหัสผ่าน (Password)</th>
+                      <th className="px-4 py-3 font-medium">บทบาท (Role)</th>
+                      <th className="px-4 py-3 font-medium">แผนก / ฝ่ายงาน</th>
+                      <th className="px-4 py-3 font-medium text-center">สถานะ</th>
+                      <th className="px-4 py-3 font-medium">เข้าสู่ระบบล่าสุด</th>
+                      <th className="px-4 py-3 font-medium text-right">การจัดการ (Actions)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-divider">
+                    {filteredUsers.map((u) => {
+                      const isCurrent = currentUser?.id === u.id;
+
+                      return (
+                        <tr key={u.id} className={`hover:bg-bg-subtle transition-colors ${isCurrent ? 'bg-brand-tint/20' : ''}`}>
+                          {/* Name & Avatar */}
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2.5">
+                              <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 text-brand-deep shadow-xs"
+                                style={{ backgroundColor: u.avatarBg || '#CFE2F8' }}
+                              >
+                                {u.initials}
+                              </div>
+                              <div>
+                                <div className="font-bold text-text-primary flex items-center gap-1.5">
+                                  <span>{u.name}</span>
+                                  {isCurrent && (
+                                    <span className="text-[10px] bg-brand text-white px-1.5 py-0.2 rounded font-semibold">
+                                      คุณ (You)
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-text-secondary">{u.email}</div>
+                              </div>
                             </div>
-                            <div className="text-[11px] text-text-secondary">{u.email}</div>
-                          </div>
-                        </div>
-                      </td>
+                          </td>
 
-                      {/* Username */}
-                      <td className="px-4 py-3 font-mono font-bold text-text-primary">
-                        {u.username}
-                      </td>
+                          {/* Username */}
+                          <td className="px-4 py-3 font-mono font-bold text-text-primary">
+                            {u.username}
+                          </td>
 
-                      {/* Password */}
-                      <td className="px-4 py-3 font-mono text-text-secondary">
-                        <span className="bg-bg-app px-2 py-0.5 rounded border border-border">
-                          {u.password}
+                          {/* Password */}
+                          <td className="px-4 py-3 font-mono text-text-secondary">
+                            <span className="bg-bg-app px-2 py-0.5 rounded border border-border">
+                              {u.password}
+                            </span>
+                          </td>
+
+                          {/* Role */}
+                          <td className="px-4 py-3">
+                            {getRoleBadge(u.role)}
+                          </td>
+
+                          {/* Department */}
+                          <td className="px-4 py-3 text-text-body2">
+                            {u.department}
+                          </td>
+
+                          {/* Status Toggle */}
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => toggleUserStatus(u.id)}
+                              disabled={isCurrent}
+                              title={isCurrent ? 'ไม่สามารถเปลี่ยนสถานะตัวเองได้' : 'คลิกเพื่อเปลี่ยนสถานะ'}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold transition-all ${
+                                u.status === 'active'
+                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+                                  : 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100'
+                              } ${isCurrent ? 'opacity-80 cursor-not-allowed' : 'cursor-pointer'}`}
+                            >
+                              {u.status === 'active' ? (
+                                <>
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                  <span>Active</span>
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="w-3 h-3 text-rose-600" />
+                                  <span>Inactive</span>
+                                </>
+                              )}
+                            </button>
+                          </td>
+
+                          {/* Last Login */}
+                          <td className="px-4 py-3 text-[11px] font-mono text-text-secondary">
+                            {u.lastLogin || '—'}
+                          </td>
+
+                          {/* Action Buttons */}
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              {/* Switch User Button */}
+                              {!isCurrent && u.status === 'active' && (
+                                <button
+                                  onClick={() => handleSwitchUser(u.username)}
+                                  title={`สลับเข้าใช้งานเป็น ${u.username}`}
+                                  className="p-1 text-brand hover:text-brand-hover hover:bg-brand-tint rounded transition-colors"
+                                >
+                                  <UserCheck className="w-4 h-4" />
+                                </button>
+                              )}
+
+                              {/* Reset Password */}
+                              <button
+                                onClick={() => handleOpenResetPassword(u)}
+                                title="รีเซ็ตรหัสผ่าน"
+                                className="p-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded transition-colors"
+                              >
+                                <KeyRound className="w-4 h-4" />
+                              </button>
+
+                              {/* Edit User */}
+                              <button
+                                onClick={() => handleOpenEdit(u)}
+                                title="แก้ไขข้อมูลผู้ใช้"
+                                className="p-1 text-text-secondary hover:text-brand hover:bg-bg-app rounded transition-colors"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+
+                              {/* Delete User */}
+                              <button
+                                onClick={() => handleOpenDelete(u)}
+                                disabled={isCurrent}
+                                title={isCurrent ? 'ไม่สามารถลบบัญชีตัวเองได้' : 'ลบผู้ใช้'}
+                                className={`p-1 rounded transition-colors ${
+                                  isCurrent
+                                    ? 'text-gray-300 cursor-not-allowed'
+                                    : 'text-text-secondary hover:text-rose-600 hover:bg-rose-50'
+                                }`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: ROLE & PERMISSION MATRIX */}
+        {activeTab === 'matrix' && (
+          <div className="bg-white rounded-card border border-border p-5 shadow-card space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-divider">
+              <div>
+                <h3 className="text-sm font-bold text-text-primary">
+                  ตารางกำหนดสิทธิ์การเข้าถึงโมดูล (Role & Permission Matrix)
+                </h3>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  โครงสร้างการอนุญาตการเข้าถึงข้อมูลตามตำแหน่งหน้าที่ของทีมงานในระบบ CusBox360
+                </p>
+              </div>
+            </div>
+
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-bg-muted text-text-secondary border-b border-border">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">โมดูลระบบ / การทำงาน</th>
+                    <th className="px-3 py-3 font-mono font-bold text-purple-800 text-center">sysadmin</th>
+                    <th className="px-3 py-3 font-mono font-bold text-blue-800 text-center">admin</th>
+                    <th className="px-3 py-3 font-mono font-bold text-emerald-800 text-center">SF_1 (Sales)</th>
+                    <th className="px-3 py-3 font-mono font-bold text-cyan-800 text-center">SF_2 (Service)</th>
+                    <th className="px-3 py-3 font-mono font-bold text-amber-800 text-center">SF_3 (Credit)</th>
+                    <th className="px-3 py-3 font-mono font-bold text-indigo-800 text-center">supervisor</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-divider">
+                  {modulesList.map((m, idx) => (
+                    <tr key={idx} className="hover:bg-bg-subtle">
+                      <td className="px-4 py-2.5 font-bold text-text-primary">{m.name}</td>
+                      <td className="px-3 py-2.5 text-center font-medium bg-purple-50/30 text-purple-900">{m.sysadmin}</td>
+                      <td className="px-3 py-2.5 text-center font-medium bg-blue-50/30 text-blue-900">{m.admin}</td>
+                      <td className="px-3 py-2.5 text-center font-medium">{m.SF_1}</td>
+                      <td className="px-3 py-2.5 text-center font-medium">{m.SF_2}</td>
+                      <td className="px-3 py-2.5 text-center font-medium">{m.SF_3}</td>
+                      <td className="px-3 py-2.5 text-center font-medium bg-indigo-50/30 text-indigo-900">{m.supervisor}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: AUDIT & SECURITY LOGS */}
+        {activeTab === 'logs' && (
+          <div className="bg-white rounded-card border border-border p-5 shadow-card space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-divider">
+              <div>
+                <h3 className="text-sm font-bold text-text-primary">
+                  บันทึกความปลอดภัยและประวัติการเข้าใช้งาน (Security & Audit Logs)
+                </h3>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  บันทึกกิจกรรมการเข้าสู่ระบบ, การเปลี่ยนสิทธิ์ และการกระทำสำคัญ
+                </p>
+              </div>
+            </div>
+
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-bg-muted text-text-secondary border-b border-border">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">วัน-เวลา</th>
+                    <th className="px-4 py-3 font-medium">ชื่อผู้ใช้ (Username)</th>
+                    <th className="px-4 py-3 font-medium">กิจกรรมที่ทำ (Action)</th>
+                    <th className="px-4 py-3 font-medium font-mono">IP Address</th>
+                    <th className="px-4 py-3 font-medium text-center">สถานะ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-divider">
+                  {auditLogs.map((log) => (
+                    <tr key={log.id} className="hover:bg-bg-subtle">
+                      <td className="px-4 py-2.5 font-mono text-text-secondary">{log.time}</td>
+                      <td className="px-4 py-2.5 font-mono font-bold text-text-primary">{log.user}</td>
+                      <td className="px-4 py-2.5 text-text-primary">{log.action}</td>
+                      <td className="px-4 py-2.5 font-mono text-text-secondary">{log.ip}</td>
+                      <td className="px-4 py-2.5 text-center">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                          <Check className="w-3 h-3 text-emerald-600" />
+                          <span>{log.status}</span>
                         </span>
                       </td>
-
-                      {/* Role */}
-                      <td className="px-4 py-3">
-                        {getRoleBadge(u.role)}
-                      </td>
-
-                      {/* Department */}
-                      <td className="px-4 py-3 text-text-body2">
-                        {u.department}
-                      </td>
-
-                      {/* Status Toggle */}
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => toggleUserStatus(u.id)}
-                          disabled={isCurrent}
-                          title={isCurrent ? 'ไม่สามารถเปลี่ยนสถานะตัวเองได้' : 'คลิกเพื่อเปลี่ยนสถานะ'}
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold transition-all ${
-                            u.status === 'active'
-                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
-                              : 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100'
-                          } ${isCurrent ? 'opacity-80 cursor-not-allowed' : 'cursor-pointer'}`}
-                        >
-                          {u.status === 'active' ? (
-                            <>
-                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                              <span>Active</span>
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="w-3 h-3 text-rose-600" />
-                              <span>Inactive</span>
-                            </>
-                          )}
-                        </button>
-                      </td>
-
-                      {/* Last Login */}
-                      <td className="px-4 py-3 text-[11px] font-mono text-text-secondary">
-                        {u.lastLogin || '—'}
-                      </td>
-
-                      {/* Action Buttons */}
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          {/* Switch User Button */}
-                          {!isCurrent && u.status === 'active' && (
-                            <button
-                              onClick={() => handleSwitchUser(u.username)}
-                              title={`สลับเข้าใช้งานเป็น ${u.username}`}
-                              className="p-1 text-brand hover:text-brand-hover hover:bg-brand-tint rounded transition-colors"
-                            >
-                              <UserCheck className="w-4 h-4" />
-                            </button>
-                          )}
-
-                          {/* Reset Password */}
-                          <button
-                            onClick={() => handleOpenResetPassword(u)}
-                            title="รีเซ็ตรหัสผ่าน"
-                            className="p-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded transition-colors"
-                          >
-                            <KeyRound className="w-4 h-4" />
-                          </button>
-
-                          {/* Edit User */}
-                          <button
-                            onClick={() => handleOpenEdit(u)}
-                            title="แก้ไขข้อมูลผู้ใช้"
-                            className="p-1 text-text-secondary hover:text-brand hover:bg-bg-app rounded transition-colors"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-
-                          {/* Delete User */}
-                          <button
-                            onClick={() => handleOpenDelete(u)}
-                            disabled={isCurrent}
-                            title={isCurrent ? 'ไม่สามารถลบบัญชีตัวเองได้' : 'ลบผู้ใช้'}
-                            className={`p-1 rounded transition-colors ${
-                              isCurrent
-                                ? 'text-gray-300 cursor-not-allowed'
-                                : 'text-text-secondary hover:text-rose-600 hover:bg-rose-50'
-                            }`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
       </div>
 

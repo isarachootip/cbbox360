@@ -92,21 +92,21 @@ export const Sidebar: React.FC = () => {
     },
   ];
 
-  const bottomNavItems = [
+  const adminNavItems = [
     {
-      name: 'ผู้ใช้งาน (User CRUD)',
+      name: 'User Management (จัดการผู้ใช้)',
       path: '/users',
       activeMatch: '/users',
       icon: UserCog,
     },
     {
-      name: 'Connectors',
+      name: 'Connectors (การเชื่อมต่อ)',
       path: '/connectors',
       activeMatch: '/connectors',
       icon: Network,
     },
     {
-      name: 'ตั้งค่า',
+      name: 'ตั้งค่าระบบ (Settings)',
       path: '/settings',
       activeMatch: '/settings',
       icon: Settings,
@@ -229,17 +229,20 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Area: Settings, User CRUD & Active Profile */}
+      {/* Section 3: ADMINISTRATION */}
       <div className="flex flex-col gap-2 pt-3 border-t border-sidebar-border/80 flex-shrink-0 relative">
+        <div className="px-2.5 mb-0.5 text-[10px] font-bold text-sidebar-label tracking-[1px] uppercase">
+          ADMINISTRATION · จัดการระบบ
+        </div>
         <nav className="flex flex-col gap-0.5">
-          {bottomNavItems.map((item) => {
+          {adminNavItems.map((item) => {
             const active = isItemActive(item.activeMatch);
             const Icon = item.icon;
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] transition-all ${
+                className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[12px] transition-all ${
                   active
                     ? 'bg-white text-brand-hover font-semibold shadow-sidebar-active'
                     : 'text-sidebar-text hover:bg-white/60 font-medium'
