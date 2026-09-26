@@ -39,11 +39,11 @@ export const ConnectorsPage: React.FC = () => {
           if (c.id === 'conn-line' && (!c.accountName || c.accountName.includes('CusShop'))) {
             return {
               ...c,
-              accountName: 'cb360 Official (@cb360)',
-              accountId: '@cb360',
-              basicId: '@cb360',
+              accountName: 'cb360 (@596vuzml)',
+              accountId: '@596vuzml',
+              basicId: '@596vuzml',
               appId: '2011580063',
-              webhookUrl: 'https://api.cb360.co.th/v1/webhooks/line/2011580063',
+              webhookUrl: 'https://cb360.online/api/webhooks/line/2011580063',
             };
           }
           return c;
