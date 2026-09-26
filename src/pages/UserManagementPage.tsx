@@ -243,10 +243,9 @@ export const UserManagementPage: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-bg-app select-none">
-      {/* Top Header */}
+      {/* Top Header - CLEAN */}
       <PageHeader
-        title="User Management (ระบบจัดการผู้ใช้และสิทธิ์)"
-        subtitle={`รวมทั้งหมด ${users.length} บัญชีผู้ใช้ · Role-based Access Control (RBAC)`}
+        title="User Management"
         actionButton={
           <div className="flex items-center gap-2">
             <button
@@ -298,9 +297,9 @@ export const UserManagementPage: React.FC = () => {
         <div className="flex items-center justify-between border-b border-border bg-white px-5 rounded-t-xl">
           <div className="flex items-center gap-6">
             {[
-              { key: 'users', label: '👥 บัญชีผู้ใช้งาน (User Accounts)' },
-              { key: 'matrix', label: '🛡️ โครงสร้างสิทธิ์ (Role & Permissions Matrix)' },
-              { key: 'logs', label: '📋 ประวัติการเข้าสู่ระบบ (Security & Audit Logs)' },
+              { key: 'users', label: 'บัญชีผู้ใช้งาน' },
+              { key: 'matrix', label: 'สิทธิ์การเข้าถึง (Permissions)' },
+              { key: 'logs', label: 'Audit Logs' },
             ].map((t) => (
               <button
                 key={t.key}
@@ -532,15 +531,10 @@ export const UserManagementPage: React.FC = () => {
         {/* TAB 2: ROLE & PERMISSION MATRIX */}
         {activeTab === 'matrix' && (
           <div className="bg-white rounded-card border border-border p-5 shadow-card space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-divider">
-              <div>
-                <h3 className="text-sm font-bold text-text-primary">
-                  ตารางกำหนดสิทธิ์การเข้าถึงโมดูล (Role & Permission Matrix)
-                </h3>
-                <p className="text-xs text-text-secondary mt-0.5">
-                  โครงสร้างการอนุญาตการเข้าถึงข้อมูลตามตำแหน่งหน้าที่ของทีมงานในระบบ CusBox360
-                </p>
-              </div>
+            <div className="flex items-center justify-between pb-2 border-b border-divider">
+              <h3 className="text-xs font-bold text-text-primary">
+                Role & Permission Matrix
+              </h3>
             </div>
 
             <div className="border border-border rounded-lg overflow-hidden">
@@ -577,15 +571,10 @@ export const UserManagementPage: React.FC = () => {
         {/* TAB 3: AUDIT & SECURITY LOGS */}
         {activeTab === 'logs' && (
           <div className="bg-white rounded-card border border-border p-5 shadow-card space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-divider">
-              <div>
-                <h3 className="text-sm font-bold text-text-primary">
-                  บันทึกความปลอดภัยและประวัติการเข้าใช้งาน (Security & Audit Logs)
-                </h3>
-                <p className="text-xs text-text-secondary mt-0.5">
-                  บันทึกกิจกรรมการเข้าสู่ระบบ, การเปลี่ยนสิทธิ์ และการกระทำสำคัญ
-                </p>
-              </div>
+            <div className="flex items-center justify-between pb-2 border-b border-divider">
+              <h3 className="text-xs font-bold text-text-primary">
+                Security & Audit Logs
+              </h3>
             </div>
 
             <div className="border border-border rounded-lg overflow-hidden">
