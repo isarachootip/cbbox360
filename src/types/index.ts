@@ -173,7 +173,7 @@ export interface Conversation {
   customerAvatar?: string;
   customerTier: TierType;
   channel: 'LINE' | 'Facebook';
-  channelAccount: string; // "CusShop Official"
+  channelAccount: string; // "cb360 Official"
   time: string;
   lastMessagePreview: string;
   label?: string; // "จัดส่ง", "ใบเสนอราคา", "เคลม", "เครดิต", "ทั่วไป"

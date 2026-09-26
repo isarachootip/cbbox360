@@ -34,7 +34,19 @@ export const ConnectorsPage: React.FC = () => {
     const saved = localStorage.getItem('cb360_connectors_config');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return parsed.map((c: ConnectorConfig) => {
+          if (c.id === 'conn-line' && (!c.accountName || c.accountName.includes('CusShop'))) {
+            return {
+              ...c,
+              accountName: 'cb360 Official (@cb360)',
+              accountId: '@cb360',
+              basicId: '@cb360',
+              webhookUrl: 'https://api.cb360.co.th/v1/webhooks/line/cb360',
+            };
+          }
+          return c;
+        });
       } catch (e) {
         console.error(e);
       }
