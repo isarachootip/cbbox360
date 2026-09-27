@@ -218,15 +218,24 @@ export const CreditSalesPage: React.FC = () => {
                         </td>
                         <td className="px-3.5 py-2.5 text-center">
                           <span
-                            className={`px-2 py-0.5 rounded text-[11px] font-medium ${
+                            className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
                               acc.aging === 'ปกติ'
-                                ? 'bg-emerald-50 text-emerald-800'
+                                ? 'text-emerald-600'
                                 : acc.aging === '90+ วัน'
-                                ? 'bg-rose-100 text-rose-800 font-bold'
-                                : 'bg-amber-50 text-amber-800'
+                                ? 'text-rose-600'
+                                : 'text-amber-600'
                             }`}
                           >
-                            {acc.aging}
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                acc.aging === 'ปกติ'
+                                  ? 'bg-emerald-500'
+                                  : acc.aging === '90+ วัน'
+                                  ? 'bg-rose-500'
+                                  : 'bg-amber-500'
+                              }`}
+                            />
+                            <span>{acc.aging}</span>
                           </span>
                         </td>
                         <td className="px-3.5 py-2.5 text-text-body2">

@@ -78,6 +78,18 @@ export const initialMenuItems: MenuItemConfig[] = [
     allowedRoles: ['sysadmin', 'admin', 'SF_1', 'SF_2', 'supervisor'],
   },
   {
+    id: 'menu-canned-responses',
+    name: 'ข้อความตอบกลับด่วน',
+    path: '/canned-responses',
+    activeMatch: '/canned-responses',
+    icon: 'Bot',
+    section: 'ACTIVITY',
+    order: 7,
+    isSystem: true,
+    description: 'จัดการข้อความตอบกลับอัตโนมัติ (Greeting, Question, Answer) สำหรับแชท',
+    allowedRoles: ['sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor'],
+  },
+  {
     id: 'menu-cases',
     name: 'Service / Case',
     path: '/cases',

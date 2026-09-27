@@ -340,15 +340,13 @@ export const ConnectorsPage: React.FC = () => {
                   </div>
 
                   <span
-                    className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border flex-shrink-0 ${
-                      isConnected
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                        : 'bg-slate-100 text-slate-700 border-slate-300'
+                    className={`inline-flex items-center gap-1.5 text-xs font-semibold flex-shrink-0 ${
+                      isConnected ? 'text-emerald-600' : 'text-slate-500'
                     }`}
                   >
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
-                        isConnected ? 'bg-emerald-500' : 'bg-gray-400'
+                        isConnected ? 'bg-emerald-500' : 'bg-slate-400'
                       }`}
                     />
                     <span>{isConnected ? 'Active' : 'Offline'}</span>
@@ -543,10 +541,11 @@ export const ConnectorsPage: React.FC = () => {
                   {/* Webhook URL Box */}
                   <div className="p-3 bg-bg-muted rounded-lg border border-border space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         <span className="font-bold text-text-primary">Webhook URL</span>
-                        <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold">
-                          Active (SSL)
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          <span>Active (SSL)</span>
                         </span>
                       </div>
                       <div className="flex items-center gap-2">

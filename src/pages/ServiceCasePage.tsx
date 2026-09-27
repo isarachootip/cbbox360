@@ -18,6 +18,7 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { KpiTile } from '../components/common/KpiTile';
 import { TierBadge } from '../components/common/TierBadge';
 import { ChannelChip } from '../components/common/ChannelChip';
+import { StatusBadge } from '../components/common/StatusBadge';
 import { Modal } from '../components/common/Modal';
 import { useCustomer } from '../context/CustomerContext';
 import { useToast } from '../context/ToastContext';
@@ -243,25 +244,13 @@ export const ServiceCasePage: React.FC = () => {
                           <span className="font-mono">{t.channel}</span>
                         </td>
                         <td className="px-3.5 py-2.5">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[11px] font-medium border ${
-                              t.status === 'Open'
-                                ? 'bg-blue-50 text-blue-800 border-blue-200'
-                                : t.status === 'Pending'
-                                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                : t.status === 'Waiting'
-                                ? 'bg-purple-50 text-purple-800 border-purple-200'
-                                : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                            }`}
-                          >
-                            {t.status}
-                          </span>
+                          <StatusBadge status={t.status} />
                         </td>
                         <td className="px-3.5 py-2.5 text-right font-mono font-semibold">
                           <span
                             className={
                               t.slaStatus === 'danger'
-                                ? 'text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded'
+                                ? 'text-rose-600 font-bold'
                                 : 'text-text-primary'
                             }
                           >
@@ -287,9 +276,10 @@ export const ServiceCasePage: React.FC = () => {
               <span className="font-mono font-bold text-base text-brand">
                 {selectedTicket.id}
               </span>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                {selectedTicket.status} · SLA เหลือ {selectedTicket.slaFormatted}
-              </span>
+              <div className="flex items-center gap-1.5 text-xs font-semibold">
+                <StatusBadge status={selectedTicket.status} />
+                <span className="text-text-secondary font-normal">· SLA เหลือ {selectedTicket.slaFormatted}</span>
+              </div>
             </div>
 
             <h3 className="text-base font-bold text-text-primary mt-2">

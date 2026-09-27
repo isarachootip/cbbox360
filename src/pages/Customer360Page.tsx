@@ -22,6 +22,7 @@ import {
 import { PageHeader } from '../components/layout/PageHeader';
 import { TierBadge } from '../components/common/TierBadge';
 import { GradeBadge } from '../components/common/GradeBadge';
+import { StatusBadge } from '../components/common/StatusBadge';
 import { ProgressBar } from '../components/common/ProgressBar';
 import { Modal } from '../components/common/Modal';
 import { useCustomer } from '../context/CustomerContext';
@@ -525,9 +526,7 @@ export const Customer360Page: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                            {t.status}
-                          </span>
+                          <StatusBadge status={t.status} />
                           <button
                             onClick={() => navigate('/cases')}
                             className="text-xs text-brand font-medium hover:underline"

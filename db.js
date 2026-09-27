@@ -10,13 +10,16 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
+const dbUrl = process.env.DATABASE_URL;
+const useSsl =
+  process.env.DB_SSL === 'true' ||
+  dbUrl.includes('sslmode=require') ||
+  dbUrl.includes('neon.tech') ||
+  dbUrl.includes('supabase.co');
+
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl:
-    process.env.DATABASE_URL.includes('localhost') ||
-    process.env.DATABASE_URL.includes('127.0.0.1')
-      ? false
-      : { rejectUnauthorized: false },
+  connectionString: dbUrl,
+  ssl: useSsl ? { rejectUnauthorized: false } : false,
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,

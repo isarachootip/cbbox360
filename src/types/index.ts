@@ -286,3 +286,19 @@ export interface MenuItemConfig {
   allowedRoles: UserRole[];
 }
 
+export type CannedResponseCategory = 'greeting' | 'question' | 'answer';
+
+export interface CannedResponse {
+  id: string;
+  title: string;
+  shortcut: string;
+  category: CannedResponseCategory;
+  content: string;
+  tags?: string[];
+  isActive: boolean;
+  usageCount: number;
+  lastUsedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+

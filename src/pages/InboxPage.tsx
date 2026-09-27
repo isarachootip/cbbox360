@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Send,
@@ -11,13 +12,22 @@ import {
   Tag,
   MessageSquare,
   Sparkles,
+  Bot,
+  Zap,
+  ExternalLink,
+  Settings,
+  HelpCircle,
+  Check,
 } from 'lucide-react';
 import { useCustomer } from '../context/CustomerContext';
+import { useCannedResponses, CATEGORIES_CONFIG } from '../context/CannedResponseContext';
 import { useToast } from '../context/ToastContext';
 import { TierBadge } from '../components/common/TierBadge';
 import { CustomerSideCard } from '../components/common/CustomerSideCard';
+import { CannedResponse, CannedResponseCategory } from '../types';
 
 export const InboxPage: React.FC = () => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const {
     conversations,
@@ -25,6 +35,12 @@ export const InboxPage: React.FC = () => {
     updateConversationStatus,
     addMessageToConversation,
   } = useCustomer();
+
+  const {
+    cannedResponses,
+    replaceVariables,
+    incrementUsage,
+  } = useCannedResponses();
 
   // State
   const [selectedConvId, setSelectedConvId] = useState<string>('conv-1');
@@ -35,6 +51,10 @@ export const InboxPage: React.FC = () => {
   // Composer state
   const [composerMode, setComposerMode] = useState<'reply' | 'note'>('reply');
   const [inputText, setInputText] = useState('');
+  const [selectedCannedGroup, setSelectedCannedGroup] = useState<string>('all');
+  const [isSlashMenuOpen, setIsSlashMenuOpen] = useState<boolean>(false);
+  const [slashSearchQuery, setSlashSearchQuery] = useState<string>('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Selected conversation
   const selectedConv = conversations.find((c) => c.id === selectedConvId) || conversations[0];
@@ -56,6 +76,61 @@ export const InboxPage: React.FC = () => {
     return true;
   });
 
+  // Filter active canned responses
+  const activeCannedResponses = cannedResponses.filter((c) => c.isActive);
+
+  // Canned responses filtered for chip bar
+  const chipCannedResponses = activeCannedResponses.filter((c) => {
+    if (selectedCannedGroup === 'all') return true;
+    return c.category === selectedCannedGroup;
+  });
+
+  // Canned responses for slash menu
+  const slashFilteredResponses = activeCannedResponses.filter((c) => {
+    if (!slashSearchQuery) return true;
+    const q = slashSearchQuery.toLowerCase();
+    return (
+      c.shortcut.toLowerCase().includes(q) ||
+      c.title.toLowerCase().includes(q) ||
+      c.content.toLowerCase().includes(q)
+    );
+  });
+
+  // Watch for '/' trigger in textarea
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setInputText(val);
+
+    if (val.startsWith('/')) {
+      setIsSlashMenuOpen(true);
+      setSlashSearchQuery(val.slice(1).trim());
+    } else {
+      setIsSlashMenuOpen(false);
+      setSlashSearchQuery('');
+    }
+  };
+
+  const applyCannedResponse = (response: CannedResponse) => {
+    const customizedText = replaceVariables(response.content, {
+      customer_name: selectedConv.customerName,
+      order_code: currentCustomer?.lastOrderCode || 'SO-10482',
+      tracking_no: 'TH2609-88412',
+      agent_name: selectedConv.assignedTo || 'วิภา ส.',
+      company_name: 'บจก. CusBox360',
+      phone: currentCustomer?.fullPhone || '081-892-5678',
+    });
+
+    setInputText(customizedText);
+    setIsSlashMenuOpen(false);
+    setSlashSearchQuery('');
+    incrementUsage(response.id);
+    showToast(`ใช้ข้อความ "${response.shortcut}" เรียบร้อยแล้ว`, 'info');
+
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
   const handleSendMessage = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputText.trim()) return;
@@ -64,10 +139,7 @@ export const InboxPage: React.FC = () => {
     addMessageToConversation(selectedConv.id, inputText.trim(), isPrivate);
     showToast(isPrivate ? 'บันทึก Private note สำเร็จ' : 'ส่งข้อความตอบกลับแล้ว', 'success');
     setInputText('');
-  };
-
-  const handleApplyCannedResponse = (text: string) => {
-    setInputText(text);
+    setIsSlashMenuOpen(false);
   };
 
   const handleResolve = () => {
@@ -324,8 +396,9 @@ export const InboxPage: React.FC = () => {
         </div>
 
         {/* Composer Area */}
-        <div className="p-4 bg-white border-t border-border flex-shrink-0 space-y-2.5">
-          {/* Mode Switch Tabs */}
+        <div className="p-4 bg-white border-t border-border flex-shrink-0 space-y-2.5 relative">
+          
+          {/* Mode Switch Tabs & Info */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 text-xs font-semibold">
               <button
@@ -350,42 +423,184 @@ export const InboxPage: React.FC = () => {
                 <span>Private note</span>
               </button>
             </div>
-            <span className="text-[11px] text-text-secondary">
-              พิมพ์ <kbd className="font-mono bg-bg-app px-1 py-0.5 rounded border border-border">/</kbd> เพื่อใช้ข้อความสำเร็จรูป
-            </span>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-text-secondary">
+                พิมพ์ <kbd className="font-mono bg-bg-app px-1 py-0.5 rounded border border-border">/</kbd> เพื่อค้นหาข้อความ
+              </span>
+              <button
+                onClick={() => navigate('/canned-responses')}
+                className="text-[11px] text-brand hover:text-brand-hover hover:underline flex items-center gap-0.5 font-medium"
+                title="เปิดหน้าจัดการข้อความอัตโนมัติ"
+              >
+                <Settings className="w-3 h-3" />
+                <span>จัดการข้อความ</span>
+              </button>
+            </div>
           </div>
 
-          {/* Quick canned responses chips */}
-          <div className="flex items-center gap-2">
+          {/* Canned Response Category Group Filter Tabs */}
+          <div className="flex items-center justify-between gap-1 overflow-x-auto custom-scrollbar pt-1">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setSelectedCannedGroup('all')}
+                className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all ${
+                  selectedCannedGroup === 'all'
+                    ? 'bg-brand text-white shadow-2xs'
+                    : 'bg-bg-app text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                ทั้งหมด
+              </button>
+              <button
+                onClick={() => setSelectedCannedGroup('greeting')}
+                className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 ${
+                  selectedCannedGroup === 'greeting'
+                    ? 'bg-purple-600 text-white shadow-2xs'
+                    : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                }`}
+              >
+                <span>👋</span>
+                <span>Greeting (ทักทาย)</span>
+              </button>
+              <button
+                onClick={() => setSelectedCannedGroup('question')}
+                className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 ${
+                  selectedCannedGroup === 'question'
+                    ? 'bg-amber-600 text-white shadow-2xs'
+                    : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
+                }`}
+              >
+                <span>❓</span>
+                <span>Question (คำถาม)</span>
+              </button>
+              <button
+                onClick={() => setSelectedCannedGroup('answer')}
+                className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 ${
+                  selectedCannedGroup === 'answer'
+                    ? 'bg-emerald-600 text-white shadow-2xs'
+                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                }`}
+              >
+                <span>💡</span>
+                <span>Answer (คำตอบ)</span>
+              </button>
+            </div>
+
             <button
-              onClick={() => handleApplyCannedResponse('/ส่งเลขพัสดุ SO-10482 กำลังนำส่งรอบบ่าย')}
-              className="text-[11px] px-2 py-0.5 rounded bg-bg-subtle hover:bg-bg-app border border-border text-brand font-medium transition-colors"
+              onClick={() => navigate('/canned-responses')}
+              className="text-[10px] text-text-secondary hover:text-brand flex-shrink-0 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-bg-app"
             >
-              /ส่งเลขพัสดุ
-            </button>
-            <button
-              onClick={() => handleApplyCannedResponse('/ส่งช่องทางชำระ โอนเข้า บจก. CusBox ธ.กสิกรไทย เลขที่ 012-3-45678-9')}
-              className="text-[11px] px-2 py-0.5 rounded bg-bg-subtle hover:bg-bg-app border border-border text-brand font-medium transition-colors"
-            >
-              /ส่งช่องทางชำระ
+              <span>+ เพิ่มเทมเพลต</span>
             </button>
           </div>
+
+          {/* Quick response clickable chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
+            {chipCannedResponses.slice(0, 8).map((item) => {
+              const isGreeting = item.category === 'greeting';
+              const isQuestion = item.category === 'question';
+              const isAnswer = item.category === 'answer';
+
+              let chipStyle = 'border-border text-brand bg-bg-subtle hover:bg-bg-app';
+              if (isGreeting) chipStyle = 'border-purple-200 text-purple-700 bg-purple-50/70 hover:bg-purple-100';
+              if (isQuestion) chipStyle = 'border-amber-200 text-amber-800 bg-amber-50/70 hover:bg-amber-100';
+              if (isAnswer) chipStyle = 'border-emerald-200 text-emerald-800 bg-emerald-50/70 hover:bg-emerald-100';
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => applyCannedResponse(item)}
+                  title={`${item.title}\n\n${item.content}`}
+                  className={`text-[11px] px-2.5 py-1 rounded-lg border font-mono font-semibold flex-shrink-0 flex items-center gap-1 transition-all shadow-2xs ${chipStyle}`}
+                >
+                  <span>{item.shortcut}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Interactive Slash Command Suggestions Popover */}
+          {isSlashMenuOpen && (
+            <div className="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-xl border border-border shadow-xl z-40 max-h-64 overflow-y-auto custom-scrollbar p-2 space-y-1">
+              <div className="flex items-center justify-between px-2 py-1 border-b border-divider text-[11px] font-bold text-text-secondary">
+                <div className="flex items-center gap-1.5">
+                  <Bot className="w-3.5 h-3.5 text-brand" />
+                  <span>เลือกข้อความตอบกลับอัตโนมัติ (พิมพ์ค้นหาได้เลย)</span>
+                </div>
+                <button
+                  onClick={() => setIsSlashMenuOpen(false)}
+                  className="text-text-secondary hover:text-text-primary"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {slashFilteredResponses.length === 0 ? (
+                <div className="p-3 text-center text-xs text-text-secondary">
+                  ไม่พบ shortcut ที่ตรงกับ &quot;/{slashSearchQuery}&quot;
+                </div>
+              ) : (
+                slashFilteredResponses.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => applyCannedResponse(item)}
+                    className="w-full text-left p-2 rounded-lg hover:bg-bg-subtle transition-colors flex items-start justify-between gap-3 group"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-xs text-brand group-hover:underline">
+                          {item.shortcut}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-slate-100 text-slate-700">
+                          {item.category === 'greeting'
+                            ? '👋 Greeting'
+                            : item.category === 'question'
+                            ? '❓ Question'
+                            : '💡 Answer'}
+                        </span>
+                        <span className="text-xs font-bold text-text-primary truncate">
+                          {item.title}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-text-secondary line-clamp-1 mt-0.5">
+                        {item.content}
+                      </p>
+                    </div>
+
+                    <span className="text-[10px] text-text-secondary font-mono flex-shrink-0 pt-0.5">
+                      ใช้ {item.usageCount || 0} ครั้ง
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
 
           {/* Input Box */}
           <form onSubmit={handleSendMessage} className="relative">
             <textarea
+              ref={textareaRef}
               rows={2}
               value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
+                  // If slash menu is open with results, pick first result on Enter
+                  if (isSlashMenuOpen && slashFilteredResponses.length > 0) {
+                    e.preventDefault();
+                    applyCannedResponse(slashFilteredResponses[0]);
+                    return;
+                  }
                   e.preventDefault();
                   handleSendMessage();
+                } else if (e.key === 'Escape') {
+                  setIsSlashMenuOpen(false);
                 }
               }}
               placeholder={
                 composerMode === 'reply'
-                  ? 'พิมพ์ข้อความตอบกลับลูกค้า...'
+                  ? 'พิมพ์ข้อความตอบกลับลูกค้า หรือพิมพ์ / เพื่อเลือกข้อความสำเร็จรูป...'
                   : 'เขียนโน้ตส่วนตัว (Private note สำหรับทีมภายใน)...'
               }
               className={`w-full p-2.5 text-xs rounded-lg border focus:outline-none transition-all resize-none ${

@@ -314,9 +314,9 @@ export const PipelinePage: React.FC = () => {
                               </span>
                             ) : (
                               <span
-                                className={`px-1.5 py-0.5 rounded font-mono ${
+                                className={`font-mono ${
                                   isStale
-                                    ? 'bg-warn-bg text-warn-text font-bold border border-warn-border'
+                                    ? 'text-amber-600 font-bold'
                                     : 'text-text-secondary'
                                 }`}
                               >
