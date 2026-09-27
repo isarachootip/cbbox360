@@ -269,3 +269,20 @@ export interface ConnectorConfig {
     enabled: boolean;
   }[];
 }
+
+export type MenuSection = 'CDP' | 'ACTIVITY' | 'ADMINISTRATION';
+
+export interface MenuItemConfig {
+  id: string;
+  name: string;
+  path: string;
+  activeMatch?: string;
+  icon: string;
+  section: MenuSection;
+  order: number;
+  badge?: string;
+  description?: string;
+  isSystem?: boolean;
+  allowedRoles: UserRole[];
+}
+

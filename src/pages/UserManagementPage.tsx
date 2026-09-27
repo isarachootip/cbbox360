@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Users,
   UserPlus,
@@ -31,6 +32,7 @@ import { useToast } from '../context/ToastContext';
 import { UserAccount, UserRole } from '../types';
 
 export const UserManagementPage: React.FC = () => {
+  const navigate = useNavigate();
   const {
     users,
     currentUser,
@@ -317,6 +319,14 @@ export const UserManagementPage: React.FC = () => {
               </button>
             ))}
           </div>
+
+          <button
+            onClick={() => navigate('/menus')}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-tint hover:bg-brand/15 text-brand rounded-lg text-xs font-semibold transition-colors"
+          >
+            <span>จัดการสิทธิ์เมนูตาม Role (Menu Management)</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         {/* TAB 1: USERS LIST */}
