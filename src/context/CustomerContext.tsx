@@ -136,10 +136,32 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     );
   };
 
-  const addMessageToConversation = (convId: string, text: string, isPrivate: boolean = false) => {
+  // Live sync with Backend Server (LINE Webhook messages)
+  React.useEffect(() => {
+    const fetchLiveConversations = async () => {
+      try {
+        const res = await fetch('/api/conversations');
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
+            setConversations(json.data);
+          }
+        }
+      } catch (err) {
+        // Fallback to local mock data
+      }
+    };
+
+    fetchLiveConversations();
+    const interval = setInterval(fetchLiveConversations, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const addMessageToConversation = async (convId: string, text: string, isPrivate: boolean = false) => {
     const now = new Date();
     const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
+    // Optimistic local update
     setConversations(prev =>
       prev.map(c => {
         if (c.id === convId) {
@@ -163,6 +185,17 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return c;
       })
     );
+
+    // Send to backend API (which also sends real LINE Push message to customer)
+    try {
+      await fetch(`/api/conversations/${convId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, isPrivate, authorName: 'วิภา ส.' }),
+      });
+    } catch (err) {
+      console.error('Failed to send message to backend API', err);
+    }
   };
 
   const approveCreditLimit = (requestId: string) => {
