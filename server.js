@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { query } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,91 +20,16 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health Check
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', time: new Date().toISOString() });
+app.get('/api/health', async (req, res) => {
+  try {
+    await query('SELECT 1');
+    res.status(200).json({ status: 'ok', db: 'connected', time: new Date().toISOString() });
+  } catch (err) {
+    res.status(500).json({ status: 'error', db: 'disconnected', error: err.message });
+  }
 });
 
-// ================= Live In-Memory Conversations Store =================
-let liveConversations = [
-  {
-    id: 'conv-1',
-    customerId: 'C00123',
-    customerName: 'สมชาย ใจดี',
-    customerTier: 'PLATINUM',
-    channel: 'LINE',
-    channelAccount: 'cb360 Official',
-    time: '10:41',
-    lastMessagePreview: 'ของจะถึงพรุ่งนี้ใช่ไหมครับ',
-    label: 'จัดส่ง',
-    unreadCount: 0,
-    status: 'Open',
-    assignedTo: 'วิภา ส.',
-    team: 'Customer Care',
-    tabGroup: 'Mine',
-    messages: [
-      {
-        id: 'm-1',
-        sender: 'customer',
-        text: 'สวัสดีครับ สั่งหมึกพิมพ์ไปเมื่อ 14 ก.ย. เลข SO-10482 ครับ',
-        time: '10:32',
-      },
-      {
-        id: 'm-2',
-        sender: 'customer',
-        text: 'ของจะถึงเมื่อไหร่ครับ ต้องใช้ด่วน',
-        time: '10:33',
-      },
-      {
-        id: 'm-3',
-        sender: 'note',
-        authorName: 'วิภา ส.',
-        text: '@ธนพล ลูกค้า Platinum มี Deal ต่อสัญญาค้างอยู่ ช่วยโทรตามหลังปิดแชทนี้ด้วย',
-        time: '10:35',
-        isPrivateNote: true,
-      },
-      {
-        id: 'm-4',
-        sender: 'agent',
-        authorName: 'วิภา ส.',
-        text: 'สวัสดีค่ะคุณสมชาย ตรวจสอบแล้ว SO-10482 ออกจากคลังวันนี้ จะถึงพรุ่งนี้ก่อน 12:00 ค่ะ เลขพัสดุ TH2609-88412',
-        time: '10:38',
-        trackingNumber: 'TH2609-88412',
-      },
-      {
-        id: 'm-5',
-        sender: 'customer',
-        text: 'ของจะถึงพรุ่งนี้ใช่ไหมครับ',
-        time: '10:41',
-      },
-    ],
-  },
-  {
-    id: 'conv-2',
-    customerId: 'C00124',
-    customerName: 'บจก. นำชัยการพิมพ์',
-    customerTier: 'GOLD',
-    channel: 'LINE',
-    channelAccount: 'cb360 Official',
-    time: '10:36',
-    lastMessagePreview: 'ขอใบเสนอราคาเครื่องพิมพ์ 5 เครื่อง',
-    label: 'ใบเสนอราคา',
-    unreadCount: 2,
-    status: 'Open',
-    assignedTo: 'ธนพล ก.',
-    team: 'Sales',
-    tabGroup: 'All',
-    messages: [
-      {
-        id: 'm-201',
-        sender: 'customer',
-        text: 'ขอใบเสนอราคาเครื่องพิมพ์รุ่น Pro 5 เครื่องครับ',
-        time: '10:36',
-      },
-    ],
-  },
-];
-
-// Helper: Format current Thai time
+// ================= Helpers =================
 const getThaiTime = () => {
   const now = new Date();
   const hours = now.getHours().toString().padStart(2, '0');
@@ -111,33 +37,57 @@ const getThaiTime = () => {
   return `${hours}:${mins}`;
 };
 
-// Helper: Fetch user profile from LINE Messaging API
 const fetchLineProfile = async (userId) => {
   if (!userId || !LINE_CHANNEL_ACCESS_TOKEN) return null;
   try {
     const res = await fetch(`https://api.line.me/v2/bot/profile/${userId}`, {
-      headers: {
-        Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
-      },
+      headers: { Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}` },
     });
-    if (res.ok) {
-      return await res.json(); // { displayName, userId, pictureUrl, statusMessage }
-    }
+    if (res.ok) return await res.json();
   } catch (err) {
     console.error('[LINE Profile Fetch Error]:', err.message);
   }
   return null;
 };
 
+/** Convert DB row (snake_case) → frontend object (camelCase) */
+const rowToConversation = (row, messages = []) => ({
+  id: row.id,
+  customerId: row.customer_id,
+  customerName: row.customer_name,
+  customerAvatar: row.customer_avatar,
+  customerTier: row.customer_tier,
+  channel: row.channel,
+  channelAccount: row.channel_account,
+  time: row.time,
+  lastMessagePreview: row.last_message_preview,
+  label: row.label,
+  unreadCount: row.unread_count,
+  status: row.status,
+  assignedTo: row.assigned_to,
+  team: row.team,
+  tabGroup: row.tab_group,
+  lineUserId: row.line_user_id,
+  messages,
+});
+
+const rowToMessage = (row) => ({
+  id: row.id,
+  sender: row.sender,
+  authorName: row.author_name,
+  text: row.text,
+  time: row.time,
+  trackingNumber: row.tracking_number,
+  isPrivateNote: row.is_private_note,
+});
+
 // ================= LINE Webhook Handler =================
 const handleLineWebhook = async (req, res) => {
   const channelId = req.params.channelId || '2011580063';
-  const signature = req.headers['x-line-signature'] || 'none';
   const events = req.body?.events || [];
 
   console.log(`[LINE Webhook] Received ${events.length} event(s) for channel: ${channelId}`);
 
-  // Process incoming events in the background
   for (const evt of events) {
     console.log(`[LINE Event] Type: ${evt.type}, Mode: ${evt.mode}, Source:`, evt.source);
 
@@ -148,64 +98,59 @@ const handleLineWebhook = async (req, res) => {
 
       console.log(`📩 [LINE Incoming Message] From: ${userId}, Text: "${text}"`);
 
-      // Try fetching profile
       const profile = await fetchLineProfile(userId);
       const customerName = profile?.displayName || 'ลูกค้า LINE (ใหม่)';
-      const customerAvatar = profile?.pictureUrl || undefined;
+      const customerAvatar = profile?.pictureUrl || null;
 
-      // Find existing conversation for this LINE user
-      const existingConvIndex = liveConversations.findIndex(
-        (c) => c.lineUserId === userId || (c.customerId === userId)
+      // Find existing conversation
+      const existResult = await query(
+        `SELECT * FROM conversations WHERE line_user_id = $1 OR customer_id = $1 LIMIT 1`,
+        [userId]
       );
 
-      const newMsg = {
-        id: `m-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        sender: 'customer',
-        text,
-        time: timeStr,
-      };
+      const newMsgId = `m-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-      if (existingConvIndex >= 0) {
-        // Append message and bring conversation to top
-        const conv = liveConversations[existingConvIndex];
-        conv.messages.push(newMsg);
-        conv.lastMessagePreview = text;
-        conv.time = timeStr;
-        conv.unreadCount = (conv.unreadCount || 0) + 1;
-        conv.status = 'Open';
-        if (profile?.displayName) conv.customerName = profile.displayName;
-        if (profile?.pictureUrl) conv.customerAvatar = profile.pictureUrl;
+      if (existResult.rows.length > 0) {
+        const conv = existResult.rows[0];
 
-        // Move to top
-        liveConversations.splice(existingConvIndex, 1);
-        liveConversations.unshift(conv);
+        // Insert new message
+        await query(
+          `INSERT INTO messages (id, conversation_id, sender, text, time) VALUES ($1,$2,'customer',$3,$4)`,
+          [newMsgId, conv.id, text, timeStr]
+        );
+
+        // Update conversation
+        await query(
+          `UPDATE conversations SET
+            last_message_preview = $1,
+            time = $2,
+            unread_count = unread_count + 1,
+            status = 'Open',
+            customer_name = COALESCE($3, customer_name),
+            customer_avatar = COALESCE($4, customer_avatar),
+            updated_at = NOW()
+           WHERE id = $5`,
+          [text, timeStr, profile?.displayName || null, profile?.pictureUrl || null, conv.id]
+        );
       } else {
-        // Create brand new conversation
-        const newConv = {
-          id: `conv-line-${userId ? userId.slice(-6) : Date.now()}`,
-          customerId: userId || `C-LINE-${Date.now()}`,
-          customerName,
-          customerAvatar,
-          customerTier: 'MEMBER',
-          channel: 'LINE',
-          channelAccount: 'cb360 Official',
-          time: timeStr,
-          lastMessagePreview: text,
-          label: 'LINE Live',
-          unreadCount: 1,
-          status: 'Open',
-          assignedTo: 'วิภา ส.',
-          team: 'Customer Care',
-          tabGroup: 'Mine',
-          lineUserId: userId,
-          messages: [newMsg],
-        };
-        liveConversations.unshift(newConv);
+        // New conversation
+        const convId = `conv-line-${userId ? userId.slice(-6) : Date.now()}`;
+        const custId = userId || `C-LINE-${Date.now()}`;
+
+        await query(
+          `INSERT INTO conversations (id, customer_id, customer_name, customer_avatar, customer_tier, channel, channel_account, time, last_message_preview, label, unread_count, status, assigned_to, team, tab_group, line_user_id)
+           VALUES ($1,$2,$3,$4,'MEMBER','LINE','cb360 Official',$5,$6,'LINE Live',1,'Open','วิภา ส.','Customer Care','Mine',$7)`,
+          [convId, custId, customerName, customerAvatar, timeStr, text, userId]
+        );
+
+        await query(
+          `INSERT INTO messages (id, conversation_id, sender, text, time) VALUES ($1,$2,'customer',$3,$4)`,
+          [newMsgId, convId, text, timeStr]
+        );
       }
     }
   }
 
-  // LINE Messaging API requires HTTP 200 OK
   return res.status(200).json({
     status: 'success',
     message: 'Webhook processed successfully',
@@ -214,29 +159,43 @@ const handleLineWebhook = async (req, res) => {
   });
 };
 
-// Route mappings for Webhooks
+// Webhook routes
 app.post('/api/webhooks/line/:channelId', handleLineWebhook);
 app.post('/api/webhooks/line', handleLineWebhook);
 app.post('/v1/webhooks/line/:channelId', handleLineWebhook);
 app.post('/v1/webhooks/line', handleLineWebhook);
 
-app.get('/api/webhooks/line/:channelId', (req, res) => {
-  res.status(200).send('LINE Webhook Endpoint is Active (HTTP 200 OK)');
-});
-app.get('/api/webhooks/line', (req, res) => {
-  res.status(200).send('LINE Webhook Endpoint is Active (HTTP 200 OK)');
+app.get('/api/webhooks/line/:channelId', (req, res) => res.status(200).send('LINE Webhook Endpoint is Active'));
+app.get('/api/webhooks/line', (req, res) => res.status(200).send('LINE Webhook Endpoint is Active'));
+
+// ================= Conversations API =================
+
+// GET all conversations (with messages)
+app.get('/api/conversations', async (req, res) => {
+  try {
+    const convResult = await query(
+      `SELECT * FROM conversations ORDER BY updated_at DESC`
+    );
+    const msgResult = await query(`SELECT * FROM messages ORDER BY created_at ASC`);
+
+    const msgMap = {};
+    for (const msg of msgResult.rows) {
+      if (!msgMap[msg.conversation_id]) msgMap[msg.conversation_id] = [];
+      msgMap[msg.conversation_id].push(rowToMessage(msg));
+    }
+
+    const data = convResult.rows.map((row) =>
+      rowToConversation(row, msgMap[row.id] || [])
+    );
+
+    return res.status(200).json({ status: 'success', data, count: data.length });
+  } catch (err) {
+    console.error('[GET /api/conversations Error]:', err.message);
+    return res.status(500).json({ error: 'Database error', detail: err.message });
+  }
 });
 
-// ================= Conversations API (for Web Frontend) =================
-app.get('/api/conversations', (req, res) => {
-  return res.status(200).json({
-    status: 'success',
-    data: liveConversations,
-    count: liveConversations.length,
-  });
-});
-
-// Send message from agent on web dashboard -> sends back to LINE user!
+// POST send agent message (also pushes to LINE if live)
 app.post('/api/conversations/:id/messages', async (req, res) => {
   const { id } = req.params;
   const { text, isPrivate, authorName } = req.body;
@@ -245,70 +204,203 @@ app.post('/api/conversations/:id/messages', async (req, res) => {
     return res.status(400).json({ error: 'Message text is required' });
   }
 
-  const conv = liveConversations.find((c) => c.id === id);
-  if (!conv) {
-    return res.status(404).json({ error: 'Conversation not found' });
-  }
-
-  const timeStr = getThaiTime();
-  const newMsg = {
-    id: `m-${Date.now()}`,
-    sender: isPrivate ? 'note' : 'agent',
-    authorName: authorName || 'วิภา ส.',
-    text: text.trim(),
-    time: timeStr,
-    isPrivateNote: !!isPrivate,
-  };
-
-  conv.messages.push(newMsg);
-  if (!isPrivate) {
-    conv.lastMessagePreview = text.trim();
-    conv.time = timeStr;
-  }
-
-  // If this conversation is connected to a real LINE user, push the message to LINE!
-  if (!isPrivate && conv.lineUserId) {
-    try {
-      console.log(`🚀 [Pushing to LINE] User: ${conv.lineUserId}, Message: "${text}"`);
-      await fetch('https://api.line.me/v2/bot/message/push', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          to: conv.lineUserId,
-          messages: [{ type: 'text', text: text.trim() }],
-        }),
-      });
-    } catch (err) {
-      console.error('[LINE Push Error]:', err.message);
+  try {
+    const convResult = await query(`SELECT * FROM conversations WHERE id = $1`, [id]);
+    if (convResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found' });
     }
-  }
+    const conv = convResult.rows[0];
 
-  return res.status(200).json({ status: 'success', message: newMsg, conversation: conv });
+    const timeStr = getThaiTime();
+    const newMsgId = `m-${Date.now()}`;
+    const sender = isPrivate ? 'note' : 'agent';
+    const author = authorName || 'วิภา ส.';
+
+    await query(
+      `INSERT INTO messages (id, conversation_id, sender, author_name, text, time, is_private_note)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [newMsgId, id, sender, author, text.trim(), timeStr, !!isPrivate]
+    );
+
+    if (!isPrivate) {
+      await query(
+        `UPDATE conversations SET last_message_preview=$1, time=$2, updated_at=NOW() WHERE id=$3`,
+        [text.trim(), timeStr, id]
+      );
+    }
+
+    // Push to LINE if real user
+    if (!isPrivate && conv.line_user_id) {
+      try {
+        console.log(`🚀 [Pushing to LINE] User: ${conv.line_user_id}, Message: "${text}"`);
+        await fetch('https://api.line.me/v2/bot/message/push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+          },
+          body: JSON.stringify({
+            to: conv.line_user_id,
+            messages: [{ type: 'text', text: text.trim() }],
+          }),
+        });
+      } catch (err) {
+        console.error('[LINE Push Error]:', err.message);
+      }
+    }
+
+    const newMsg = {
+      id: newMsgId,
+      sender,
+      authorName: author,
+      text: text.trim(),
+      time: timeStr,
+      isPrivateNote: !!isPrivate,
+    };
+
+    return res.status(200).json({ status: 'success', message: newMsg });
+  } catch (err) {
+    console.error('[POST messages Error]:', err.message);
+    return res.status(500).json({ error: 'Database error', detail: err.message });
+  }
 });
 
-// ================= Meta / Facebook Webhook Endpoints =================
+// ================= Canned Responses API =================
+
+// GET all canned responses
+app.get('/api/canned-responses', async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT * FROM canned_responses ORDER BY usage_count DESC`
+    );
+    const data = result.rows.map((r) => ({
+      id: r.id,
+      shortcut: r.shortcut,
+      title: r.title,
+      category: r.category,
+      content: r.content,
+      tags: r.tags,
+      isActive: r.is_active,
+      usageCount: r.usage_count,
+      lastUsedAt: r.last_used_at,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
+    return res.status(200).json({ status: 'success', data, count: data.length });
+  } catch (err) {
+    console.error('[GET canned-responses Error]:', err.message);
+    return res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// POST create canned response
+app.post('/api/canned-responses', async (req, res) => {
+  const data = req.body;
+  if (!data?.title || !data?.shortcut || !data?.content) {
+    return res.status(400).json({ error: 'title, shortcut, and content are required' });
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const id = data.id || `cr-${Date.now()}`;
+
+  try {
+    const result = await query(
+      `INSERT INTO canned_responses (id, shortcut, title, category, content, tags, is_active, usage_count, last_used_at, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       RETURNING *`,
+      [
+        id, data.shortcut, data.title, data.category || 'answer', data.content,
+        data.tags || [], data.isActive !== undefined ? data.isActive : true,
+        data.usageCount || 0, data.lastUsedAt || null, data.createdAt || today, today,
+      ]
+    );
+    const r = result.rows[0];
+    return res.status(201).json({
+      status: 'success',
+      data: { ...r, isActive: r.is_active, usageCount: r.usage_count },
+    });
+  } catch (err) {
+    console.error('[POST canned-responses Error]:', err.message);
+    return res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// PUT update canned response
+app.put('/api/canned-responses/:id', async (req, res) => {
+  const { id } = req.params;
+  const upd = req.body;
+  const today = new Date().toISOString().split('T')[0];
+
+  try {
+    const result = await query(
+      `UPDATE canned_responses SET
+        shortcut    = COALESCE($1, shortcut),
+        title       = COALESCE($2, title),
+        category    = COALESCE($3, category),
+        content     = COALESCE($4, content),
+        tags        = COALESCE($5, tags),
+        is_active   = COALESCE($6, is_active),
+        usage_count = COALESCE($7, usage_count),
+        last_used_at= COALESCE($8, last_used_at),
+        updated_at  = $9
+       WHERE id = $10
+       RETURNING *`,
+      [
+        upd.shortcut || null, upd.title || null, upd.category || null,
+        upd.content || null, upd.tags || null,
+        upd.isActive !== undefined ? upd.isActive : null,
+        upd.usageCount !== undefined ? upd.usageCount : null,
+        upd.lastUsedAt || null, today, id,
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Canned response not found' });
+    }
+    const r = result.rows[0];
+    return res.status(200).json({
+      status: 'success',
+      data: { ...r, isActive: r.is_active, usageCount: r.usage_count },
+    });
+  } catch (err) {
+    console.error('[PUT canned-responses Error]:', err.message);
+    return res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// DELETE canned response
+app.delete('/api/canned-responses/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await query(
+      `DELETE FROM canned_responses WHERE id = $1 RETURNING *`,
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Canned response not found' });
+    }
+    return res.status(200).json({ status: 'success', deleted: result.rows[0] });
+  } catch (err) {
+    console.error('[DELETE canned-responses Error]:', err.message);
+    return res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// ================= Meta / Facebook Webhook =================
 const handleMetaGet = (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
-
-  if (mode && token) {
-    return res.status(200).send(challenge);
-  }
+  if (mode && token) return res.status(200).send(challenge);
   return res.status(200).send('Meta Webhook Endpoint Active');
 };
 
 app.get('/api/webhooks/meta/:pageId', handleMetaGet);
 app.get('/api/webhooks/meta', handleMetaGet);
 
-// ================= Static Frontend Assets (Vite SPA) =================
+// ================= Static Frontend (Vite SPA) =================
 const distPath = path.join(__dirname, 'dist');
 app.use(express.static(distPath));
-
-// Catch-all fallback for React Router (SPA)
 app.use((req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
@@ -316,5 +408,6 @@ app.use((req, res) => {
 // Start Server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 CusBox 360 Production Server running on port ${PORT}`);
-  console.log(`📡 LINE Webhook listening at: http://0.0.0.0:${PORT}/api/webhooks/line/:channelId`);
+  console.log(`🗄️  Database: PostgreSQL (via DATABASE_URL)`);
+  console.log(`📡 LINE Webhook: http://0.0.0.0:${PORT}/api/webhooks/line/:channelId`);
 });
