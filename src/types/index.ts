@@ -45,13 +45,13 @@ export interface Customer {
   };
 }
 
-export type TimelineEventType = 'Order' | 'แชท' | 'โทร' | 'Ticket' | 'Deal' | 'Tier';
+export type TimelineEventType = 'Order' | 'แชท' | 'โทร' | 'Ticket' | 'Deal' | 'Tier' | 'Task';
 
 export interface TimelineEvent {
   id: string;
   customerId: string;
   type: TimelineEventType;
-  iconCode: 'LN' | 'OR' | 'TL' | 'DL' | 'TK' | 'T↑' | 'T↓';
+  iconCode: 'LN' | 'OR' | 'TL' | 'DL' | 'TK' | 'T↑' | 'T↓' | 'TS';
   title: string;
   time: string; // "วันนี้ 10:42", "14 ก.ย.", etc.
   detail: string;
@@ -156,6 +156,17 @@ export interface Ticket {
   }[];
 }
 
+export interface TaskDetails {
+  id: string;
+  title: string;
+  assignee: string;
+  dueDate: string;
+  priority: 'ปกติ' | 'ด่วน' | 'ด่วนที่สุด';
+  status: 'Pending' | 'In Progress' | 'Completed';
+  createdAt: string;
+  note?: string;
+}
+
 export interface ChatMessage {
   id: string;
   sender: 'customer' | 'agent' | 'system' | 'note';
@@ -164,6 +175,7 @@ export interface ChatMessage {
   time: string;
   isPrivateNote?: boolean;
   trackingNumber?: string;
+  task?: TaskDetails;
 }
 
 export interface Conversation {

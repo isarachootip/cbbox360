@@ -18,6 +18,8 @@ import {
   Settings,
   HelpCircle,
   Check,
+  CheckSquare,
+  User,
 } from 'lucide-react';
 import { useCustomer } from '../context/CustomerContext';
 import { useCannedResponses, CATEGORIES_CONFIG } from '../context/CannedResponseContext';
@@ -36,6 +38,8 @@ export const InboxPage: React.FC = () => {
     customers,
     updateConversationStatus,
     addMessageToConversation,
+    addTaskToConversation,
+    updateTaskStatus,
   } = useCustomer();
 
   const {
@@ -51,8 +55,15 @@ export const InboxPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   
   // Composer state
-  const [composerMode, setComposerMode] = useState<'reply' | 'note'>('reply');
+  const [composerMode, setComposerMode] = useState<'reply' | 'note' | 'task'>('reply');
   const [inputText, setInputText] = useState('');
+  const [taskForm, setTaskForm] = useState({
+    title: '',
+    assignee: 'วิภา ส. (Customer Care)',
+    dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    priority: 'ด่วน' as 'ปกติ' | 'ด่วน' | 'ด่วนที่สุด',
+    note: '',
+  });
   const [selectedCannedGroup, setSelectedCannedGroup] = useState<string>('all');
   const [isSlashMenuOpen, setIsSlashMenuOpen] = useState<boolean>(false);
   const [slashSearchQuery, setSlashSearchQuery] = useState<string>('');
@@ -142,6 +153,32 @@ export const InboxPage: React.FC = () => {
     showToast(isPrivate ? 'บันทึก Private note สำเร็จ' : 'ส่งข้อความตอบกลับแล้ว', 'success');
     setInputText('');
     setIsSlashMenuOpen(false);
+  };
+
+  const handleCreateTaskSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!taskForm.title.trim()) {
+      showToast('กรุณาระบุชื่องานที่ต้องทำ', 'warning');
+      return;
+    }
+
+    addTaskToConversation(selectedConv.id, {
+      title: taskForm.title.trim(),
+      assignee: taskForm.assignee,
+      dueDate: taskForm.dueDate,
+      priority: taskForm.priority,
+      note: taskForm.note.trim() || undefined,
+    });
+
+    showToast(`สร้าง Task "${taskForm.title.trim()}" สำเร็จ (มอบหมาย: ${taskForm.assignee})`, 'success');
+    setTaskForm({
+      title: '',
+      assignee: 'วิภา ส. (Customer Care)',
+      dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      priority: 'ด่วน',
+      note: '',
+    });
+    setComposerMode('reply');
   };
 
   const handleResolve = () => {
@@ -348,6 +385,139 @@ export const InboxPage: React.FC = () => {
           </div>
 
           {selectedConv.messages.map((msg) => {
+            if (msg.task) {
+              const task = msg.task;
+              const getTaskStatusConfig = (st: string) => {
+                switch (st) {
+                  case 'Completed':
+                    return { dot: 'bg-emerald-500', text: 'text-emerald-600', label: 'Completed' };
+                  case 'In Progress':
+                    return { dot: 'bg-blue-500', text: 'text-blue-600', label: 'In Progress' };
+                  default:
+                    return { dot: 'bg-amber-500', text: 'text-amber-600', label: 'Pending' };
+                }
+              };
+
+              const getTaskPriorityConfig = (pr: string) => {
+                switch (pr) {
+                  case 'ด่วนที่สุด':
+                    return { dot: 'bg-rose-500', text: 'text-rose-600' };
+                  case 'ด่วน':
+                    return { dot: 'bg-amber-500', text: 'text-amber-600' };
+                  default:
+                    return { dot: 'bg-slate-400', text: 'text-slate-600' };
+                }
+              };
+
+              const stConfig = getTaskStatusConfig(task.status);
+              const prConfig = getTaskPriorityConfig(task.priority);
+
+              return (
+                <div
+                  key={msg.id}
+                  className="w-full bg-white border border-indigo-200/80 rounded-xl p-3.5 shadow-2xs space-y-2.5 transition-all"
+                >
+                  <div className="flex items-center justify-between border-b border-divider pb-2 text-[11px]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="p-1 rounded bg-indigo-50 text-indigo-700">
+                        <CheckSquare className="w-3.5 h-3.5" />
+                      </span>
+                      <span className="font-bold text-text-primary">
+                        TASK #{task.id} · มอบหมายงานภายใน
+                      </span>
+                      <span className="text-[10px] text-text-secondary">
+                        (ลูกค้าไม่เห็น)
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 font-mono text-[11px]">
+                      {/* Status dot badge (transparent bg per cb360 rules) */}
+                      <span className={`inline-flex items-center gap-1.5 font-semibold ${stConfig.text}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${stConfig.dot}`} />
+                        <span>● {stConfig.label}</span>
+                      </span>
+                      <span className="text-text-secondary">{msg.time} · {msg.authorName || 'วิภา ส.'}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs font-bold text-text-primary">
+                      {task.title}
+                    </h4>
+                    {task.note && (
+                      <p className="text-[11px] text-text-secondary mt-1 leading-relaxed">
+                        {task.note}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 py-2 px-3 rounded-lg bg-bg-app text-[11px]">
+                    <div>
+                      <span className="text-text-secondary block text-[10px]">ผู้รับมอบหมาย</span>
+                      <span className="font-semibold text-text-primary flex items-center gap-1 mt-0.5">
+                        <User className="w-3 h-3 text-text-secondary" />
+                        <span>{task.assignee}</span>
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-text-secondary block text-[10px]">กำหนดเสร็จ (Due Date)</span>
+                      <span className="font-mono text-text-primary flex items-center gap-1 mt-0.5">
+                        <Clock className="w-3 h-3 text-text-secondary" />
+                        <span>{task.dueDate}</span>
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-text-secondary block text-[10px]">ระดับความสำคัญ</span>
+                      <span className={`inline-flex items-center gap-1 font-semibold mt-0.5 ${prConfig.text}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${prConfig.dot}`} />
+                        <span>● {task.priority}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 border-t border-divider">
+                    <span className="text-[10px] text-text-secondary font-mono">
+                      อัปเดตสถานะงานได้ทันที
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {task.status !== 'Completed' ? (
+                        <>
+                          {task.status === 'Pending' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateTaskStatus(selectedConv.id, msg.id, 'In Progress');
+                                showToast('อัปเดตสถานะ Task เป็น In Progress', 'info');
+                              }}
+                              className="text-[11px] px-2.5 py-1 rounded-md border border-border hover:bg-bg-subtle text-blue-600 font-semibold transition-colors"
+                            >
+                              เริ่มทำ (In Progress)
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateTaskStatus(selectedConv.id, msg.id, 'Completed');
+                              showToast(`Task #${task.id} เสร็จสมบูรณ์แล้ว`, 'success');
+                            }}
+                            className="text-[11px] px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>ทำเสร็จแล้ว (Done)</span>
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>งานเสร็จสมบูรณ์เรียบร้อยแล้ว</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
             if (msg.isPrivateNote) {
               return (
                 <div
@@ -435,6 +605,17 @@ export const InboxPage: React.FC = () => {
                 <Lock className="w-3 h-3" />
                 <span>Private note</span>
               </button>
+              <button
+                onClick={() => setComposerMode('task')}
+                className={`pb-1 border-b-2 flex items-center gap-1 transition-all ${
+                  composerMode === 'task'
+                    ? 'border-indigo-600 text-indigo-700 font-bold'
+                    : 'border-transparent text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                <CheckSquare className="w-3.5 h-3.5" />
+                <span>สร้าง Task</span>
+              </button>
             </div>
 
             <div className="flex items-center gap-2.5">
@@ -471,208 +652,331 @@ export const InboxPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Canned Response Category Group Filter Tabs */}
-          <div className="flex items-center justify-between gap-1 overflow-x-auto custom-scrollbar pt-1">
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setSelectedCannedGroup('all')}
-                className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all ${
-                  selectedCannedGroup === 'all'
-                    ? 'bg-brand text-white shadow-2xs'
-                    : 'bg-bg-app text-text-secondary hover:text-text-primary'
-                }`}
-              >
-                ทั้งหมด
-              </button>
-              <button
-                onClick={() => setSelectedCannedGroup('greeting')}
-                className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 ${
-                  selectedCannedGroup === 'greeting'
-                    ? 'bg-purple-600 text-white shadow-2xs'
-                    : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
-                }`}
-              >
-                <span>👋</span>
-                <span>Greeting (ทักทาย)</span>
-              </button>
-              <button
-                onClick={() => setSelectedCannedGroup('question')}
-                className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 ${
-                  selectedCannedGroup === 'question'
-                    ? 'bg-amber-600 text-white shadow-2xs'
-                    : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
-                }`}
-              >
-                <span>❓</span>
-                <span>Question (คำถาม)</span>
-              </button>
-              <button
-                onClick={() => setSelectedCannedGroup('answer')}
-                className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 ${
-                  selectedCannedGroup === 'answer'
-                    ? 'bg-emerald-600 text-white shadow-2xs'
-                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                }`}
-              >
-                <span>💡</span>
-                <span>Answer (คำตอบ)</span>
-              </button>
-            </div>
-
-            <button
-              onClick={() => navigate('/canned-responses')}
-              className="text-[10px] text-text-secondary hover:text-brand flex-shrink-0 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-bg-app"
-            >
-              <span>+ เพิ่มเทมเพลต</span>
-            </button>
-          </div>
-
-          {/* Quick response clickable chips */}
-          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
-            {chipCannedResponses.slice(0, 8).map((item) => {
-              const isGreeting = item.category === 'greeting';
-              const isQuestion = item.category === 'question';
-              const isAnswer = item.category === 'answer';
-
-              let chipStyle = 'border-border text-brand bg-bg-subtle hover:bg-bg-app';
-              if (isGreeting) chipStyle = 'border-purple-200 text-purple-700 bg-purple-50/70 hover:bg-purple-100';
-              if (isQuestion) chipStyle = 'border-amber-200 text-amber-800 bg-amber-50/70 hover:bg-amber-100';
-              if (isAnswer) chipStyle = 'border-emerald-200 text-emerald-800 bg-emerald-50/70 hover:bg-emerald-100';
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => applyCannedResponse(item)}
-                  title={`${item.title}\n\n${item.content}`}
-                  className={`text-[11px] px-2.5 py-1 rounded-lg border font-mono font-semibold flex-shrink-0 flex items-center gap-1 transition-all shadow-2xs ${chipStyle}`}
-                >
-                  <span>{item.shortcut}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Interactive Slash Command Suggestions Popover */}
-          {isSlashMenuOpen && (
-            <div className="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-xl border border-border shadow-xl z-40 max-h-64 overflow-y-auto custom-scrollbar p-2 space-y-1">
-              <div className="flex items-center justify-between px-2 py-1 border-b border-divider text-[11px] font-bold text-text-secondary">
-                <div className="flex items-center gap-1.5">
-                  <Bot className="w-3.5 h-3.5 text-brand" />
-                  <span>เลือกข้อความตอบกลับอัตโนมัติ (พิมพ์ค้นหาได้เลย)</span>
+          {composerMode === 'task' ? (
+            <div className="bg-slate-50/70 border border-indigo-100 rounded-xl p-3.5 space-y-3 shadow-2xs">
+              <div className="flex items-center justify-between border-b border-divider pb-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                  <CheckSquare className="w-4 h-4 text-indigo-600" />
+                  <span>มอบหมายงานติดตามลูกค้า (Task Assignment)</span>
                 </div>
+                <span className="text-[11px] text-text-secondary font-medium">
+                  เฉพาะทีมงานภายใน · ไม่แสดงให้ลูกค้าเห็น
+                </span>
+              </div>
+
+              {/* Task Title */}
+              <div>
+                <label className="block text-[11px] font-semibold text-text-primary mb-1">
+                  ชื่องาน / รายละเอียดที่ต้องทำ <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={taskForm.title}
+                  onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleCreateTaskSubmit();
+                    }
+                  }}
+                  placeholder="เช่น ติดตามฝ่ายคลังเรื่องเลขพัสดุ SO-10482, โทรติดต่อลูกค้านัดหมายส่งสินค้า..."
+                  className="w-full px-3 py-2 text-xs bg-white border border-border rounded-lg focus:outline-none focus:border-indigo-600 shadow-2xs"
+                />
+              </div>
+
+              {/* Assignee, Due Date, Priority */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label className="block text-[11px] font-semibold text-text-primary mb-1">
+                    ผู้รับผิดชอบ (Assignee)
+                  </label>
+                  <select
+                    value={taskForm.assignee}
+                    onChange={(e) => setTaskForm({ ...taskForm, assignee: e.target.value })}
+                    className="w-full px-2.5 py-1.5 text-xs bg-white border border-border rounded-lg focus:outline-none focus:border-indigo-600 cursor-pointer"
+                  >
+                    <option value="วิภา ส. (Customer Care)">วิภา ส. (Customer Care)</option>
+                    <option value="สมหญิง ร. (Supervisor)">สมหญิง ร. (Supervisor)</option>
+                    <option value="ธนพล ก. (Sales Manager)">ธนพล ก. (Sales Manager)</option>
+                    <option value="ประเทือง ว. (Credit Officer)">ประเทือง ว. (Credit Officer)</option>
+                    <option value="ทีมคลังสินค้า & ขนส่ง">ทีมคลังสินค้า & ขนส่ง</option>
+                    <option value="ทีมช่างเทคนิค">ทีมช่างเทคนิค</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-text-primary mb-1">
+                    กำหนดเสร็จ (Due Date)
+                  </label>
+                  <input
+                    type="date"
+                    value={taskForm.dueDate}
+                    onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
+                    className="w-full px-2.5 py-1.5 text-xs bg-white border border-border rounded-lg focus:outline-none focus:border-indigo-600 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-text-primary mb-1">
+                    ระดับความสำคัญ (Priority)
+                  </label>
+                  <select
+                    value={taskForm.priority}
+                    onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as any })}
+                    className="w-full px-2.5 py-1.5 text-xs bg-white border border-border rounded-lg focus:outline-none focus:border-indigo-600 cursor-pointer"
+                  >
+                    <option value="ปกติ">● ปกติ</option>
+                    <option value="ด่วน">● ด่วน</option>
+                    <option value="ด่วนที่สุด">● ด่วนที่สุด (Urgent)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Note (optional) */}
+              <div>
+                <label className="block text-[11px] font-semibold text-text-primary mb-1">
+                  โน้ตเพิ่มเติม / ข้อมูลอ้างอิง
+                </label>
+                <textarea
+                  rows={2}
+                  value={taskForm.note}
+                  onChange={(e) => setTaskForm({ ...taskForm, note: e.target.value })}
+                  placeholder="ระบุข้อความอ้างอิง ข้อมูลที่ลูกค้าต้องการ หรือคำแนะนำแก่ผู้รับมอบหมาย..."
+                  className="w-full p-2 text-xs bg-white border border-border rounded-lg focus:outline-none focus:border-indigo-600 resize-none"
+                />
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex items-center justify-between pt-1">
                 <button
-                  onClick={() => setIsSlashMenuOpen(false)}
-                  className="text-text-secondary hover:text-text-primary"
+                  type="button"
+                  onClick={() => setComposerMode('reply')}
+                  className="text-xs text-text-secondary hover:text-text-primary px-2 py-1 transition-colors"
                 >
-                  ✕
+                  ยกเลิก
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCreateTaskSubmit}
+                  disabled={!taskForm.title.trim()}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm ${
+                    taskForm.title.trim()
+                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <CheckSquare className="w-3.5 h-3.5" />
+                  <span>สร้างและมอบหมาย Task</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Canned Response Category Group Filter Tabs */}
+              <div className="flex items-center justify-between gap-1 overflow-x-auto custom-scrollbar pt-1">
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setSelectedCannedGroup('all')}
+                    className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all ${
+                      selectedCannedGroup === 'all'
+                        ? 'bg-brand text-white shadow-2xs'
+                        : 'bg-bg-app text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    ทั้งหมด
+                  </button>
+                  <button
+                    onClick={() => setSelectedCannedGroup('greeting')}
+                    className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 ${
+                      selectedCannedGroup === 'greeting'
+                        ? 'bg-purple-600 text-white shadow-2xs'
+                        : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                    }`}
+                  >
+                    <span>👋</span>
+                    <span>Greeting (ทักทาย)</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedCannedGroup('question')}
+                    className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 ${
+                      selectedCannedGroup === 'question'
+                        ? 'bg-amber-600 text-white shadow-2xs'
+                        : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
+                    }`}
+                  >
+                    <span>❓</span>
+                    <span>Question (คำถาม)</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedCannedGroup('answer')}
+                    className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 ${
+                      selectedCannedGroup === 'answer'
+                        ? 'bg-emerald-600 text-white shadow-2xs'
+                        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                    }`}
+                  >
+                    <span>💡</span>
+                    <span>Answer (คำตอบ)</span>
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => navigate('/canned-responses')}
+                  className="text-[10px] text-text-secondary hover:text-brand flex-shrink-0 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-bg-app"
+                >
+                  <span>+ เพิ่มเทมเพลต</span>
                 </button>
               </div>
 
-              {slashFilteredResponses.length === 0 ? (
-                <div className="p-3 text-center text-xs text-text-secondary">
-                  ไม่พบ shortcut ที่ตรงกับ &quot;/{slashSearchQuery}&quot;
-                </div>
-              ) : (
-                slashFilteredResponses.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => applyCannedResponse(item)}
-                    className="w-full text-left p-2 rounded-lg hover:bg-bg-subtle transition-colors flex items-start justify-between gap-3 group"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-xs text-brand group-hover:underline">
-                          {item.shortcut}
-                        </span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-slate-100 text-slate-700">
-                          {item.category === 'greeting'
-                            ? '👋 Greeting'
-                            : item.category === 'question'
-                            ? '❓ Question'
-                            : '💡 Answer'}
-                        </span>
-                        <span className="text-xs font-bold text-text-primary truncate">
-                          {item.title}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-text-secondary line-clamp-1 mt-0.5">
-                        {item.content}
-                      </p>
+              {/* Quick response clickable chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
+                {chipCannedResponses.slice(0, 8).map((item) => {
+                  const isGreeting = item.category === 'greeting';
+                  const isQuestion = item.category === 'question';
+                  const isAnswer = item.category === 'answer';
+
+                  let chipStyle = 'border-border text-brand bg-bg-subtle hover:bg-bg-app';
+                  if (isGreeting) chipStyle = 'border-purple-200 text-purple-700 bg-purple-50/70 hover:bg-purple-100';
+                  if (isQuestion) chipStyle = 'border-amber-200 text-amber-800 bg-amber-50/70 hover:bg-amber-100';
+                  if (isAnswer) chipStyle = 'border-emerald-200 text-emerald-800 bg-emerald-50/70 hover:bg-emerald-100';
+
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => applyCannedResponse(item)}
+                      title={`${item.title}\n\n${item.content}`}
+                      className={`text-[11px] px-2.5 py-1 rounded-lg border font-mono font-semibold flex-shrink-0 flex items-center gap-1 transition-all shadow-2xs ${chipStyle}`}
+                    >
+                      <span>{item.shortcut}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Interactive Slash Command Suggestions Popover */}
+              {isSlashMenuOpen && (
+                <div className="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-xl border border-border shadow-xl z-40 max-h-64 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                  <div className="flex items-center justify-between px-2 py-1 border-b border-divider text-[11px] font-bold text-text-secondary">
+                    <div className="flex items-center gap-1.5">
+                      <Bot className="w-3.5 h-3.5 text-brand" />
+                      <span>เลือกข้อความตอบกลับอัตโนมัติ (พิมพ์ค้นหาได้เลย)</span>
                     </div>
+                    <button
+                      onClick={() => setIsSlashMenuOpen(false)}
+                      className="text-text-secondary hover:text-text-primary"
+                    >
+                      ✕
+                    </button>
+                  </div>
 
-                    <span className="text-[10px] text-text-secondary font-mono flex-shrink-0 pt-0.5">
-                      ใช้ {item.usageCount || 0} ครั้ง
-                    </span>
-                  </button>
-                ))
+                  {slashFilteredResponses.length === 0 ? (
+                    <div className="p-3 text-center text-xs text-text-secondary">
+                      ไม่พบ shortcut ที่ตรงกับ &quot;/{slashSearchQuery}&quot;
+                    </div>
+                  ) : (
+                    slashFilteredResponses.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => applyCannedResponse(item)}
+                        className="w-full text-left p-2 rounded-lg hover:bg-bg-subtle transition-colors flex items-start justify-between gap-3 group"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-xs text-brand group-hover:underline">
+                              {item.shortcut}
+                            </span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-slate-100 text-slate-700">
+                              {item.category === 'greeting'
+                                ? '👋 Greeting'
+                                : item.category === 'question'
+                                ? '❓ Question'
+                                : '💡 Answer'}
+                            </span>
+                            <span className="text-xs font-bold text-text-primary truncate">
+                              {item.title}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-text-secondary line-clamp-1 mt-0.5">
+                            {item.content}
+                          </p>
+                        </div>
+
+                        <span className="text-[10px] text-text-secondary font-mono flex-shrink-0 pt-0.5">
+                          ใช้ {item.usageCount || 0} ครั้ง
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
               )}
-            </div>
-          )}
 
-          {/* Input Box */}
-          <form onSubmit={handleSendMessage} className="relative">
-            <textarea
-              ref={textareaRef}
-              rows={2}
-              value={inputText}
-              onChange={handleInputChange}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  // If slash menu is open with results, pick first result on Enter
-                  if (isSlashMenuOpen && slashFilteredResponses.length > 0) {
-                    e.preventDefault();
-                    applyCannedResponse(slashFilteredResponses[0]);
-                    return;
+              {/* Input Box */}
+              <form onSubmit={handleSendMessage} className="relative">
+                <textarea
+                  ref={textareaRef}
+                  rows={2}
+                  value={inputText}
+                  onChange={handleInputChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      // If slash menu is open with results, pick first result on Enter
+                      if (isSlashMenuOpen && slashFilteredResponses.length > 0) {
+                        e.preventDefault();
+                        applyCannedResponse(slashFilteredResponses[0]);
+                        return;
+                      }
+                      e.preventDefault();
+                      handleSendMessage();
+                    } else if (e.key === 'Escape') {
+                      setIsSlashMenuOpen(false);
+                    }
+                  }}
+                  placeholder={
+                    composerMode === 'reply'
+                      ? 'พิมพ์ข้อความตอบกลับลูกค้า หรือพิมพ์ / เพื่อเลือกข้อความสำเร็จรูป...'
+                      : 'เขียนโน้ตส่วนตัว (Private note สำหรับทีมภายใน)...'
                   }
-                  e.preventDefault();
-                  handleSendMessage();
-                } else if (e.key === 'Escape') {
-                  setIsSlashMenuOpen(false);
-                }
-              }}
-              placeholder={
-                composerMode === 'reply'
-                  ? 'พิมพ์ข้อความตอบกลับลูกค้า หรือพิมพ์ / เพื่อเลือกข้อความสำเร็จรูป...'
-                  : 'เขียนโน้ตส่วนตัว (Private note สำหรับทีมภายใน)...'
-              }
-              className={`w-full p-2.5 text-xs rounded-lg border focus:outline-none transition-all resize-none ${
-                composerMode === 'note'
-                  ? 'bg-warn-bg/50 border-warn-border focus:border-amber-600 text-warn-text'
-                  : 'bg-bg-app/50 border-border focus:border-brand text-text-primary focus:bg-white'
-              }`}
-            />
+                  className={`w-full p-2.5 text-xs rounded-lg border focus:outline-none transition-all resize-none ${
+                    composerMode === 'note'
+                      ? 'bg-warn-bg/50 border-warn-border focus:border-amber-600 text-warn-text'
+                      : 'bg-bg-app/50 border-border focus:border-brand text-text-primary focus:bg-white'
+                  }`}
+                />
 
-            <div className="flex items-center justify-between pt-2">
-              <button
-                type="button"
-                onClick={() => showToast('แนบไฟล์หรือรูปภาพสินค้า', 'info')}
-                className="text-text-secondary hover:text-text-primary p-1 rounded-md hover:bg-bg-subtle transition-colors"
-                aria-label="Attach File"
-              >
-                <Paperclip className="w-4 h-4" />
-              </button>
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => showToast('แนบไฟล์หรือรูปภาพสินค้า', 'info')}
+                    className="text-text-secondary hover:text-text-primary p-1 rounded-md hover:bg-bg-subtle transition-colors"
+                    aria-label="Attach File"
+                  >
+                    <Paperclip className="w-4 h-4" />
+                  </button>
 
-              <button
-                type="submit"
-                disabled={!inputText.trim()}
-                className={`px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm ${
-                  inputText.trim()
-                    ? composerMode === 'note'
-                      ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                      : 'bg-brand hover:bg-brand-hover text-white'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                <span>{composerMode === 'note' ? 'บันทึกโน้ต' : 'ส่ง'}</span>
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </form>
+                  <button
+                    type="submit"
+                    disabled={!inputText.trim()}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm ${
+                      inputText.trim()
+                        ? composerMode === 'note'
+                          ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                          : 'bg-brand hover:bg-brand-hover text-white'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    <span>{composerMode === 'note' ? 'บันทึกโน้ต' : 'ส่ง'}</span>
+                    <Send className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
         </div>
       </div>
 
       {/* ================= COLUMN 3: CDP CUSTOMER SIDE CARD (320px) ================= */}
-      <CustomerSideCard customer={currentCustomer} />
+      <CustomerSideCard customer={currentCustomer} onOpenTask={() => setComposerMode('task')} />
     </div>
   );
 };

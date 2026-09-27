@@ -9,9 +9,10 @@ import { useCustomer } from '../../context/CustomerContext';
 
 interface CustomerSideCardProps {
   customer: Customer;
+  onOpenTask?: () => void;
 }
 
-export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({ customer }) => {
+export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({ customer, onOpenTask }) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { deals, tickets } = useCustomer();
@@ -186,24 +187,38 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({ customer }) 
 
       {/* Bottom Actions */}
       <div className="mt-auto pt-4 space-y-2">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-1.5">
           <button
             onClick={() => {
               navigate('/pipeline');
               showToast('เปิดสร้าง Lead ใหม่สำหรับลูกค้า', 'info');
             }}
-            className="w-full py-1.5 text-xs font-medium border border-border bg-white hover:bg-bg-subtle rounded-lg text-text-primary transition-colors"
+            className="w-full py-1.5 text-xs font-medium border border-border bg-white hover:bg-bg-subtle rounded-lg text-text-primary transition-colors text-center"
           >
-            + สร้าง Lead
+            + Lead
           </button>
           <button
             onClick={() => {
               navigate('/cases');
               showToast('เปิดสร้าง Ticket ใหม่สำหรับลูกค้า', 'info');
             }}
-            className="w-full py-1.5 text-xs font-medium border border-border bg-white hover:bg-bg-subtle rounded-lg text-text-primary transition-colors"
+            className="w-full py-1.5 text-xs font-medium border border-border bg-white hover:bg-bg-subtle rounded-lg text-text-primary transition-colors text-center"
           >
-            + สร้าง Ticket
+            + Ticket
+          </button>
+          <button
+            onClick={() => {
+              if (onOpenTask) {
+                onOpenTask();
+                showToast('สลับไปยังแท็บสร้าง Task ให้ทีมงาน', 'info');
+              } else {
+                navigate(`/customers/${customer.id}`);
+                showToast('เปิดหน้า Customer 360 เพื่อสร้าง Task', 'info');
+              }
+            }}
+            className="w-full py-1.5 text-xs font-medium border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition-colors text-center"
+          >
+            + Task
           </button>
         </div>
         <button

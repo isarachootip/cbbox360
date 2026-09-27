@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { Customer, Deal, Ticket, Conversation, CreditLimitRequest, Segment, TimelineEvent } from '../types';
+import { Customer, Deal, Ticket, Conversation, CreditLimitRequest, Segment, TimelineEvent, TaskDetails } from '../types';
 import { mockCustomers } from '../data/customers';
 import { mockDeals } from '../data/deals';
 import { mockTickets } from '../data/tickets';
@@ -26,6 +26,17 @@ interface CustomerContextType {
   addTicketLog: (ticketId: string, text: string, author?: string) => void;
   updateConversationStatus: (convId: string, status: Conversation['status']) => void;
   addMessageToConversation: (convId: string, text: string, isPrivate?: boolean) => void;
+  addTaskToConversation: (
+    convId: string,
+    taskData: {
+      title: string;
+      assignee: string;
+      dueDate: string;
+      priority: 'ปกติ' | 'ด่วน' | 'ด่วนที่สุด';
+      note?: string;
+    }
+  ) => void;
+  updateTaskStatus: (convId: string, messageId: string, status: TaskDetails['status']) => void;
   approveCreditLimit: (requestId: string) => void;
   rejectCreditLimit: (requestId: string) => void;
   toggleSegmentWebhook: (segmentId: string) => void;
@@ -198,6 +209,118 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const addTaskToConversation = async (
+    convId: string,
+    taskData: {
+      title: string;
+      assignee: string;
+      dueDate: string;
+      priority: 'ปกติ' | 'ด่วน' | 'ด่วนที่สุด';
+      note?: string;
+    }
+  ) => {
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const taskId = `TSK-${Date.now().toString().slice(-4)}`;
+
+    const taskDetails: TaskDetails = {
+      id: taskId,
+      title: taskData.title,
+      assignee: taskData.assignee,
+      dueDate: taskData.dueDate,
+      priority: taskData.priority,
+      status: 'Pending',
+      createdAt: timeStr,
+      note: taskData.note,
+    };
+
+    const taskText = `📋 สร้าง Task: ${taskData.title} (มอบหมาย: ${taskData.assignee})`;
+
+    setConversations(prev =>
+      prev.map(c => {
+        if (c.id === convId) {
+          return {
+            ...c,
+            lastMessagePreview: `[Task] ${taskData.title}`,
+            time: timeStr,
+            messages: [
+              ...c.messages,
+              {
+                id: `m-${Date.now()}`,
+                sender: 'system',
+                authorName: 'วิภา ส.',
+                text: taskText,
+                time: timeStr,
+                isPrivateNote: true,
+                task: taskDetails,
+              },
+            ],
+          };
+        }
+        return c;
+      })
+    );
+
+    // Also add to Timeline for the customer
+    const targetConv = conversations.find(c => c.id === convId);
+    if (targetConv) {
+      const newTimelineEvent: TimelineEvent = {
+        id: `tl-task-${Date.now()}`,
+        customerId: targetConv.customerId,
+        type: 'Task',
+        iconCode: 'TS',
+        title: `มอบหมาย Task: ${taskData.title}`,
+        time: `วันนี้ ${timeStr}`,
+        detail: `มอบหมายให้ ${taskData.assignee} · กำหนดเสร็จ ${taskData.dueDate} · ความสำคัญ: ${taskData.priority}${taskData.note ? ` (${taskData.note})` : ''}`,
+        meta: [`สถานะ: Pending`, `ผู้สร้าง: วิภา ส.`],
+        linkText: 'เปิดใน Inbox',
+        linkRoute: '/inbox',
+        colorScheme: 'purple',
+      };
+      setTimelineEvents(prev => [newTimelineEvent, ...prev]);
+    }
+
+    // Persist to backend as internal note
+    try {
+      await fetch(`/api/conversations/${convId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: taskText,
+          isPrivate: true,
+          authorName: 'วิภา ส.',
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to sync task with backend API', err);
+    }
+  };
+
+  const updateTaskStatus = (convId: string, messageId: string, status: TaskDetails['status']) => {
+    setConversations(prev =>
+      prev.map(c => {
+        if (c.id === convId) {
+          return {
+            ...c,
+            messages: c.messages.map(m => {
+              if (m.id === messageId && m.task) {
+                return {
+                  ...m,
+                  task: {
+                    ...m.task,
+                    status,
+                  },
+                };
+              }
+              return m;
+            }),
+          };
+        }
+        return c;
+      })
+    );
+  };
+
   const approveCreditLimit = (requestId: string) => {
     const req = creditRequests.find(r => r.id === requestId);
     if (!req) return;
@@ -258,6 +381,8 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         addTicketLog,
         updateConversationStatus,
         addMessageToConversation,
+        addTaskToConversation,
+        updateTaskStatus,
         approveCreditLimit,
         rejectCreditLimit,
         toggleSegmentWebhook,
