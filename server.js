@@ -81,6 +81,225 @@ const rowToMessage = (row) => ({
   isPrivateNote: row.is_private_note,
 });
 
+// ================= Bot Auto-Reply Settings & Engine =================
+let botSettings = {
+  isEnabled: true,
+  botName: 'CusBox AI Assistant',
+  operatingMode: 'always',
+  welcomeMessageEnabled: true,
+  welcomeCannedResponseId: 'cr-1',
+  offHoursMessageEnabled: true,
+  offHoursText:
+    'สวัสดีค่ะ ขณะนี้นอกเวลาทำการของศูนย์บริการ CusBox360 (เวลาทำการ จ.-ศ. 08:30 - 18:00 น.) คุณลูกค้าสามารถฝากข้อความหรือคำถามไว้ได้เลยนะคะ เจ้าหน้าที่จะรีบติดต่อกลับในเวลาทำการค่ะ 🙏',
+  businessHours: {
+    start: '08:30',
+    end: '18:00',
+    workdays: [1, 2, 3, 4, 5, 6],
+  },
+  humanHandoffEnabled: true,
+  humanHandoffKeywords: [
+    'ติดต่อเจ้าหน้าที่', 'คุยกับคน', 'พนักงาน', 'แอดมิน', 'คุยกับแอดมิน', 'ขอคุยกับคน', 'ติดต่อพนักงาน', 'agent', 'human'
+  ],
+  handoffMessage:
+    'ระบบได้ส่งเรื่องให้เจ้าหน้าที่ฝ่ายบริการลูกค้าเรียบร้อยแล้วค่ะ เจ้าหน้าที่จะเข้ามาดูแลและตอบกลับแชทนี้โดยเร็วที่สุดนะคะ กรุณารอสักครู่ค่ะ 👩‍💼',
+  rules: [
+    {
+      id: 'rule-bank',
+      name: 'แจ้งช่องทางชำระเงินและเลขบัญชี',
+      triggerType: 'keyword',
+      keywords: ['เลขบัญชี', 'โอนเงิน', 'ชำระเงิน', 'จ่ายเงิน', 'ช่องทางชำระ', 'เลขที่บัญชี', 'โอนที่ไหน', 'บัญชี'],
+      matchType: 'contains',
+      cannedResponseId: 'cr-10',
+      isActive: true,
+      priority: 1,
+    },
+    {
+      id: 'rule-tracking',
+      name: 'แจ้งเลขพัสดุและติดตามจัดส่ง',
+      triggerType: 'keyword',
+      keywords: ['เลขพัสดุ', 'พัสดุ', 'ส่งของหรือยัง', 'ส่งของยัง', 'เช็คพัสดุ', 'track', 'tracking', 'ตามของ'],
+      matchType: 'contains',
+      cannedResponseId: 'cr-11',
+      isActive: true,
+      priority: 2,
+    },
+    {
+      id: 'rule-delivery-time',
+      name: 'รอบจัดส่งสินค้าและการตัดรอบ',
+      triggerType: 'keyword',
+      keywords: ['รอบส่ง', 'ตัดรอบ', 'ส่งวันไหน', 'ส่งกี่โมง', 'กี่วันถึง', 'ได้รับเมื่อไหร่', 'รอบจัดส่ง'],
+      matchType: 'contains',
+      cannedResponseId: 'cr-12',
+      isActive: true,
+      priority: 3,
+    },
+    {
+      id: 'rule-slip',
+      name: 'ขอสลิปหลักฐานการโอนเงิน',
+      triggerType: 'keyword',
+      keywords: ['โอนแล้ว', 'ส่งสลิป', 'แนบสลิป', 'จ่ายแล้ว', 'โอนเงินเรียบร้อย'],
+      matchType: 'contains',
+      cannedResponseId: 'cr-6',
+      isActive: true,
+      priority: 4,
+    },
+    {
+      id: 'rule-hours',
+      name: 'สอบถามเวลาทำการและที่ตั้ง',
+      triggerType: 'keyword',
+      keywords: ['เปิดกี่โมง', 'ปิดกี่โมง', 'เวลาทำการ', 'เปิดวันไหน', 'เบอร์ติดต่อ', 'สำนักงาน'],
+      matchType: 'contains',
+      cannedResponseId: 'cr-13',
+      isActive: true,
+      priority: 5,
+    },
+    {
+      id: 'rule-warranty',
+      name: 'ประกันสินค้าและเงื่อนไขเปลี่ยนคืน',
+      triggerType: 'keyword',
+      keywords: ['เคลม', 'ประกัน', 'สินค้าชำรุด', 'เปลี่ยนสินค้า', 'พัง', 'มีประกันไหม', 'สินค้าเสีย', 'ส่งซ่อม'],
+      matchType: 'contains',
+      cannedResponseId: 'cr-14',
+      isActive: true,
+      priority: 6,
+    },
+    {
+      id: 'rule-tax',
+      name: 'ขอใบกำกับภาษีและใบเสร็จรับเงิน',
+      triggerType: 'keyword',
+      keywords: ['ใบกำกับภาษี', 'ใบเสร็จ', 'tax id', 'ออกบิล', 'ขอใบกำกับ', 'ภพ20', 'หัก ณ ที่จ่าย'],
+      matchType: 'contains',
+      cannedResponseId: 'cr-9',
+      isActive: true,
+      priority: 7,
+    },
+    {
+      id: 'rule-credit',
+      name: 'เงื่อนไขการขอเครดิตเทอม',
+      triggerType: 'keyword',
+      keywords: ['เครดิต', 'credit term', 'วงเงินเครดิต', 'ขอเครดิต', 'ขอผ่อน', 'วางบิล'],
+      matchType: 'contains',
+      cannedResponseId: 'cr-15',
+      isActive: true,
+      priority: 8,
+    },
+    {
+      id: 'rule-address',
+      name: 'ขอที่อยู่และเบอร์โทรจัดส่ง',
+      triggerType: 'keyword',
+      keywords: ['ส่งที่ไหน', 'แก้ที่อยู่', 'เปลี่ยนที่อยู่', 'ที่อยู่จัดส่ง'],
+      matchType: 'contains',
+      cannedResponseId: 'cr-5',
+      isActive: true,
+      priority: 9,
+    },
+  ],
+};
+
+// Try loading persisted bot settings from DB
+const initBotSettingsFromDb = async () => {
+  try {
+    await query(`
+      CREATE TABLE IF NOT EXISTS bot_settings (
+        id TEXT PRIMARY KEY,
+        config JSONB NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    const res = await query(`SELECT config FROM bot_settings WHERE id = 'default' LIMIT 1`);
+    if (res.rows.length > 0 && res.rows[0].config) {
+      botSettings = res.rows[0].config;
+      console.log('🤖 [Bot Settings] Loaded configuration from database');
+    } else {
+      await query(
+        `INSERT INTO bot_settings (id, config) VALUES ('default', $1) ON CONFLICT (id) DO NOTHING`,
+        [JSON.stringify(botSettings)]
+      );
+    }
+  } catch (err) {
+    console.warn('⚠️ [Bot Settings DB Init Warning]:', err.message);
+  }
+};
+initBotSettingsFromDb();
+
+// Match incoming text against bot rules
+const matchBotReply = async (text, isNewConv, customerName) => {
+  if (!botSettings || !botSettings.isEnabled) return null;
+
+  const cleanText = (text || '').trim().toLowerCase();
+
+  // 1. Human handoff check
+  if (botSettings.humanHandoffEnabled) {
+    const isHandoff = botSettings.humanHandoffKeywords.some((k) =>
+      cleanText.includes(k.trim().toLowerCase())
+    );
+    if (isHandoff) {
+      return {
+        replyText: botSettings.handoffMessage,
+        type: 'handoff',
+        isHandoff: true,
+      };
+    }
+  }
+
+  // 2. Keyword rules check
+  const activeRules = (botSettings.rules || [])
+    .filter((r) => r.isActive)
+    .sort((a, b) => (a.priority || 99) - (b.priority || 99));
+
+  for (const rule of activeRules) {
+    for (const kw of rule.keywords || []) {
+      const cleanKw = kw.trim().toLowerCase();
+      if (!cleanKw) continue;
+      const hit = rule.matchType === 'exact' ? cleanText === cleanKw : cleanText.includes(cleanKw);
+      if (hit) {
+        let reply = rule.customReplyText;
+        if (!reply && rule.cannedResponseId) {
+          try {
+            const crRes = await query('SELECT content FROM canned_responses WHERE id = $1 LIMIT 1', [
+              rule.cannedResponseId,
+            ]);
+            if (crRes.rows.length > 0) {
+              reply = crRes.rows[0].content;
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        if (reply) {
+          reply = reply
+            .replace(/{customer_name}/g, customerName || 'คุณลูกค้า')
+            .replace(/{order_code}/g, 'SO-10482')
+            .replace(/{tracking_no}/g, 'TH2609-88412');
+          return { replyText: reply, type: 'rule', ruleName: rule.name, matchedKeyword: kw };
+        }
+      }
+    }
+  }
+
+  // 3. Welcome message on new conversation
+  if (isNewConv && botSettings.welcomeMessageEnabled) {
+    let welcomeText = null;
+    if (botSettings.welcomeCannedResponseId) {
+      try {
+        const crRes = await query('SELECT content FROM canned_responses WHERE id = $1 LIMIT 1', [
+          botSettings.welcomeCannedResponseId,
+        ]);
+        if (crRes.rows.length > 0) {
+          welcomeText = crRes.rows[0].content.replace(/{customer_name}/g, customerName || 'คุณลูกค้า');
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    if (welcomeText) {
+      return { replyText: welcomeText, type: 'welcome' };
+    }
+  }
+
+  return null;
+};
+
 // ================= LINE Webhook Handler =================
 const handleLineWebhook = async (req, res) => {
   const channelId = req.params.channelId || '2011580063';
@@ -109,9 +328,12 @@ const handleLineWebhook = async (req, res) => {
       );
 
       const newMsgId = `m-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      let targetConvId = '';
+      const isNew = existResult.rows.length === 0;
 
-      if (existResult.rows.length > 0) {
+      if (!isNew) {
         const conv = existResult.rows[0];
+        targetConvId = conv.id;
 
         // Insert new message
         await query(
@@ -135,6 +357,7 @@ const handleLineWebhook = async (req, res) => {
       } else {
         // New conversation
         const convId = `conv-line-${userId ? userId.slice(-6) : Date.now()}`;
+        targetConvId = convId;
         const custId = userId || `C-LINE-${Date.now()}`;
 
         await query(
@@ -147,6 +370,82 @@ const handleLineWebhook = async (req, res) => {
           `INSERT INTO messages (id, conversation_id, sender, text, time) VALUES ($1,$2,'customer',$3,$4)`,
           [newMsgId, convId, text, timeStr]
         );
+      }
+
+      // Check Bot Auto-Reply
+      try {
+        const botReply = await matchBotReply(text, isNew, customerName);
+        if (botReply && botReply.replyText) {
+          const botMsgId = `m-bot-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+          const botTimeStr = getThaiTime();
+
+          // Store bot reply in DB
+          await query(
+            `INSERT INTO messages (id, conversation_id, sender, author_name, text, time) VALUES ($1,$2,'agent','🤖 CusBox Bot (Auto-Reply)',$3,$4)`,
+            [botMsgId, targetConvId, botReply.replyText, botTimeStr]
+          );
+
+          // Update conversation preview
+          await query(
+            `UPDATE conversations SET last_message_preview = $1, time = $2, updated_at = NOW() WHERE id = $3`,
+            [botReply.replyText, botTimeStr, targetConvId]
+          );
+
+          // Push or Reply to LINE
+          if (evt.replyToken) {
+            try {
+              console.log(`🤖 [Bot Replying to LINE Token]: "${botReply.replyText.slice(0, 40)}..."`);
+              const lineRes = await fetch('https://api.line.me/v2/bot/message/reply', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+                },
+                body: JSON.stringify({
+                  replyToken: evt.replyToken,
+                  messages: [{ type: 'text', text: botReply.replyText }],
+                }),
+              });
+              if (!lineRes.ok) {
+                const errBody = await lineRes.text();
+                console.error('[LINE Reply Token Error, falling back to push]:', errBody);
+                if (userId) {
+                  await fetch('https://api.line.me/v2/bot/message/push', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+                    },
+                    body: JSON.stringify({
+                      to: userId,
+                      messages: [{ type: 'text', text: botReply.replyText }],
+                    }),
+                  });
+                }
+              }
+            } catch (replyErr) {
+              console.error('[LINE Reply Send Failed]:', replyErr.message);
+            }
+          } else if (userId) {
+            try {
+              await fetch('https://api.line.me/v2/bot/message/push', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+                },
+                body: JSON.stringify({
+                  to: userId,
+                  messages: [{ type: 'text', text: botReply.replyText }],
+                }),
+              });
+            } catch (pushErr) {
+              console.error('[LINE Push Send Failed]:', pushErr.message);
+            }
+          }
+        }
+      } catch (botErr) {
+        console.error('[Bot Auto-Reply Execution Error]:', botErr.message);
       }
     }
   }
@@ -262,6 +561,58 @@ app.post('/api/conversations/:id/messages', async (req, res) => {
   } catch (err) {
     console.error('[POST messages Error]:', err.message);
     return res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// ================= Bot Settings API =================
+
+// GET bot settings
+app.get('/api/bot-settings', (req, res) => {
+  return res.status(200).json({ status: 'success', data: botSettings });
+});
+
+// POST update bot settings
+app.post('/api/bot-settings', async (req, res) => {
+  try {
+    const newConfig = req.body;
+    if (!newConfig || typeof newConfig !== 'object') {
+      return res.status(400).json({ error: 'Invalid configuration payload' });
+    }
+    botSettings = { ...botSettings, ...newConfig };
+
+    try {
+      await query(
+        `INSERT INTO bot_settings (id, config, updated_at)
+         VALUES ('default', $1, NOW())
+         ON CONFLICT (id) DO UPDATE SET config = $1, updated_at = NOW()`,
+        [JSON.stringify(botSettings)]
+      );
+    } catch (dbErr) {
+      console.warn('⚠️ [Bot Settings DB Save Error]:', dbErr.message);
+    }
+
+    return res.status(200).json({ status: 'success', data: botSettings });
+  } catch (err) {
+    console.error('[POST /api/bot-settings Error]:', err.message);
+    return res.status(500).json({ error: 'Server error', detail: err.message });
+  }
+});
+
+// POST simulate bot reply
+app.post('/api/bot/simulate', async (req, res) => {
+  const { text, customerName } = req.body;
+  if (!text) {
+    return res.status(400).json({ error: 'Text is required' });
+  }
+  try {
+    const match = await matchBotReply(text, false, customerName || 'สมชาย ใจดี');
+    return res.status(200).json({
+      status: 'success',
+      matched: !!match,
+      result: match || { replyText: 'ไม่พบคำสำคัญที่ตรงกับกฎใดๆ', type: 'none' },
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 });
 

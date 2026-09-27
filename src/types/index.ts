@@ -302,3 +302,36 @@ export interface CannedResponse {
   updatedAt: string;
 }
 
+export type BotTriggerType = 'keyword' | 'welcome' | 'off_hours' | 'fallback';
+
+export interface BotAutoReplyRule {
+  id: string;
+  name: string;
+  triggerType: BotTriggerType;
+  keywords: string[];
+  matchType: 'contains' | 'exact';
+  cannedResponseId?: string;
+  customReplyText?: string;
+  isActive: boolean;
+  priority: number;
+}
+
+export interface BotSettings {
+  isEnabled: boolean;
+  botName: string;
+  operatingMode: 'always' | 'off_hours_only' | 'keyword_only';
+  welcomeMessageEnabled: boolean;
+  welcomeCannedResponseId?: string;
+  offHoursMessageEnabled: boolean;
+  offHoursText?: string;
+  businessHours: {
+    start: string;
+    end: string;
+    workdays: number[];
+  };
+  humanHandoffEnabled: boolean;
+  humanHandoffKeywords: string[];
+  handoffMessage: string;
+  rules: BotAutoReplyRule[];
+}
+

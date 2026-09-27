@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useCustomer } from '../context/CustomerContext';
 import { useCannedResponses, CATEGORIES_CONFIG } from '../context/CannedResponseContext';
+import { useBot } from '../context/BotContext';
 import { useToast } from '../context/ToastContext';
 import { TierBadge } from '../components/common/TierBadge';
 import { CustomerSideCard } from '../components/common/CustomerSideCard';
@@ -29,6 +30,7 @@ import { CannedResponse, CannedResponseCategory } from '../types';
 export const InboxPage: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { settings: botSettings } = useBot();
   const {
     conversations,
     customers,
@@ -387,8 +389,19 @@ export const InboxPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <span className="text-[10px] text-text-secondary mt-1 px-1 font-mono">
-                  {msg.time} {msg.authorName ? `· ${msg.authorName}` : ''}
+                <span className="text-[10px] text-text-secondary mt-1 px-1 font-mono flex items-center gap-1">
+                  <span>{msg.time}</span>
+                  {msg.authorName && (
+                    <span
+                      className={
+                        msg.authorName.includes('Bot')
+                          ? 'text-brand font-semibold flex items-center gap-0.5'
+                          : ''
+                      }
+                    >
+                      · {msg.authorName}
+                    </span>
+                  )}
                 </span>
               </div>
             );
@@ -424,11 +437,30 @@ export const InboxPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] text-text-secondary">
-                พิมพ์ <kbd className="font-mono bg-bg-app px-1 py-0.5 rounded border border-border">/</kbd> เพื่อค้นหาข้อความ
-              </span>
+            <div className="flex items-center gap-2.5">
+              {/* Bot Auto-Reply Status Indicator */}
               <button
+                type="button"
+                onClick={() => navigate('/canned-responses?tab=bot')}
+                className={`text-[11px] font-semibold flex items-center gap-1.5 px-2 py-0.5 rounded-md hover:bg-bg-app transition-colors ${
+                  botSettings.isEnabled ? 'text-emerald-600' : 'text-slate-500'
+                }`}
+                title="คลิกเพื่อตั้งค่า Bot ตอบอัตโนมัติ"
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    botSettings.isEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                  }`}
+                />
+                <span>{botSettings.isEnabled ? '● Bot Active' : '● Bot Inactive'}</span>
+              </button>
+
+              <span className="text-[11px] text-text-secondary hidden md:inline">
+                พิมพ์ <kbd className="font-mono bg-bg-app px-1 py-0.5 rounded border border-border">/</kbd> เพื่อค้นหา
+              </span>
+
+              <button
+                type="button"
                 onClick={() => navigate('/canned-responses')}
                 className="text-[11px] text-brand hover:text-brand-hover hover:underline flex items-center gap-0.5 font-medium"
                 title="เปิดหน้าจัดการข้อความอัตโนมัติ"

@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Agent & AI Skill files
+.agents/
+cb360_skill.md
