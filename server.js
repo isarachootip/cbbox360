@@ -56,6 +56,41 @@ app.get('/api/webhooks/line', (req, res) => {
   res.status(200).send('LINE Webhook Endpoint is Active (HTTP 200 OK)');
 });
 
+// ================= LINE Send / Push Message API =================
+app.post('/api/line/push', async (req, res) => {
+  const { to, text, messages } = req.body;
+  const token =
+    process.env.LINE_CHANNEL_ACCESS_TOKEN ||
+    'G6HhxgQDo/1Ji4LOomrfk8Eh4yhBn74w0i+T2vXPjdA2/8bRXZCtvXF9hSwFpjM0MKhTYasa+K/CKZjamIj9JhvqhXCKJXtH/I2YjgGpTkZgwNweMhhOe0GcuLKArE8W1B4tn68xsWeRD/0WY1cpowdB04t89/1O/w1cDnyilFU=';
+
+  if (!to) {
+    return res.status(400).json({ error: 'Target LINE UID (to) is required' });
+  }
+
+  try {
+    const response = await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        to,
+        messages: messages || [{ type: 'text', text: text || 'สวัสดีครับจากระบบ CusBox 360 CDP' }],
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    return res.status(response.status).json({
+      status: response.ok ? 'success' : 'error',
+      statusCode: response.status,
+      data,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // ================= Meta / Facebook Webhook Endpoints =================
 const handleMetaGet = (req, res) => {
   const mode = req.query['hub.mode'];
