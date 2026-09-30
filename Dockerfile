@@ -17,6 +17,7 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 COPY server.js db.js migrate.js ./
+COPY server/ ./server/
 
 ENV NODE_ENV=production
 ENV PORT=3000

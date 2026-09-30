@@ -26,3 +26,8 @@ dist-ssr
 # Agent & AI Skill files
 .agents/
 cb360_skill.md
+
+# Environment variables
+.env
+.env.*
+!.env.example
