@@ -31,6 +31,8 @@ import { useToast } from '../context/ToastContext';
 import { useLayout } from '../context/LayoutContext';
 import { TierBadge } from '../components/common/TierBadge';
 import { CustomerSideCard } from '../components/common/CustomerSideCard';
+import { BotStatusToggle } from '../components/inbox/BotStatusToggle';
+import { ChatMessageItem } from '../components/inbox/ChatMessageItem';
 import { CannedResponse, CannedResponseCategory } from '../types';
 
 export const InboxPage: React.FC = () => {
@@ -42,6 +44,8 @@ export const InboxPage: React.FC = () => {
     customers,
     updateConversationStatus,
     addMessageToConversation,
+    toggleBotStatus,
+    retrySendMessage,
     addTaskToConversation,
     updateTaskStatus,
   } = useCustomer();
@@ -152,15 +156,33 @@ export const InboxPage: React.FC = () => {
     }
   };
 
-  const handleSendMessage = (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputText.trim()) return;
 
+    const textToSend = inputText.trim();
     const isPrivate = composerMode === 'note';
-    addMessageToConversation(selectedConv.id, inputText.trim(), isPrivate);
-    showToast(isPrivate ? 'บันทึก Private note สำเร็จ' : 'ส่งข้อความตอบกลับแล้ว', 'success');
     setInputText('');
     setIsSlashMenuOpen(false);
+
+    const res = await addMessageToConversation(selectedConv.id, textToSend, isPrivate);
+    if (isPrivate) {
+      showToast('บันทึก Private note สำเร็จ', 'success');
+    } else if (res?.lineDelivery && !res.lineDelivery.success) {
+      showToast(`ส่งเข้า LINE ไม่สำเร็จ: ${res.lineDelivery.error || 'LINE Push Error'}`, 'error');
+    } else {
+      showToast('ส่งข้อความตอบกลับแล้ว', 'success');
+    }
+  };
+
+  const handleToggleBot = async (nextState: boolean) => {
+    await toggleBotStatus(selectedConv.id, nextState);
+    showToast(
+      nextState
+        ? 'เปิดการทำงานของ Bot ในห้องแชทนี้แล้ว'
+        : 'หยุดการทำงานของ Bot ในห้องแชทนี้แล้ว (แอดมินดูแล)',
+      'info'
+    );
   };
 
   const handleCreateTaskSubmit = (e?: React.FormEvent) => {
@@ -432,198 +454,25 @@ export const InboxPage: React.FC = () => {
             </span>
           </div>
 
-          {selectedConv.messages.map((msg) => {
-            if (msg.task) {
-              const task = msg.task;
-              const getTaskStatusConfig = (st: string) => {
-                switch (st) {
-                  case 'Completed':
-                    return { dot: 'bg-emerald-500', text: 'text-emerald-600', label: 'Completed' };
-                  case 'In Progress':
-                    return { dot: 'bg-blue-500', text: 'text-blue-600', label: 'In Progress' };
-                  default:
-                    return { dot: 'bg-amber-500', text: 'text-amber-600', label: 'Pending' };
-                }
-              };
-
-              const getTaskPriorityConfig = (pr: string) => {
-                switch (pr) {
-                  case 'ด่วนที่สุด':
-                    return { dot: 'bg-rose-500', text: 'text-rose-600' };
-                  case 'ด่วน':
-                    return { dot: 'bg-amber-500', text: 'text-amber-600' };
-                  default:
-                    return { dot: 'bg-slate-400', text: 'text-slate-600' };
-                }
-              };
-
-              const stConfig = getTaskStatusConfig(task.status);
-              const prConfig = getTaskPriorityConfig(task.priority);
-
-              return (
-                <div
-                  key={msg.id}
-                  className="w-full bg-white border border-indigo-200/80 rounded-xl p-3.5 shadow-2xs space-y-2.5 transition-all"
-                >
-                  <div className="flex items-center justify-between border-b border-divider pb-2 text-[11px]">
-                    <div className="flex items-center gap-1.5">
-                      <span className="p-1 rounded bg-indigo-50 text-indigo-700">
-                        <CheckSquare className="w-3.5 h-3.5" />
-                      </span>
-                      <span className="font-bold text-text-primary">
-                        TASK #{task.id} · มอบหมายงานภายใน
-                      </span>
-                      <span className="text-[10px] text-text-secondary">
-                        (ลูกค้าไม่เห็น)
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3 font-mono text-[11px]">
-                      {/* Status dot badge (transparent bg per cb360 rules) */}
-                      <span className={`inline-flex items-center gap-1.5 font-semibold ${stConfig.text}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${stConfig.dot}`} />
-                        <span>● {stConfig.label}</span>
-                      </span>
-                      <span className="text-text-secondary">{msg.time} · {msg.authorName || 'วิภา ส.'}</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-xs font-bold text-text-primary">
-                      {task.title}
-                    </h4>
-                    {task.note && (
-                      <p className="text-[11px] text-text-secondary mt-1 leading-relaxed">
-                        {task.note}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 py-2 px-3 rounded-lg bg-bg-app text-[11px]">
-                    <div>
-                      <span className="text-text-secondary block text-[10px]">ผู้รับมอบหมาย</span>
-                      <span className="font-semibold text-text-primary flex items-center gap-1 mt-0.5">
-                        <User className="w-3 h-3 text-text-secondary" />
-                        <span>{task.assignee}</span>
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-text-secondary block text-[10px]">กำหนดเสร็จ (Due Date)</span>
-                      <span className="font-mono text-text-primary flex items-center gap-1 mt-0.5">
-                        <Clock className="w-3 h-3 text-text-secondary" />
-                        <span>{task.dueDate}</span>
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-text-secondary block text-[10px]">ระดับความสำคัญ</span>
-                      <span className={`inline-flex items-center gap-1 font-semibold mt-0.5 ${prConfig.text}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${prConfig.dot}`} />
-                        <span>● {task.priority}</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1 border-t border-divider">
-                    <span className="text-[10px] text-text-secondary font-mono">
-                      อัปเดตสถานะงานได้ทันที
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {task.status !== 'Completed' ? (
-                        <>
-                          {task.status === 'Pending' && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                updateTaskStatus(selectedConv.id, msg.id, 'In Progress');
-                                showToast('อัปเดตสถานะ Task เป็น In Progress', 'info');
-                              }}
-                              className="text-[11px] px-2.5 py-1 rounded-md border border-border hover:bg-bg-subtle text-blue-600 font-semibold transition-colors"
-                            >
-                              เริ่มทำ (In Progress)
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              updateTaskStatus(selectedConv.id, msg.id, 'Completed');
-                              showToast(`Task #${task.id} เสร็จสมบูรณ์แล้ว`, 'success');
-                            }}
-                            className="text-[11px] px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-1 transition-colors shadow-2xs"
-                          >
-                            <Check className="w-3 h-3" />
-                            <span>ทำเสร็จแล้ว (Done)</span>
-                          </button>
-                        </>
-                      ) : (
-                        <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
-                          <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                          <span>งานเสร็จสมบูรณ์เรียบร้อยแล้ว</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            }
-
-            if (msg.isPrivateNote) {
-              return (
-                <div
-                  key={msg.id}
-                  className="w-full bg-warn-bg border border-dashed border-warn-border rounded-lg p-3 text-warn-text shadow-xs"
-                >
-                  <div className="flex items-center justify-between text-[11px] font-bold tracking-wide">
-                    <span className="flex items-center gap-1 text-amber-800">
-                      <Lock className="w-3 h-3" />
-                      <span>PRIVATE NOTE · ลูกค้าไม่เห็น</span>
-                    </span>
-                    <span className="font-mono text-amber-700">{msg.time} · {msg.authorName}</span>
-                  </div>
-                  <p className="text-xs text-[#633E00] mt-1 font-medium leading-relaxed">
-                    {msg.text}
-                  </p>
-                </div>
-              );
-            }
-
-            const isCustomer = msg.sender === 'customer';
-
-            return (
-              <div
-                key={msg.id}
-                className={`flex flex-col ${isCustomer ? 'items-start' : 'items-end'}`}
-              >
-                <div
-                  className={`max-w-[70%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-xs ${
-                    isCustomer
-                      ? 'bg-white border border-border text-text-primary rounded-tl-sm'
-                      : 'bg-brand text-white rounded-tr-sm'
-                  }`}
-                >
-                  <p>{msg.text}</p>
-                  {msg.trackingNumber && (
-                    <div className="mt-2 pt-2 border-t border-white/20 font-mono text-[11px] bg-black/10 px-2 py-1 rounded">
-                      📦 Track: {msg.trackingNumber}
-                    </div>
-                  )}
-                </div>
-                <span className="text-[10px] text-text-secondary mt-1 px-1 font-mono flex items-center gap-1">
-                  <span>{msg.time}</span>
-                  {msg.authorName && (
-                    <span
-                      className={
-                        msg.authorName.includes('Bot')
-                          ? 'text-brand font-semibold flex items-center gap-0.5'
-                          : ''
-                      }
-                    >
-                      · {msg.authorName}
-                    </span>
-                  )}
-                </span>
-              </div>
-            );
-          })}
+          {selectedConv.messages.map((msg) => (
+            <ChatMessageItem
+              key={msg.id}
+              msg={msg}
+              onRetry={(messageId, text) => {
+                retrySendMessage(selectedConv.id, messageId, text);
+                showToast('กำลังลองส่งข้อความใหม่...', 'info');
+              }}
+              onUpdateTaskStatus={(messageId, status) => {
+                updateTaskStatus(selectedConv.id, messageId, status);
+                showToast(
+                  status === 'Completed'
+                    ? 'งานเสร็จสมบูรณ์เรียบร้อยแล้ว'
+                    : 'อัปเดตสถานะ Task เป็น In Progress',
+                  status === 'Completed' ? 'success' : 'info'
+                );
+              }}
+            />
+          ))}
         </div>
 
         {/* Composer Area */}
@@ -667,22 +516,11 @@ export const InboxPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2.5">
-              {/* Bot Auto-Reply Status Indicator */}
-              <button
-                type="button"
-                onClick={() => navigate('/canned-responses?tab=bot')}
-                className={`text-[11px] font-semibold flex items-center gap-1.5 px-2 py-0.5 rounded-md hover:bg-bg-app transition-colors ${
-                  botSettings.isEnabled ? 'text-emerald-600' : 'text-slate-500'
-                }`}
-                title="คลิกเพื่อตั้งค่า Bot ตอบอัตโนมัติ"
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    botSettings.isEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
-                  }`}
-                />
-                <span>{botSettings.isEnabled ? '● Bot Active' : '● Bot Inactive'}</span>
-              </button>
+              {/* Per-Conversation Bot Auto-Reply Status & Toggle */}
+              <BotStatusToggle
+                isBotActive={selectedConv.isBotActive !== false}
+                onToggle={handleToggleBot}
+              />
 
               <span className="text-[11px] text-text-secondary hidden md:inline">
                 พิมพ์ <kbd className="font-mono bg-bg-app px-1 py-0.5 rounded border border-border">/</kbd> เพื่อค้นหา

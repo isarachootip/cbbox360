@@ -6,6 +6,7 @@ import { env } from './server/config/env.js';
 import apiRoutes from './server/routes/index.js';
 import webhookRoutes from './server/routes/webhookRoutes.js';
 import { initBotSettingsFromDb } from './server/services/botEngineService.js';
+import { ensureDatabaseSchema } from './server/services/dbInitService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,7 +19,8 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Initialize DB-backed bot settings
+// Initialize DB schema & bot settings
+ensureDatabaseSchema();
 initBotSettingsFromDb();
 
 // API Routes

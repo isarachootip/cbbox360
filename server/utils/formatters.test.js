@@ -33,22 +33,27 @@ describe('Server Formatters Utility', () => {
     expect(result.customerName).toBe('คุณสมศักดิ์');
     expect(result.messages.length).toBe(1);
     expect(result.tabGroup).toBe('vip');
+    expect(result.isBotActive).toBe(true);
   });
 
-  it('should map DB row to message object', () => {
+  it('should map DB row to message object with delivery status', () => {
     const row = {
       id: 'msg-1',
-      sender: 'customer',
+      sender: 'agent',
       author_name: 'Customer A',
       text: 'สอบถามราคาครับ',
       time: '10:00',
       tracking_number: 'TH123456',
       is_private_note: false,
+      delivery_status: 'failed',
+      failure_reason: 'LINE Quota exceeded',
     };
 
     const msg = rowToMessage(row);
     expect(msg.id).toBe('msg-1');
     expect(msg.trackingNumber).toBe('TH123456');
     expect(msg.isPrivateNote).toBe(false);
+    expect(msg.deliveryStatus).toBe('failed');
+    expect(msg.failureReason).toBe('LINE Quota exceeded');
   });
 });

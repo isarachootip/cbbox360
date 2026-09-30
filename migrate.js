@@ -25,6 +25,7 @@ const createTables = async () => {
       team             TEXT,
       tab_group        TEXT DEFAULT 'All',
       line_user_id     TEXT,
+      is_bot_active    BOOLEAN DEFAULT TRUE,
       created_at       TIMESTAMPTZ DEFAULT NOW(),
       updated_at       TIMESTAMPTZ DEFAULT NOW()
     );
@@ -40,6 +41,8 @@ const createTables = async () => {
       time             TEXT,
       tracking_number  TEXT,
       is_private_note  BOOLEAN DEFAULT FALSE,
+      delivery_status  TEXT DEFAULT 'delivered', -- 'delivered' | 'failed' | 'sending'
+      failure_reason   TEXT,
       created_at       TIMESTAMPTZ DEFAULT NOW()
     );
   `);
@@ -48,6 +51,11 @@ const createTables = async () => {
     CREATE INDEX IF NOT EXISTS idx_messages_conv_id ON messages(conversation_id);
     CREATE INDEX IF NOT EXISTS idx_conv_status ON conversations(status);
     CREATE INDEX IF NOT EXISTS idx_conv_line_user ON conversations(line_user_id);
+    
+    -- Safe alterations for existing tables
+    ALTER TABLE conversations ADD COLUMN IF NOT EXISTS is_bot_active BOOLEAN DEFAULT TRUE;
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS delivery_status TEXT DEFAULT 'delivered';
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS failure_reason TEXT;
   `);
 
   await pool.query(`

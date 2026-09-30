@@ -26,6 +26,7 @@ export const rowToConversation = (row, messages = []) => ({
   team: row.team,
   tabGroup: row.tab_group,
   lineUserId: row.line_user_id,
+  isBotActive: row.is_bot_active !== false,
   messages,
 });
 
@@ -37,4 +38,6 @@ export const rowToMessage = (row) => ({
   time: row.time,
   trackingNumber: row.tracking_number,
   isPrivateNote: row.is_private_note,
+  deliveryStatus: row.delivery_status || 'delivered',
+  failureReason: row.failure_reason || null,
 });

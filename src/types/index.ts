@@ -220,6 +220,8 @@ export interface ChatMessage {
   isPrivateNote?: boolean;
   trackingNumber?: string;
   task?: TaskDetails;
+  deliveryStatus?: 'delivered' | 'failed' | 'sending';
+  failureReason?: string;
 }
 
 export interface Conversation {
@@ -239,6 +241,7 @@ export interface Conversation {
   team: string; // "Customer Care"
   messages: ChatMessage[];
   tabGroup: 'Mine' | 'Unassigned' | 'All';
+  isBotActive?: boolean;
 }
 
 export interface CreditAccount {

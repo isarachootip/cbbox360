@@ -75,36 +75,42 @@ export const handleLineWebhook = async (req, res) => {
       }
 
       // Check Bot Auto-Reply
-      try {
-        const botReply = await matchBotReply(text, isNew, customerName);
-        if (botReply && botReply.replyText) {
-          const botMsgId = `m-bot-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-          const botTimeStr = getThaiTime();
+      const isBotActiveForConv = isNew ? true : existResult.rows[0]?.is_bot_active !== false;
 
-          // Store bot reply in DB
-          await query(
-            `INSERT INTO messages (id, conversation_id, sender, author_name, text, time) VALUES ($1,$2,'agent','🤖 CusBox Bot (Auto-Reply)',$3,$4)`,
-            [botMsgId, targetConvId, botReply.replyText, botTimeStr]
-          );
+      if (!isBotActiveForConv) {
+        console.log(`🤖 [Bot Paused]: Skipping auto-reply for conversation ${targetConvId} (Agent active)`);
+      } else {
+        try {
+          const botReply = await matchBotReply(text, isNew, customerName);
+          if (botReply && botReply.replyText) {
+            const botMsgId = `m-bot-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+            const botTimeStr = getThaiTime();
 
-          // Update conversation preview
-          await query(
-            `UPDATE conversations SET last_message_preview = $1, time = $2, updated_at = NOW() WHERE id = $3`,
-            [botReply.replyText, botTimeStr, targetConvId]
-          );
+            // Store bot reply in DB
+            await query(
+              `INSERT INTO messages (id, conversation_id, sender, author_name, text, time) VALUES ($1,$2,'agent','🤖 CusBox Bot (Auto-Reply)',$3,$4)`,
+              [botMsgId, targetConvId, botReply.replyText, botTimeStr]
+            );
 
-          // Send to LINE
-          if (evt.replyToken) {
-            const success = await sendLineReply(evt.replyToken, botReply.replyText);
-            if (!success && userId) {
+            // Update conversation preview
+            await query(
+              `UPDATE conversations SET last_message_preview = $1, time = $2, updated_at = NOW() WHERE id = $3`,
+              [botReply.replyText, botTimeStr, targetConvId]
+            );
+
+            // Send to LINE
+            if (evt.replyToken) {
+              const success = await sendLineReply(evt.replyToken, botReply.replyText);
+              if (!success && userId) {
+                await sendLinePush(userId, botReply.replyText);
+              }
+            } else if (userId) {
               await sendLinePush(userId, botReply.replyText);
             }
-          } else if (userId) {
-            await sendLinePush(userId, botReply.replyText);
           }
+        } catch (botErr) {
+          console.error('[Bot Auto-Reply Execution Error]:', botErr.message);
         }
-      } catch (botErr) {
-        console.error('[Bot Auto-Reply Execution Error]:', botErr.message);
       }
     }
   }

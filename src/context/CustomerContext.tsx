@@ -43,7 +43,13 @@ interface CustomerContextType {
   updateTicketStatus: (ticketId: string, status: Ticket['status']) => void;
   addTicketLog: (ticketId: string, text: string, author?: string) => void;
   updateConversationStatus: (convId: string, status: Conversation['status']) => void;
-  addMessageToConversation: (convId: string, text: string, isPrivate?: boolean) => void;
+  addMessageToConversation: (
+    convId: string,
+    text: string,
+    isPrivate?: boolean
+  ) => Promise<{ success: boolean; lineDelivery?: { success: boolean; error?: string } }>;
+  toggleBotStatus: (convId: string, isBotActive: boolean) => Promise<void>;
+  retrySendMessage: (convId: string, messageId: string, text: string) => Promise<void>;
   addTaskToConversation: (
     convId: string,
     taskData: {
@@ -210,7 +216,8 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const addMessageToConversation = async (convId: string, text: string, isPrivate: boolean = false) => {
     const now = new Date();
     const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    
+    const tempMsgId = `m-${Date.now()}`;
+
     // Optimistic local update
     setConversations(prev =>
       prev.map(c => {
@@ -219,15 +226,17 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             ...c,
             lastMessagePreview: isPrivate ? c.lastMessagePreview : text,
             time: timeStr,
+            isBotActive: isPrivate ? c.isBotActive : false,
             messages: [
               ...c.messages,
               {
-                id: `m-${Date.now()}`,
+                id: tempMsgId,
                 sender: isPrivate ? 'note' : 'agent',
                 authorName: 'วิภา ส.',
                 text,
                 time: timeStr,
                 isPrivateNote: isPrivate,
+                deliveryStatus: 'delivered',
               },
             ],
           };
@@ -238,13 +247,180 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     // Send to backend API (which also sends real LINE Push message to customer)
     try {
-      await fetch(`/api/conversations/${convId}/messages`, {
+      const res = await fetch(`/api/conversations/${convId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, isPrivate, authorName: 'วิภา ส.' }),
       });
+
+      if (res.ok) {
+        const json = await res.json();
+        const lineSuccess = json?.lineDelivery?.success !== false;
+        if (!lineSuccess) {
+          setConversations(prev =>
+            prev.map(c => {
+              if (c.id === convId) {
+                return {
+                  ...c,
+                  messages: c.messages.map(m =>
+                    m.id === tempMsgId
+                      ? {
+                          ...m,
+                          id: json?.message?.id || m.id,
+                          deliveryStatus: 'failed',
+                          failureReason: json?.lineDelivery?.error || 'LINE Push delivery failed',
+                        }
+                      : m
+                  ),
+                };
+              }
+              return c;
+            })
+          );
+        } else if (json?.message?.id) {
+          setConversations(prev =>
+            prev.map(c => {
+              if (c.id === convId) {
+                return {
+                  ...c,
+                  messages: c.messages.map(m =>
+                    m.id === tempMsgId ? { ...m, id: json.message.id, deliveryStatus: 'delivered' } : m
+                  ),
+                };
+              }
+              return c;
+            })
+          );
+        }
+        return { success: true, lineDelivery: json?.lineDelivery };
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        const errMsg = errJson?.error || `HTTP ${res.status}`;
+        setConversations(prev =>
+          prev.map(c => {
+            if (c.id === convId) {
+              return {
+                ...c,
+                messages: c.messages.map(m =>
+                  m.id === tempMsgId ? { ...m, deliveryStatus: 'failed', failureReason: errMsg } : m
+                ),
+              };
+            }
+            return c;
+          })
+        );
+        return { success: false, lineDelivery: { success: false, error: errMsg } };
+      }
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'เชื่อมต่อเซิร์ฟเวอร์ขัดข้อง';
+      setConversations(prev =>
+        prev.map(c => {
+          if (c.id === convId) {
+            return {
+              ...c,
+              messages: c.messages.map(m =>
+                m.id === tempMsgId ? { ...m, deliveryStatus: 'failed', failureReason: errMsg } : m
+              ),
+            };
+          }
+          return c;
+        })
+      );
+      return { success: false, lineDelivery: { success: false, error: errMsg } };
+    }
+  };
+
+  const toggleBotStatus = async (convId: string, isBotActive: boolean) => {
+    setConversations(prev =>
+      prev.map(c => (c.id === convId ? { ...c, isBotActive } : c))
+    );
+
+    try {
+      await fetch(`/api/conversations/${convId}/bot-status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isBotActive }),
+      });
     } catch (err) {
-      console.error('Failed to send message to backend API', err);
+      console.error('Failed to toggle bot status on server', err);
+    }
+  };
+
+  const retrySendMessage = async (convId: string, messageId: string, text: string) => {
+    setConversations(prev =>
+      prev.map(c => {
+        if (c.id === convId) {
+          return {
+            ...c,
+            messages: c.messages.map(m =>
+              m.id === messageId ? { ...m, deliveryStatus: 'sending', failureReason: undefined } : m
+            ),
+          };
+        }
+        return c;
+      })
+    );
+
+    try {
+      const res = await fetch(`/api/conversations/${convId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, isPrivate: false, authorName: 'วิภา ส.' }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const lineSuccess = json?.lineDelivery?.success !== false;
+        setConversations(prev =>
+          prev.map(c => {
+            if (c.id === convId) {
+              return {
+                ...c,
+                isBotActive: false,
+                messages: c.messages.map(m =>
+                  m.id === messageId
+                    ? {
+                        ...m,
+                        deliveryStatus: lineSuccess ? 'delivered' : 'failed',
+                        failureReason: lineSuccess ? undefined : json?.lineDelivery?.error || 'LINE Push delivery failed',
+                      }
+                    : m
+                ),
+              };
+            }
+            return c;
+          })
+        );
+      } else {
+        setConversations(prev =>
+          prev.map(c => {
+            if (c.id === convId) {
+              return {
+                ...c,
+                messages: c.messages.map(m =>
+                  m.id === messageId ? { ...m, deliveryStatus: 'failed', failureReason: `HTTP ${res.status}` } : m
+                ),
+              };
+            }
+            return c;
+          })
+        );
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'เชื่อมต่อล้มเหลว';
+      setConversations(prev =>
+        prev.map(c => {
+          if (c.id === convId) {
+            return {
+              ...c,
+              messages: c.messages.map(m =>
+                m.id === messageId ? { ...m, deliveryStatus: 'failed', failureReason: errorMsg } : m
+              ),
+            };
+          }
+          return c;
+        })
+      );
     }
   };
 
@@ -618,6 +794,8 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         addTicketLog,
         updateConversationStatus,
         addMessageToConversation,
+        toggleBotStatus,
+        retrySendMessage,
         addTaskToConversation,
         updateTaskStatus,
         approveCreditLimit,
