@@ -21,6 +21,10 @@ import { mockConversations } from '../data/conversations';
 import { mockCreditLimitRequests } from '../data/credit';
 import { mockSegments } from '../data/segments';
 import { mockTimelineEvents } from '../data/timeline';
+import {
+  setPrimaryContact as setPrimaryContactHelper,
+  setDefaultAddress as setDefaultAddressHelper,
+} from '../utils/customerHelpers';
 
 interface CustomerContextType {
   customers: Customer[];
@@ -517,12 +521,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       prev.map(c => {
         if (c.id === customerId) {
           const existing = c.addresses || [];
-          const updated = existing.map(a => ({
-            ...a,
-            ...(type === 'billing' ? { isDefaultBilling: a.id === addressId } : {}),
-            ...(type === 'shipping' ? { isDefaultShipping: a.id === addressId } : {}),
-          }));
-          return { ...c, addresses: updated };
+          return { ...c, addresses: setDefaultAddressHelper(existing, addressId, type) };
         }
         return c;
       })
