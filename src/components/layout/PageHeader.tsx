@@ -1,4 +1,6 @@
 import React from 'react';
+import { Menu } from 'lucide-react';
+import { useLayout } from '../../context/LayoutContext';
 
 interface PageHeaderProps {
   breadcrumbs?: React.ReactNode;
@@ -15,10 +17,20 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   centerControls,
   actionButton,
 }) => {
+  const { toggleMobileSidebar } = useLayout();
+
   return (
-    <header className="h-[60px] flex-shrink-0 bg-white border-b border-border px-6 flex items-center justify-between gap-4 select-none z-20">
-      {/* Left side: Breadcrumb or Title */}
-      <div className="flex items-center gap-3 min-w-0">
+    <header className="h-[56px] sm:h-[60px] flex-shrink-0 bg-white border-b border-border px-3.5 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 select-none z-20">
+      {/* Left side: Mobile Hamburger + Breadcrumb or Title */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <button
+          type="button"
+          onClick={toggleMobileSidebar}
+          aria-label="เปิดเมนูการนำทาง"
+          className="lg:hidden p-1.5 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand/30"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
         {breadcrumbs ? (
           <div className="text-[14px] font-semibold text-text-primary flex items-center gap-1.5 truncate">
             {breadcrumbs}

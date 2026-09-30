@@ -20,11 +20,15 @@ import {
   Check,
   CheckSquare,
   User,
+  Menu,
+  ArrowLeft,
+  X,
 } from 'lucide-react';
 import { useCustomer } from '../context/CustomerContext';
 import { useCannedResponses, CATEGORIES_CONFIG } from '../context/CannedResponseContext';
 import { useBot } from '../context/BotContext';
 import { useToast } from '../context/ToastContext';
+import { useLayout } from '../context/LayoutContext';
 import { TierBadge } from '../components/common/TierBadge';
 import { CustomerSideCard } from '../components/common/CustomerSideCard';
 import { CannedResponse, CannedResponseCategory } from '../types';
@@ -48,8 +52,12 @@ export const InboxPage: React.FC = () => {
     incrementUsage,
   } = useCannedResponses();
 
+  const { toggleMobileSidebar } = useLayout();
+
   // State
   const [selectedConvId, setSelectedConvId] = useState<string>('conv-1');
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
+  const [isCustomerDetailOpen, setIsCustomerDetailOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'Open' | 'Pending' | 'Snoozed' | 'Resolved'>('Open');
   const [tabFilter, setTabFilter] = useState<'Mine' | 'Unassigned' | 'All'>('Mine');
   const [searchQuery, setSearchQuery] = useState('');
@@ -199,11 +207,25 @@ export const InboxPage: React.FC = () => {
     <div className="flex-1 flex h-full overflow-hidden bg-white select-none">
       
       {/* ================= COLUMN 1: CONVERSATION LIST (340px) ================= */}
-      <div className="w-[340px] flex-shrink-0 border-r border-border bg-white flex flex-col h-full">
+      <div
+        className={`${
+          mobileView === 'list' ? 'flex' : 'hidden'
+        } md:flex w-full md:w-[320px] lg:w-[340px] flex-shrink-0 border-r border-border bg-white flex-col h-full`}
+      >
         {/* Top Header */}
         <div className="p-3.5 border-b border-border space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-[17px] font-bold text-text-primary">Inbox</h2>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleMobileSidebar}
+                aria-label="เปิดเมนูการนำทาง"
+                className="lg:hidden p-1.5 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand/30"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <h2 className="text-[17px] font-bold text-text-primary">Inbox</h2>
+            </div>
             {/* Status dropdown */}
             <div className="relative">
               <select
@@ -273,7 +295,10 @@ export const InboxPage: React.FC = () => {
             return (
               <div
                 key={conv.id}
-                onClick={() => setSelectedConvId(conv.id)}
+                onClick={() => {
+                  setSelectedConvId(conv.id);
+                  setMobileView('chat');
+                }}
                 className={`p-3 cursor-pointer transition-all flex gap-3 relative ${
                   isSelected
                     ? 'bg-brand-selected border-l-[3px] border-brand'
@@ -332,42 +357,65 @@ export const InboxPage: React.FC = () => {
       </div>
 
       {/* ================= COLUMN 2: CHAT PANE (FLEX) ================= */}
-      <div className="flex-1 flex flex-col h-full bg-bg-app">
+      <div
+        className={`${
+          mobileView === 'chat' ? 'flex' : 'hidden'
+        } md:flex flex-1 flex-col h-full bg-bg-app min-w-0`}
+      >
         {/* Top Header */}
-        <div className="h-[60px] bg-white border-b border-border px-5 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-[15px] text-text-primary">
+        <div className="h-[56px] sm:h-[60px] bg-white border-b border-border px-3.5 sm:px-5 flex items-center justify-between flex-shrink-0 gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* Back button on mobile to return to conversation list */}
+            <button
+              type="button"
+              onClick={() => setMobileView('list')}
+              aria-label="กลับไปที่รายการแชท"
+              className="md:hidden p-1.5 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-bold text-[14px] sm:text-[15px] text-text-primary truncate">
                   {selectedConv.customerName}
                 </span>
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-medium">
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-medium flex-shrink-0">
                   {selectedConv.channel} · {selectedConv.channelAccount}
                 </span>
               </div>
-              <div className="text-[11px] text-text-secondary mt-0.5">
+              <div className="text-[10px] sm:text-[11px] text-text-secondary mt-0.5 truncate">
                 มอบหมาย: {selectedConv.assignedTo} · ทีม {selectedConv.team} · #{selectedConv.id}
               </div>
             </div>
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {/* View CDP Customer details button on mobile / tablet */}
+            <button
+              type="button"
+              onClick={() => setIsCustomerDetailOpen(true)}
+              aria-label="ดูข้อมูลลูกค้า CDP"
+              className="xl:hidden p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-border"
+              title="ข้อมูลลูกค้า (CDP)"
+            >
+              <User className="w-4 h-4" />
+            </button>
             <button
               onClick={handleTransfer}
-              className="px-3 py-1.5 border border-border hover:bg-bg-subtle rounded-lg text-xs font-medium text-text-primary transition-colors"
+              className="hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 border border-border hover:bg-bg-subtle rounded-lg text-xs font-medium text-text-primary transition-colors"
             >
               โอนแชท
             </button>
             <button
               onClick={handlePending}
-              className="px-3 py-1.5 border border-border hover:bg-bg-subtle rounded-lg text-xs font-medium text-text-primary transition-colors"
+              className="hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 border border-border hover:bg-bg-subtle rounded-lg text-xs font-medium text-text-primary transition-colors"
             >
               Pending
             </button>
             <button
               onClick={handleResolve}
-              className="px-3.5 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+              className="px-2.5 sm:px-3.5 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold flex items-center gap-1 sm:gap-1.5 shadow-sm transition-colors"
             >
               <CheckCircle className="w-3.5 h-3.5" />
               <span>✓ Resolve</span>
@@ -976,7 +1024,42 @@ export const InboxPage: React.FC = () => {
       </div>
 
       {/* ================= COLUMN 3: CDP CUSTOMER SIDE CARD (320px) ================= */}
-      <CustomerSideCard customer={currentCustomer} onOpenTask={() => setComposerMode('task')} />
+      <div className="hidden xl:block h-full">
+        <CustomerSideCard customer={currentCustomer} onOpenTask={() => setComposerMode('task')} />
+      </div>
+
+      {/* Mobile & Tablet Drawer for CDP Info */}
+      {isCustomerDetailOpen && (
+        <div className="fixed inset-0 z-50 xl:hidden flex justify-end">
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsCustomerDetailOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="relative z-10 w-[320px] sm:w-[360px] h-full bg-white shadow-2xl flex flex-col">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <span className="font-bold text-sm text-text-primary">ข้อมูลลูกค้า (CDP)</span>
+              <button
+                type="button"
+                onClick={() => setIsCustomerDetailOpen(false)}
+                className="p-1 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition-colors"
+                aria-label="ปิด"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <CustomerSideCard
+                customer={currentCustomer}
+                onOpenTask={() => {
+                  setComposerMode('task');
+                  setIsCustomerDetailOpen(false);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

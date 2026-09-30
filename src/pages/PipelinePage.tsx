@@ -203,10 +203,10 @@ export const PipelinePage: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col p-5 overflow-hidden gap-4">
+      <div className="flex-1 flex flex-col p-3.5 sm:p-5 overflow-hidden gap-3.5 sm:gap-4">
         
         {/* KPI Row (4 metrics) */}
-        <div className="grid grid-cols-4 gap-4 flex-shrink-0">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 flex-shrink-0">
           <KpiTile
             label="มูลค่า Pipeline (เปิดอยู่)"
             value={`฿${kpis.totalPipelineValue.toLocaleString()}`}

@@ -6,6 +6,7 @@ import { MenuProvider } from './context/MenuContext';
 import { CustomerProvider } from './context/CustomerContext';
 import { CannedResponseProvider } from './context/CannedResponseContext';
 import { BotProvider } from './context/BotContext';
+import { LayoutProvider } from './context/LayoutContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
 import { UserManagementPage } from './pages/UserManagementPage';
@@ -40,39 +41,41 @@ export const App: React.FC = () => {
             <CannedResponseProvider>
               <BotProvider>
                 <BrowserRouter>
-                  <Routes>
-                    {/* Public Route */}
-                    <Route path="/login" element={<LoginPage />} />
+                  <LayoutProvider>
+                    <Routes>
+                      {/* Public Route */}
+                      <Route path="/login" element={<LoginPage />} />
 
-                    {/* Protected Routes */}
-                    <Route path="/" element={<ProtectedLayout />}>
-                      <Route index element={<Navigate to="/customers/C00123" replace />} />
-                      <Route path="customers/:id" element={<Customer360Page />} />
-                      <Route path="inbox" element={<InboxPage />} />
-                      <Route path="canned-responses" element={<CannedResponsesPage />} />
-                      <Route path="pipeline" element={<PipelinePage />} />
-                      <Route path="segments" element={<SegmentsPage />} />
-                      <Route path="tiers" element={<TierLoyaltyPage />} />
-                      <Route path="cases" element={<ServiceCasePage />} />
-                      <Route path="credit" element={<CreditSalesPage />} />
-                      <Route path="users" element={<UserManagementPage />} />
-                      <Route path="menus" element={<MenuManagementPage />} />
-                      
-                      {/* Placeholders & Tools */}
-                      <Route path="consent" element={<PlaceholderPage />} />
-                      <Route path="voice" element={<PlaceholderPage />} />
-                      <Route path="connectors" element={<ConnectorsPage />} />
-                      <Route path="settings" element={<SettingsPage />} />
-                      <Route path="settings/bot" element={<SettingsPage />} />
-                      <Route path="settings/canned-responses" element={<CannedResponsesPage />} />
-                      <Route path="settings/users" element={<UserManagementPage />} />
-                      <Route path="settings/menus" element={<MenuManagementPage />} />
-                      <Route path="settings/connectors" element={<ConnectorsPage />} />
+                      {/* Protected Routes */}
+                      <Route path="/" element={<ProtectedLayout />}>
+                        <Route index element={<Navigate to="/customers/C00123" replace />} />
+                        <Route path="customers/:id" element={<Customer360Page />} />
+                        <Route path="inbox" element={<InboxPage />} />
+                        <Route path="canned-responses" element={<CannedResponsesPage />} />
+                        <Route path="pipeline" element={<PipelinePage />} />
+                        <Route path="segments" element={<SegmentsPage />} />
+                        <Route path="tiers" element={<TierLoyaltyPage />} />
+                        <Route path="cases" element={<ServiceCasePage />} />
+                        <Route path="credit" element={<CreditSalesPage />} />
+                        <Route path="users" element={<UserManagementPage />} />
+                        <Route path="menus" element={<MenuManagementPage />} />
+                        
+                        {/* Placeholders & Tools */}
+                        <Route path="consent" element={<PlaceholderPage />} />
+                        <Route path="voice" element={<PlaceholderPage />} />
+                        <Route path="connectors" element={<ConnectorsPage />} />
+                        <Route path="settings" element={<SettingsPage />} />
+                        <Route path="settings/bot" element={<SettingsPage />} />
+                        <Route path="settings/canned-responses" element={<CannedResponsesPage />} />
+                        <Route path="settings/users" element={<UserManagementPage />} />
+                        <Route path="settings/menus" element={<MenuManagementPage />} />
+                        <Route path="settings/connectors" element={<ConnectorsPage />} />
 
-                      {/* Catch all */}
-                      <Route path="*" element={<Navigate to="/customers/C00123" replace />} />
-                    </Route>
-                  </Routes>
+                        {/* Catch all */}
+                        <Route path="*" element={<Navigate to="/customers/C00123" replace />} />
+                      </Route>
+                    </Routes>
+                  </LayoutProvider>
                 </BrowserRouter>
               </BotProvider>
             </CannedResponseProvider>

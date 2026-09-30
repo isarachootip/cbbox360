@@ -195,9 +195,9 @@ export const Customer360Page: React.FC = () => {
         }
       />
 
-      {/* Main 3-Column Layout */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
-        <div className="grid grid-cols-[330px_1fr_320px] gap-4 max-w-[1600px] mx-auto min-h-[780px]">
+      {/* Main 3-Column Responsive Layout */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-3.5 sm:p-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] xl:grid-cols-[330px_1fr_320px] gap-4 max-w-[1600px] mx-auto">
           
           {/* ================= LEFT COLUMN: PROFILE CARD ================= */}
           <div className="bg-white rounded-card border border-border p-5 flex flex-col gap-4 shadow-card">
@@ -592,7 +592,7 @@ export const Customer360Page: React.FC = () => {
           </div>
 
           {/* ================= RIGHT COLUMN: RELATED ACTIVITY ================= */}
-          <div className="flex flex-col gap-3.5">
+          <div className="flex flex-col gap-3.5 lg:col-span-2 xl:col-span-1">
             {/* Card 1: Deal เปิดอยู่ */}
             <div className="bg-white rounded-card border border-border p-4 shadow-card">
               <div className="flex items-center justify-between pb-2.5 border-b border-divider">

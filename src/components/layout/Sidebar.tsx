@@ -25,11 +25,13 @@ import {
   ChevronDown,
   ChevronUp,
   UserCheck,
+  X,
 } from 'lucide-react';
 import { useCustomer } from '../../context/CustomerContext';
 import { useAuth } from '../../context/AuthContext';
 import { useMenu } from '../../context/MenuContext';
 import { useToast } from '../../context/ToastContext';
+import { useLayout } from '../../context/LayoutContext';
 import { MenuItemConfig, UserRole } from '../../types';
 
 export const Sidebar: React.FC = () => {
@@ -39,6 +41,8 @@ export const Sidebar: React.FC = () => {
   const { currentUser, logout, switchUser, users } = useAuth();
   const { menus, getMenusByRole } = useMenu();
   const { showToast } = useToast();
+
+  const { isMobileSidebarOpen, closeMobileSidebar } = useLayout();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
@@ -113,26 +117,52 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-[232px] flex-shrink-0 bg-sidebar-bg border-r border-sidebar-border h-screen flex flex-col justify-between p-[18px_12px] select-none z-30">
-      <div className="flex flex-col gap-5 overflow-y-auto custom-scrollbar">
-        {/* Framed Logo */}
-        <div className="flex items-center gap-2.5 px-1 py-1">
-          <div className="h-10 w-10 rounded-xl bg-white border border-sidebar-border shadow-sm flex items-center justify-center p-1 overflow-hidden flex-shrink-0">
-            <img
-              src="/logo.png"
-              alt="CustBox360 Logo"
-              className="w-full h-full object-contain"
-            />
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isMobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden transition-opacity"
+          onClick={closeMobileSidebar}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 w-[260px] bg-sidebar-bg border-r border-sidebar-border h-screen flex flex-col justify-between p-[18px_12px] select-none z-50 transition-transform duration-300 ease-in-out lg:static lg:w-[232px] lg:translate-x-0 lg:z-30 flex-shrink-0 ${
+          isMobileSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex flex-col gap-5 overflow-y-auto custom-scrollbar">
+          {/* Framed Logo & Mobile Close Button */}
+          <div className="flex items-center justify-between px-1 py-1">
+            <div className="flex items-center gap-2.5">
+              <div className="h-10 w-10 rounded-xl bg-white border border-sidebar-border shadow-sm flex items-center justify-center p-1 overflow-hidden flex-shrink-0">
+                <img
+                  src="/logo.png"
+                  alt="CustBox360 Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="font-extrabold text-[17px] text-[#0F2B4D] tracking-tight leading-none">
+                  CustBox360
+                </span>
+                <span className="text-[10px] text-sidebar-label font-medium tracking-wide mt-0.5">
+                  CDP & Activity
+                </span>
+              </div>
+            </div>
+
+            {/* Close button for mobile drawer */}
+            <button
+              type="button"
+              onClick={closeMobileSidebar}
+              aria-label="ปิดเมนูการนำทาง"
+              className="lg:hidden p-1.5 text-slate-500 hover:text-slate-800 hover:bg-black/5 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <div className="flex flex-col min-w-0">
-            <span className="font-extrabold text-[17px] text-[#0F2B4D] tracking-tight leading-none">
-              CustBox360
-            </span>
-            <span className="text-[10px] text-sidebar-label font-medium tracking-wide mt-0.5">
-              CDP & Activity
-            </span>
-          </div>
-        </div>
 
         {/* Navigation Sections */}
         <div className="flex flex-col gap-4">
@@ -321,5 +351,6 @@ export const Sidebar: React.FC = () => {
         )}
       </div>
     </aside>
-  );
+  </>
+);
 };
