@@ -88,8 +88,14 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
                         {c.initials}
                       </div>
                       <div className="min-w-0">
-                        <div className="font-semibold text-text-primary group-hover:text-brand transition-colors truncate">
-                          {c.name}
+                        <div className="font-semibold text-text-primary group-hover:text-brand transition-colors truncate flex items-center gap-1.5">
+                          <span>{c.name}</span>
+                          {c.customerType === 'CORPORATE' && (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-blue-600 font-medium shrink-0">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                              <span>องค์กร</span>
+                            </span>
+                          )}
                         </div>
                         <div className="text-[11px] text-text-secondary flex items-center gap-2 mt-0.5">
                           <span className="font-mono text-slate-500">{c.id}</span>

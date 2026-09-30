@@ -2,9 +2,53 @@ export type TierType = 'MEMBER' | 'SILVER' | 'GOLD' | 'PLATINUM';
 export type CreditGrade = 'A' | 'B' | 'C' | 'D';
 export type ChannelType = 'LINE' | 'Facebook' | '3CX' | 'Web form' | 'Sales rep' | 'Email';
 
+export type CustomerType = 'INDIVIDUAL' | 'CORPORATE';
+
+export interface ContactPerson {
+  id: string;
+  name: string;
+  roleOrTitle: string; // e.g. "ผู้จัดการฝ่ายจัดซื้อ", "เจ้าหน้าที่บัญชีและการเงิน"
+  phone: string;
+  email?: string;
+  lineId?: string;
+  isPrimary: boolean;
+  notes?: string;
+}
+
+export type AddressType = 'BILLING' | 'SHIPPING' | 'OFFICE' | 'WAREHOUSE' | 'BRANCH' | 'OTHER';
+
+export interface CustomerAddress {
+  id: string;
+  type: AddressType;
+  title: string; // e.g. "สำนักงานใหญ่ สาทร", "คลังสินค้าบางพลี (ประตู 3)"
+  receiverName?: string;
+  receiverPhone?: string;
+  addressLine1: string; // เลขที่ ซอย ถนน อาคาร
+  subdistrict: string;  // ตำบล / แขวง
+  district: string;     // อำเภอ / เขต
+  province: string;     // จังหวัด
+  postalCode: string;   // รหัสไปรษณีย์
+  taxId?: string;       // สำหรับใบกำกับภาษี
+  branchCode?: string;  // เช่น "00000" (สำนักงานใหญ่) หรือ "00001"
+  latitude?: number;
+  longitude?: number;
+  googlePlaceId?: string;
+  formattedAddress?: string;
+  mapUrl?: string;
+  isDefaultBilling?: boolean;
+  isDefaultShipping?: boolean;
+  deliveryNotes?: string; // ข้อจำกัดจัดส่ง เช่น "เข้าได้เฉพาะรถ 4 ล้อ, เปิดรับ 08:30 - 16:30 น."
+}
+
 export interface Customer {
   id: string; // e.g. "C00123"
-  name: string; // e.g. "สมชาย ใจดี"
+  name: string; // e.g. "สมชาย ใจดี" หรือ "บจก. นำชัยการพิมพ์"
+  customerType?: CustomerType; // 'INDIVIDUAL' | 'CORPORATE'
+  companyName?: string;
+  taxId?: string;
+  branchCode?: string;
+  contacts?: ContactPerson[];
+  addresses?: CustomerAddress[];
   avatar?: string;
   initials: string;
   tier: TierType;

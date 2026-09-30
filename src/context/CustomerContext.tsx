@@ -1,5 +1,19 @@
 import React, { createContext, useContext, useState } from 'react';
-import { Customer, Deal, Ticket, Conversation, CreditLimitRequest, Segment, TimelineEvent, TaskDetails, TierType, CreditGrade } from '../types';
+import {
+  Customer,
+  Deal,
+  Ticket,
+  Conversation,
+  CreditLimitRequest,
+  Segment,
+  TimelineEvent,
+  TaskDetails,
+  TierType,
+  CreditGrade,
+  CustomerType,
+  ContactPerson,
+  CustomerAddress,
+} from '../types';
 import { mockCustomers } from '../data/customers';
 import { mockDeals } from '../data/deals';
 import { mockTickets } from '../data/tickets';
@@ -50,7 +64,20 @@ interface CustomerContextType {
     tier: TierType;
     creditGrade: CreditGrade;
     creditLimit?: number;
+    customerType?: CustomerType;
+    companyName?: string;
+    taxId?: string;
+    branchCode?: string;
+    contacts?: ContactPerson[];
+    addresses?: CustomerAddress[];
   }) => Customer;
+  addContact: (customerId: string, contact: Omit<ContactPerson, 'id'>) => void;
+  updateContact: (customerId: string, contact: ContactPerson) => void;
+  deleteContact: (customerId: string, contactId: string) => void;
+  addAddress: (customerId: string, address: Omit<CustomerAddress, 'id'>) => void;
+  updateAddress: (customerId: string, address: CustomerAddress) => void;
+  deleteAddress: (customerId: string, addressId: string) => void;
+  setDefaultAddress: (customerId: string, addressId: string, type: 'billing' | 'shipping') => void;
 }
 
 const CustomerContext = createContext<CustomerContextType | undefined>(undefined);
@@ -369,6 +396,139 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     );
   };
 
+  const addContact = (customerId: string, contactData: Omit<ContactPerson, 'id'>) => {
+    const newContact: ContactPerson = {
+      ...contactData,
+      id: `cnt-${Date.now()}`,
+    };
+    setCustomers(prev =>
+      prev.map(c => {
+        if (c.id === customerId) {
+          const existing = c.contacts || [];
+          const updatedContacts = newContact.isPrimary
+            ? existing.map(cnt => ({ ...cnt, isPrimary: false })).concat(newContact)
+            : [...existing, newContact];
+          return { ...c, contacts: updatedContacts };
+        }
+        return c;
+      })
+    );
+  };
+
+  const updateContact = (customerId: string, updatedContact: ContactPerson) => {
+    setCustomers(prev =>
+      prev.map(c => {
+        if (c.id === customerId) {
+          const existing = c.contacts || [];
+          const updatedContacts = existing.map(cnt => {
+            if (cnt.id === updatedContact.id) {
+              return updatedContact;
+            }
+            if (updatedContact.isPrimary && cnt.isPrimary) {
+              return { ...cnt, isPrimary: false };
+            }
+            return cnt;
+          });
+          return { ...c, contacts: updatedContacts };
+        }
+        return c;
+      })
+    );
+  };
+
+  const deleteContact = (customerId: string, contactId: string) => {
+    setCustomers(prev =>
+      prev.map(c => {
+        if (c.id === customerId) {
+          return {
+            ...c,
+            contacts: (c.contacts || []).filter(cnt => cnt.id !== contactId),
+          };
+        }
+        return c;
+      })
+    );
+  };
+
+  const addAddress = (customerId: string, addressData: Omit<CustomerAddress, 'id'>) => {
+    const newAddress: CustomerAddress = {
+      ...addressData,
+      id: `addr-${Date.now()}`,
+    };
+    setCustomers(prev =>
+      prev.map(c => {
+        if (c.id === customerId) {
+          const existing = c.addresses || [];
+          let updated = existing;
+          if (newAddress.isDefaultBilling) {
+            updated = updated.map(a => ({ ...a, isDefaultBilling: false }));
+          }
+          if (newAddress.isDefaultShipping) {
+            updated = updated.map(a => ({ ...a, isDefaultShipping: false }));
+          }
+          return { ...c, addresses: [...updated, newAddress] };
+        }
+        return c;
+      })
+    );
+  };
+
+  const updateAddress = (customerId: string, updatedAddress: CustomerAddress) => {
+    setCustomers(prev =>
+      prev.map(c => {
+        if (c.id === customerId) {
+          const existing = c.addresses || [];
+          const updated = existing.map(a => {
+            if (a.id === updatedAddress.id) {
+              return updatedAddress;
+            }
+            let modified = { ...a };
+            if (updatedAddress.isDefaultBilling && modified.isDefaultBilling) {
+              modified.isDefaultBilling = false;
+            }
+            if (updatedAddress.isDefaultShipping && modified.isDefaultShipping) {
+              modified.isDefaultShipping = false;
+            }
+            return modified;
+          });
+          return { ...c, addresses: updated };
+        }
+        return c;
+      })
+    );
+  };
+
+  const deleteAddress = (customerId: string, addressId: string) => {
+    setCustomers(prev =>
+      prev.map(c => {
+        if (c.id === customerId) {
+          return {
+            ...c,
+            addresses: (c.addresses || []).filter(a => a.id !== addressId),
+          };
+        }
+        return c;
+      })
+    );
+  };
+
+  const setDefaultAddress = (customerId: string, addressId: string, type: 'billing' | 'shipping') => {
+    setCustomers(prev =>
+      prev.map(c => {
+        if (c.id === customerId) {
+          const existing = c.addresses || [];
+          const updated = existing.map(a => ({
+            ...a,
+            ...(type === 'billing' ? { isDefaultBilling: a.id === addressId } : {}),
+            ...(type === 'shipping' ? { isDefaultShipping: a.id === addressId } : {}),
+          }));
+          return { ...c, addresses: updated };
+        }
+        return c;
+      })
+    );
+  };
+
   const addCustomer = (customerData: {
     name: string;
     phone: string;
@@ -376,6 +536,12 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     tier: TierType;
     creditGrade: CreditGrade;
     creditLimit?: number;
+    customerType?: CustomerType;
+    companyName?: string;
+    taxId?: string;
+    branchCode?: string;
+    contacts?: ContactPerson[];
+    addresses?: CustomerAddress[];
   }): Customer => {
     const nextNum = customers.length + 124;
     const newId = `C${nextNum.toString().padStart(5, '0')}`;
@@ -384,6 +550,12 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const newCustomer: Customer = {
       id: newId,
       name: customerData.name,
+      customerType: customerData.customerType || 'INDIVIDUAL',
+      companyName: customerData.companyName,
+      taxId: customerData.taxId,
+      branchCode: customerData.branchCode,
+      contacts: customerData.contacts || [],
+      addresses: customerData.addresses || [],
       initials,
       tier: customerData.tier,
       creditGrade: customerData.creditGrade,
@@ -456,6 +628,13 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         searchQuery,
         setSearchQuery,
         addCustomer,
+        addContact,
+        updateContact,
+        deleteContact,
+        addAddress,
+        updateAddress,
+        deleteAddress,
+        setDefaultAddress,
       }}
     >
       {children}

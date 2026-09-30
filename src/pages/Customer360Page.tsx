@@ -25,6 +25,9 @@ import { GradeBadge } from '../components/common/GradeBadge';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { ProgressBar } from '../components/common/ProgressBar';
 import { Modal } from '../components/common/Modal';
+import { ContactsTab } from '../components/customer-360/ContactsTab';
+import { AddressesTab } from '../components/customer-360/AddressesTab';
+import { NewCustomerModal } from '../components/customer-list/NewCustomerModal';
 import { useCustomer } from '../context/CustomerContext';
 import { useToast } from '../context/ToastContext';
 import { TimelineEventType, TierType, CreditGrade } from '../types';
@@ -46,18 +49,11 @@ export const Customer360Page: React.FC = () => {
   } = useCustomer();
 
   // Active tab in middle column
-  const [activeTab, setActiveTab] = useState<'Timeline' | 'Orders' | 'Service' | 'Credit' | 'Segments'>('Timeline');
+  const [activeTab, setActiveTab] = useState<'Timeline' | 'Orders' | 'Service' | 'Credit' | 'Contacts' | 'Addresses' | 'Segments'>('Timeline');
   // Timeline filter
   const [timelineFilter, setTimelineFilter] = useState<string>('ทั้งหมด');
   // Modal for new customer
   const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
-  const [newCustomerForm, setNewCustomerForm] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    tier: 'MEMBER' as TierType,
-    creditGrade: 'B' as CreditGrade,
-  });
 
   // Modal for creating Credit Task
   const [isCreditTaskModalOpen, setIsCreditTaskModalOpen] = useState(false);
@@ -88,22 +84,6 @@ export const Customer360Page: React.FC = () => {
     navigate(`/customers/${custId}`);
     setCustomerSearch('');
     setIsSearchDropdownOpen(false);
-  };
-
-  const handleCreateCustomer = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCustomerForm.name.trim() || !newCustomerForm.phone.trim()) return;
-    const created = addCustomer({
-      name: newCustomerForm.name.trim(),
-      phone: newCustomerForm.phone.trim(),
-      email: newCustomerForm.email.trim(),
-      tier: newCustomerForm.tier,
-      creditGrade: newCustomerForm.creditGrade,
-    });
-    showToast(`เพิ่มลูกค้า "${created.name}" เรียบร้อยแล้ว (${created.id})`, 'success');
-    setIsNewCustomerModalOpen(false);
-    setSelectedCustomerId(created.id);
-    navigate(`/customers/${created.id}`);
   };
 
   const handleCreateCreditTask = () => {
@@ -233,12 +213,23 @@ export const Customer360Page: React.FC = () => {
                 <h2 className="text-[17px] font-bold text-text-primary leading-snug truncate">
                   {customer.name}
                 </h2>
-                <div className="flex items-center gap-2 mt-1.5">
+                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <span className="font-mono text-xs font-semibold text-brand-deep bg-brand-tint/60 px-1.5 py-0.5 rounded">
                     {customer.id}
                   </span>
                   <TierBadge tier={customer.tier} size="sm" />
                   <GradeBadge grade={customer.creditGrade} size="sm" />
+                  {customer.customerType === 'CORPORATE' ? (
+                    <span className="inline-flex items-center gap-1 text-blue-600 font-medium text-[11px]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      <span>องค์กร (B2B)</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-slate-600 font-medium text-[11px]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                      <span>บุคคล (B2C)</span>
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -376,23 +367,34 @@ export const Customer360Page: React.FC = () => {
           {/* ================= MIDDLE COLUMN: TIMELINE & SUB-VIEWS ================= */}
           <div className="bg-white rounded-card border border-border flex flex-col shadow-card overflow-hidden">
             {/* Tabs Header */}
-            <div className="border-b border-border px-5 flex items-center gap-6 bg-white">
-              {(['Timeline', 'Orders', 'Service', 'Credit', 'Segments'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`py-3 text-[13px] font-semibold transition-all relative ${
-                    activeTab === tab
-                      ? 'text-brand'
-                      : 'text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  {tab}
-                  {activeTab === tab && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand rounded-t" />
-                  )}
-                </button>
-              ))}
+            <div className="border-b border-border px-5 flex items-center gap-5 bg-white overflow-x-auto">
+              {(['Timeline', 'Orders', 'Service', 'Credit', 'Contacts', 'Addresses', 'Segments'] as const).map((tab) => {
+                const labelMap: Record<string, string> = {
+                  Timeline: 'Timeline',
+                  Orders: 'Orders',
+                  Service: 'Service',
+                  Credit: 'Credit',
+                  Contacts: `ผู้ติดต่อ (${(customer.contacts || []).length})`,
+                  Addresses: `ที่อยู่ & พิกัด (${(customer.addresses || []).length})`,
+                  Segments: 'Segments',
+                };
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`py-3 text-[13px] font-semibold transition-all relative shrink-0 ${
+                      activeTab === tab
+                        ? 'text-brand'
+                        : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    {labelMap[tab] || tab}
+                    {activeTab === tab && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand rounded-t" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Tab Content */}
@@ -611,6 +613,16 @@ export const Customer360Page: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {/* Sub Tab: Contacts */}
+              {activeTab === 'Contacts' && (
+                <ContactsTab customer={customer} />
+              )}
+
+              {/* Sub Tab: Addresses */}
+              {activeTab === 'Addresses' && (
+                <AddressesTab customer={customer} />
+              )}
             </div>
           </div>
 
@@ -730,95 +742,17 @@ export const Customer360Page: React.FC = () => {
       </div>
 
       {/* Modal: + ลูกค้าใหม่ */}
-      <Modal
+      <NewCustomerModal
         isOpen={isNewCustomerModalOpen}
         onClose={() => setIsNewCustomerModalOpen(false)}
-        title="เพิ่มข้อมูลลูกค้าใหม่ใน CDP"
-        maxWidth="md"
-        footer={
-          <>
-            <button
-              onClick={() => setIsNewCustomerModalOpen(false)}
-              className="px-4 py-2 border border-border rounded-lg text-xs font-medium hover:bg-white transition-colors"
-            >
-              ยกเลิก
-            </button>
-            <button
-              onClick={handleCreateCustomer}
-              className="px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
-            >
-              บันทึกข้อมูล
-            </button>
-          </>
-        }
-      >
-        <form onSubmit={handleCreateCustomer} className="space-y-3.5 text-xs">
-          <div>
-            <label className="block text-text-secondary font-medium mb-1">
-              ชื่อ-นามสกุล / ชื่อองค์กร *
-            </label>
-            <input
-              type="text"
-              required
-              value={newCustomerForm.name}
-              onChange={(e) => setNewCustomerForm({ ...newCustomerForm, name: e.target.value })}
-              placeholder="เช่น บจก. นวัตกรรมสยาม"
-              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-text-secondary font-medium mb-1">เบอร์โทรศัพท์ *</label>
-              <input
-                type="text"
-                required
-                value={newCustomerForm.phone}
-                onChange={(e) => setNewCustomerForm({ ...newCustomerForm, phone: e.target.value })}
-                placeholder="081-xxx-xxxx"
-                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand"
-              />
-            </div>
-            <div>
-              <label className="block text-text-secondary font-medium mb-1">อีเมล</label>
-              <input
-                type="email"
-                value={newCustomerForm.email}
-                onChange={(e) => setNewCustomerForm({ ...newCustomerForm, email: e.target.value })}
-                placeholder="customer@example.com"
-                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-text-secondary font-medium mb-1">ระดับสมาชิก (Tier)</label>
-              <select
-                value={newCustomerForm.tier}
-                onChange={(e) => setNewCustomerForm({ ...newCustomerForm, tier: e.target.value as TierType })}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white"
-              >
-                <option value="MEMBER">MEMBER</option>
-                <option value="SILVER">SILVER</option>
-                <option value="GOLD">GOLD</option>
-                <option value="PLATINUM">PLATINUM</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-text-secondary font-medium mb-1">เกรดสินเชื่อ (Credit Grade)</label>
-              <select
-                value={newCustomerForm.creditGrade}
-                onChange={(e) => setNewCustomerForm({ ...newCustomerForm, creditGrade: e.target.value as CreditGrade })}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white"
-              >
-                <option value="A">Grade A</option>
-                <option value="B">Grade B</option>
-                <option value="C">Grade C</option>
-                <option value="D">Grade D</option>
-              </select>
-            </div>
-          </div>
-        </form>
-      </Modal>
+        onSubmit={(customerData) => {
+          const created = addCustomer(customerData);
+          showToast(`เพิ่มลูกค้า "${created.name}" เรียบร้อยแล้ว (${created.id})`, 'success');
+          setSelectedCustomerId(created.id);
+          navigate(`/customers/${created.id}`);
+          return created;
+        }}
+      />
 
       {/* Modal: สร้าง Task ให้ทีมสินเชื่อ */}
       <Modal
