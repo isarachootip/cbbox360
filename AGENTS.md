@@ -69,3 +69,6 @@
      - `rm -rf` / `Remove-Item -Recurse -Force` on project directories
      - Dropping database tables or migrations without confirmation
    - Verify environment variables and sensitive configuration files (`.env`) are never overwritten or committed.
+
+2. **Automatic Git Commit & Push on Completion**:
+   - **ALWAYS** automatically commit (`git add .` and semantic commit message) and push (`git push origin main`) immediately upon completing and verifying any task (`npm run build`). Do NOT ask the user for permission to push to git.
