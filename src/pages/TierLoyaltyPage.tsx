@@ -54,17 +54,10 @@ export const TierLoyaltyPage: React.FC = () => {
         {/* ================= 4 TIER CARDS ================= */}
         <div className="grid grid-cols-4 gap-4">
           {mockTiersInfo.map((t) => {
-            const borderColors = {
-              MEMBER: 'border-t-[#9AA3AD]',
-              SILVER: 'border-t-[#8C959F]',
-              GOLD: 'border-t-[#C9962E]',
-              PLATINUM: 'border-t-[#6A5CB8]',
-            }[t.tier];
-
             return (
               <div
                 key={t.tier}
-                className={`bg-white rounded-card border border-border p-4 shadow-card flex flex-col justify-between border-t-[4px] ${borderColors}`}
+                className="bg-white rounded-card border border-border p-4 shadow-card flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between">
@@ -130,18 +123,18 @@ export const TierLoyaltyPage: React.FC = () => {
           </div>
 
           {/* จะลง Tier ใน 30 วัน */}
-          <div className="bg-warn-bg border border-warn-border rounded-card p-4 shadow-card flex items-center justify-between text-warn-text">
+          <div className="bg-white rounded-card border border-border p-4 shadow-card flex items-center justify-between">
             <div>
-              <div className="text-xs font-semibold text-[#6E4400]">
+              <div className="text-xs text-text-secondary font-medium">
                 จะลง Tier ใน 30 วัน
               </div>
-              <div className="text-2xl font-extrabold font-mono text-warn-text mt-1">
+              <div className="text-2xl font-extrabold font-mono text-amber-600 mt-1">
                 146
               </div>
             </div>
             <button
               onClick={() => navigate('/segments')}
-              className="px-3 py-1.5 bg-white border border-warn-border rounded-lg text-xs font-bold text-warn-text hover:bg-amber-50/80 transition-all flex items-center gap-1 shadow-xs"
+              className="px-3 py-1.5 bg-white border border-border hover:bg-bg-subtle text-amber-700 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
             >
               <span>Win-back</span>
               <ArrowRight className="w-3.5 h-3.5" />

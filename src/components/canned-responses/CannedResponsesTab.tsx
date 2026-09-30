@@ -311,7 +311,7 @@ export const CannedResponsesTab: React.FC<CannedResponsesTabProps> = ({
                       const linkedRule = botRules.find((r) => r.cannedResponseId === item.id);
                       if (linkedRule) {
                         return (
-                          <div className="flex items-center gap-1.5 text-[11px] text-brand bg-blue-50/80 border border-blue-200/60 px-2 py-0.5 rounded-md font-medium">
+                          <div className="flex items-center gap-1.5 text-[11px] text-brand font-medium">
                             <Bot className="w-3.5 h-3.5" />
                             <span>
                               Bot Auto-Reply: <strong>{linkedRule.name}</strong> ({linkedRule.keywords.slice(0, 2).join(', ')}...)

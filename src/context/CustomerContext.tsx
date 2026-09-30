@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { Customer, Deal, Ticket, Conversation, CreditLimitRequest, Segment, TimelineEvent, TaskDetails } from '../types';
+import { Customer, Deal, Ticket, Conversation, CreditLimitRequest, Segment, TimelineEvent, TaskDetails, TierType, CreditGrade } from '../types';
 import { mockCustomers } from '../data/customers';
 import { mockDeals } from '../data/deals';
 import { mockTickets } from '../data/tickets';
@@ -43,6 +43,14 @@ interface CustomerContextType {
   updateSegmentRules: (segmentId: string, rules: Segment['rules']) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  addCustomer: (customerData: {
+    name: string;
+    phone: string;
+    email: string;
+    tier: TierType;
+    creditGrade: CreditGrade;
+    creditLimit?: number;
+  }) => Customer;
 }
 
 const CustomerContext = createContext<CustomerContextType | undefined>(undefined);
@@ -361,6 +369,64 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     );
   };
 
+  const addCustomer = (customerData: {
+    name: string;
+    phone: string;
+    email: string;
+    tier: TierType;
+    creditGrade: CreditGrade;
+    creditLimit?: number;
+  }): Customer => {
+    const nextNum = customers.length + 124;
+    const newId = `C${nextNum.toString().padStart(5, '0')}`;
+    const initials = customerData.name.trim().slice(0, 2);
+
+    const newCustomer: Customer = {
+      id: newId,
+      name: customerData.name,
+      initials,
+      tier: customerData.tier,
+      creditGrade: customerData.creditGrade,
+      segments: ['New Member'],
+      lifetimeValue: 0,
+      spend12Months: 0,
+      orders12Months: 0,
+      lastOrderDaysAgo: 0,
+      lastOrderCode: '-',
+      lastOrderAmount: 0,
+      tierValidUntil: '31 ธ.ค. 2026',
+      tierProgressPercent: 0,
+      tierTargetSpend: 50000,
+      phone: customerData.phone,
+      fullPhone: customerData.phone,
+      email: customerData.email,
+      channels: {
+        line: true,
+        facebook: false,
+        email: true,
+        sms: false,
+      },
+      birthday: '-',
+      customerSince: 'เมื่อสักครู่',
+      consent: {
+        marketingLine: true,
+        marketingEmail: true,
+        marketingSms: false,
+      },
+      creditLimit: customerData.creditLimit || 50000,
+      creditUsed: 0,
+      creditOverdue: 0,
+      churnRisk: 'ต่ำ',
+      nextBestAction: {
+        description: 'ต้อนรับลูกค้าใหม่และส่งข้อความแนะนำบริการผ่าน LINE',
+        actionLabel: 'ส่งข้อความต้อนรับ',
+      },
+    };
+
+    setCustomers(prev => [newCustomer, ...prev]);
+    return newCustomer;
+  };
+
   return (
     <CustomerContext.Provider
       value={{
@@ -389,6 +455,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateSegmentRules,
         searchQuery,
         setSearchQuery,
+        addCustomer,
       }}
     >
       {children}

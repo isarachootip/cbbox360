@@ -12,42 +12,32 @@ export const TierBadge: React.FC<TierBadgeProps> = ({
   size = 'md',
   showBorderAccent = false,
 }) => {
-  const styles: Record<TierType, { text: string; bg: string; border?: string }> = {
+  const styles: Record<TierType, { text: string }> = {
     MEMBER: {
-      text: 'text-[#4A5058]',
-      bg: 'bg-[#EEF1F5]',
-      border: 'border-[#9AA3AD]',
+      text: 'text-slate-600',
     },
     SILVER: {
-      text: 'text-[#4A5058]',
-      bg: 'bg-[#ECEEF0]',
-      border: 'border-[#8C959F]',
+      text: 'text-slate-600',
     },
     GOLD: {
-      text: 'text-[#7A4F00]',
-      bg: 'bg-[#FBEBC8]',
-      border: 'border-[#C9962E]',
+      text: 'text-amber-700',
     },
     PLATINUM: {
-      text: 'text-[#4A3F8C]',
-      bg: 'bg-[#E9E7F5]',
-      border: 'border-[#6A5CB8]',
+      text: 'text-purple-700',
     },
   };
 
   const sizeClasses = {
-    sm: 'text-[11px] px-2 py-0.5 rounded',
-    md: 'text-[12px] px-2.5 py-0.5 rounded font-semibold tracking-wide',
-    lg: 'text-[13px] px-3 py-1 rounded-md font-bold tracking-wider',
+    sm: 'text-[11px] font-semibold',
+    md: 'text-[12px] font-bold tracking-wide',
+    lg: 'text-[13px] font-bold tracking-wider',
   };
 
   const config = styles[tier] || styles.MEMBER;
 
   return (
     <span
-      className={`inline-flex items-center justify-center uppercase font-mono ${config.bg} ${config.text} ${sizeClasses[size]} ${
-        showBorderAccent ? `border-t-2 ${config.border}` : ''
-      }`}
+      className={`inline-flex items-center justify-center uppercase font-mono ${config.text} ${sizeClasses[size]}`}
     >
       {tier}
     </span>

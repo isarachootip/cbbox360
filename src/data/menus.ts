@@ -5,7 +5,7 @@ export const initialMenuItems: MenuItemConfig[] = [
   {
     id: 'menu-customer360',
     name: 'Customer 360',
-    path: '/customers/C00123',
+    path: '/customers',
     activeMatch: '/customers',
     icon: 'Users',
     section: 'CDP',

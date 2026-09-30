@@ -27,6 +27,7 @@ import {
 import { PageHeader } from '../components/layout/PageHeader';
 import { KpiTile } from '../components/common/KpiTile';
 import { Modal } from '../components/common/Modal';
+import { RoleBadge } from '../components/common/RoleBadge';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { UserAccount, UserRole } from '../types';
@@ -99,21 +100,7 @@ export const UserManagementPage: React.FC = () => {
   const sysAdminCount = users.filter((u) => u.role === 'sysadmin' || u.role === 'admin').length;
 
   const getRoleBadge = (role: UserRole) => {
-    const config: Record<UserRole, { bg: string; text: string; label: string }> = {
-      sysadmin: { bg: 'bg-purple-100 border-purple-300', text: 'text-purple-800', label: 'sysadmin' },
-      admin: { bg: 'bg-blue-100 border-blue-300', text: 'text-blue-800', label: 'admin' },
-      SF_1: { bg: 'bg-emerald-100 border-emerald-300', text: 'text-emerald-800', label: 'SF_1 (Sales)' },
-      SF_2: { bg: 'bg-cyan-100 border-cyan-300', text: 'text-cyan-800', label: 'SF_2 (Service)' },
-      SF_3: { bg: 'bg-amber-100 border-amber-300', text: 'text-amber-800', label: 'SF_3 (Credit)' },
-      supervisor: { bg: 'bg-indigo-100 border-indigo-300', text: 'text-indigo-800', label: 'supervisor' },
-    };
-    const c = config[role] || { bg: 'bg-gray-100 border-gray-300', text: 'text-gray-800', label: role };
-
-    return (
-      <span className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-[11px] font-bold border ${c.bg} ${c.text}`}>
-        {c.label}
-      </span>
-    );
+    return <RoleBadge role={role} />;
   };
 
   // Handlers
@@ -418,8 +405,8 @@ export const UserManagementPage: React.FC = () => {
                                 <div className="font-bold text-text-primary flex items-center gap-1.5">
                                   <span>{u.name}</span>
                                   {isCurrent && (
-                                    <span className="text-[10px] bg-brand text-white px-1.5 py-0.2 rounded font-semibold">
-                                      คุณ (You)
+                                    <span className="text-[11px] text-brand font-semibold">
+                                      (You)
                                     </span>
                                   )}
                                 </div>
@@ -555,12 +542,12 @@ export const UserManagementPage: React.FC = () => {
                   {modulesList.map((m, idx) => (
                     <tr key={idx} className="hover:bg-bg-subtle">
                       <td className="px-4 py-2.5 font-bold text-text-primary">{m.name}</td>
-                      <td className="px-3 py-2.5 text-center font-medium bg-purple-50/30 text-purple-900">{m.sysadmin}</td>
-                      <td className="px-3 py-2.5 text-center font-medium bg-blue-50/30 text-blue-900">{m.admin}</td>
-                      <td className="px-3 py-2.5 text-center font-medium">{m.SF_1}</td>
-                      <td className="px-3 py-2.5 text-center font-medium">{m.SF_2}</td>
-                      <td className="px-3 py-2.5 text-center font-medium">{m.SF_3}</td>
-                      <td className="px-3 py-2.5 text-center font-medium bg-indigo-50/30 text-indigo-900">{m.supervisor}</td>
+                      <td className="px-3 py-2.5 text-center font-medium text-purple-700">{m.sysadmin}</td>
+                      <td className="px-3 py-2.5 text-center font-medium text-blue-700">{m.admin}</td>
+                      <td className="px-3 py-2.5 text-center font-medium text-emerald-700">{m.SF_1}</td>
+                      <td className="px-3 py-2.5 text-center font-medium text-cyan-700">{m.SF_2}</td>
+                      <td className="px-3 py-2.5 text-center font-medium text-amber-700">{m.SF_3}</td>
+                      <td className="px-3 py-2.5 text-center font-medium text-indigo-700">{m.supervisor}</td>
                     </tr>
                   ))}
                 </tbody>

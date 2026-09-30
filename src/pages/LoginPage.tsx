@@ -59,12 +59,12 @@ export const LoginPage: React.FC = () => {
   };
 
   const demoAccounts = [
-    { username: 'sysadmin', role: 'sysadmin', label: 'System Admin', color: 'bg-purple-100 text-purple-800 border-purple-200', desc: 'ดูแลระบบสูงสุด + จัดการสิทธิ์/ผู้ใช้' },
-    { username: 'admin', role: 'admin', label: 'Admin', color: 'bg-blue-100 text-blue-800 border-blue-200', desc: 'ผู้ดูแลระบบและโมดูล' },
-    { username: 'SF_1', role: 'SF_1', label: 'Sales Force 1', color: 'bg-emerald-100 text-emerald-800 border-emerald-200', desc: 'ทีมขาย / Sales Pipeline' },
-    { username: 'SF_2', role: 'SF_2', label: 'Sales Force 2', color: 'bg-cyan-100 text-cyan-800 border-cyan-200', desc: 'บริการลูกค้า / Inbox & Case' },
-    { username: 'SF_3', role: 'SF_3', label: 'Sales Force 3', color: 'bg-amber-100 text-amber-800 border-amber-200', desc: 'สินเชื่อ / Credit Sales' },
-    { username: 'supervisor', role: 'supervisor', label: 'Supervisor', color: 'bg-indigo-100 text-indigo-800 border-indigo-200', desc: 'หัวหน้างานกำกับดูแล' },
+    { username: 'sysadmin', role: 'sysadmin', label: 'System Admin', color: 'text-purple-700', desc: 'ดูแลระบบสูงสุด + จัดการสิทธิ์/ผู้ใช้' },
+    { username: 'admin', role: 'admin', label: 'Admin', color: 'text-blue-700', desc: 'ผู้ดูแลระบบและโมดูล' },
+    { username: 'SF_1', role: 'SF_1', label: 'Sales Force 1', color: 'text-emerald-700', desc: 'ทีมขาย / Sales Pipeline' },
+    { username: 'SF_2', role: 'SF_2', label: 'Sales Force 2', color: 'text-cyan-700', desc: 'บริการลูกค้า / Inbox & Case' },
+    { username: 'SF_3', role: 'SF_3', label: 'Sales Force 3', color: 'text-amber-700', desc: 'สินเชื่อ / Credit Sales' },
+    { username: 'supervisor', role: 'supervisor', label: 'Supervisor', color: 'text-indigo-700', desc: 'หัวหน้างานกำกับดูแล' },
   ];
 
   return (
@@ -201,7 +201,7 @@ export const LoginPage: React.FC = () => {
                         <span className="font-mono font-bold text-xs text-text-primary">
                           {acc.username}
                         </span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold border ${acc.color}`}>
+                        <span className={`text-[11px] font-semibold ${acc.color}`}>
                           {acc.label}
                         </span>
                       </div>

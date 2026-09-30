@@ -87,6 +87,9 @@ export const Sidebar: React.FC = () => {
   };
 
   const getResolvedPath = (item: MenuItemConfig) => {
+    if (item.id === 'menu-customer360') {
+      return '/customers';
+    }
     if (item.path.includes('/customers/')) {
       return `/customers/${selectedCustomerId || 'C00123'}`;
     }

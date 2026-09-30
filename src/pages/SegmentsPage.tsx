@@ -376,7 +376,7 @@ export const SegmentsPage: React.FC = () => {
                         {m.spend}
                       </td>
                       <td className="px-3 py-2.5 text-center">
-                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium">
                           ✓ ยินยอม
                         </span>
                       </td>

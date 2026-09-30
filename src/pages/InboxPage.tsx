@@ -379,7 +379,7 @@ export const InboxPage: React.FC = () => {
                 <span className="font-bold text-[14px] sm:text-[15px] text-text-primary truncate">
                   {selectedConv.customerName}
                 </span>
-                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-medium flex-shrink-0">
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-emerald-700 flex-shrink-0">
                   {selectedConv.channel} · {selectedConv.channelAccount}
                 </span>
               </div>
@@ -838,8 +838,8 @@ export const InboxPage: React.FC = () => {
                     onClick={() => setSelectedCannedGroup('greeting')}
                     className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 ${
                       selectedCannedGroup === 'greeting'
-                        ? 'bg-purple-600 text-white shadow-2xs'
-                        : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                        ? 'bg-brand text-white shadow-2xs'
+                        : 'bg-white text-purple-700 hover:bg-bg-subtle border border-border'
                     }`}
                   >
                     <span>👋</span>
@@ -849,8 +849,8 @@ export const InboxPage: React.FC = () => {
                     onClick={() => setSelectedCannedGroup('question')}
                     className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 ${
                       selectedCannedGroup === 'question'
-                        ? 'bg-amber-600 text-white shadow-2xs'
-                        : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
+                        ? 'bg-brand text-white shadow-2xs'
+                        : 'bg-white text-amber-700 hover:bg-bg-subtle border border-border'
                     }`}
                   >
                     <span>❓</span>
@@ -860,8 +860,8 @@ export const InboxPage: React.FC = () => {
                     onClick={() => setSelectedCannedGroup('answer')}
                     className={`text-[11px] px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 ${
                       selectedCannedGroup === 'answer'
-                        ? 'bg-emerald-600 text-white shadow-2xs'
-                        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                        ? 'bg-brand text-white shadow-2xs'
+                        : 'bg-white text-emerald-700 hover:bg-bg-subtle border border-border'
                     }`}
                   >
                     <span>💡</span>

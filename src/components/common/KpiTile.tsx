@@ -21,18 +21,18 @@ export const KpiTile: React.FC<KpiTileProps> = ({
 }) => {
   const variantStyles = {
     default: 'bg-white border-border text-text-primary',
-    highlight: 'bg-bg-subtle border-border text-text-primary',
-    warning: 'bg-warn-bg border-warn-border text-warn-text',
-    danger: 'bg-danger-bg border-danger-border text-danger-text',
-    success: 'bg-success-bg border-emerald-200 text-success-text',
+    highlight: 'bg-white border-border text-text-primary',
+    warning: 'bg-white border-border text-text-primary',
+    danger: 'bg-white border-border text-text-primary',
+    success: 'bg-white border-border text-text-primary',
   };
 
   const valueColors = {
     default: 'text-text-primary',
     highlight: 'text-brand-deep',
-    warning: 'text-warn-text',
-    danger: 'text-danger-text',
-    success: 'text-success-text',
+    warning: 'text-amber-600',
+    danger: 'text-rose-600',
+    success: 'text-emerald-600',
   };
 
   return (

@@ -11,6 +11,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
 import { UserManagementPage } from './pages/UserManagementPage';
 import { MenuManagementPage } from './pages/MenuManagementPage';
+import { CustomerListPage } from './pages/CustomerListPage';
 import { Customer360Page } from './pages/Customer360Page';
 import { InboxPage } from './pages/InboxPage';
 import { CannedResponsesPage } from './pages/CannedResponsesPage';
@@ -48,7 +49,8 @@ export const App: React.FC = () => {
 
                       {/* Protected Routes */}
                       <Route path="/" element={<ProtectedLayout />}>
-                        <Route index element={<Navigate to="/customers/C00123" replace />} />
+                        <Route index element={<Navigate to="/customers" replace />} />
+                        <Route path="customers" element={<CustomerListPage />} />
                         <Route path="customers/:id" element={<Customer360Page />} />
                         <Route path="inbox" element={<InboxPage />} />
                         <Route path="canned-responses" element={<CannedResponsesPage />} />

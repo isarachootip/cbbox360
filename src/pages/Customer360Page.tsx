@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Search,
   Plus,
@@ -42,6 +42,7 @@ export const Customer360Page: React.FC = () => {
     tickets,
     creditRequests,
     addTicket,
+    addCustomer,
   } = useCustomer();
 
   // Active tab in middle column
@@ -91,8 +92,18 @@ export const Customer360Page: React.FC = () => {
 
   const handleCreateCustomer = (e: React.FormEvent) => {
     e.preventDefault();
-    showToast(`เพิ่มลูกค้า "${newCustomerForm.name}" เรียบร้อยแล้ว`, 'success');
+    if (!newCustomerForm.name.trim() || !newCustomerForm.phone.trim()) return;
+    const created = addCustomer({
+      name: newCustomerForm.name.trim(),
+      phone: newCustomerForm.phone.trim(),
+      email: newCustomerForm.email.trim(),
+      tier: newCustomerForm.tier,
+      creditGrade: newCustomerForm.creditGrade,
+    });
+    showToast(`เพิ่มลูกค้า "${created.name}" เรียบร้อยแล้ว (${created.id})`, 'success');
     setIsNewCustomerModalOpen(false);
+    setSelectedCustomerId(created.id);
+    navigate(`/customers/${created.id}`);
   };
 
   const handleCreateCreditTask = () => {
@@ -129,9 +140,21 @@ export const Customer360Page: React.FC = () => {
       <PageHeader
         breadcrumbs={
           <div className="flex items-center gap-2 text-text-secondary text-[13px]">
-            <span>CDP</span>
+            <Link
+              to="/customers"
+              className="hover:text-brand transition-colors cursor-pointer"
+              title="หมวด CDP"
+            >
+              CDP
+            </Link>
             <span>/</span>
-            <span>ลูกค้า</span>
+            <Link
+              to="/customers"
+              className="hover:text-brand hover:underline font-medium transition-colors cursor-pointer"
+              title="กลับไปยังหน้ารายการลูกค้าทั้งหมด"
+            >
+              ลูกค้า
+            </Link>
             <span>/</span>
             <span className="font-bold text-text-primary text-[14px]">
               {customer.name}
@@ -337,13 +360,13 @@ export const Customer360Page: React.FC = () => {
                 </span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700">
                   การตลาด · LINE <Check className="w-3 h-3 text-emerald-600" />
                 </span>
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700">
                   การตลาด · Email <Check className="w-3 h-3 text-emerald-600" />
                 </span>
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-rose-600">
                   การตลาด · SMS <X className="w-3 h-3 text-rose-500" />
                 </span>
               </div>
@@ -481,7 +504,7 @@ export const Customer360Page: React.FC = () => {
                           <td className="px-3 py-2.5 font-mono font-bold text-brand">SO-10482</td>
                           <td className="px-3 py-2.5 text-text-secondary">14 ก.ย. 2026</td>
                           <td className="px-3 py-2.5 text-text-primary">หมึกพิมพ์แท้ x 6 ชุด</td>
-                          <td className="px-3 py-2.5"><span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 text-[10px]">Sales rep</span></td>
+                          <td className="px-3 py-2.5"><span className="text-amber-700 text-[11px] font-medium">Sales rep</span></td>
                           <td className="px-3 py-2.5 text-right font-mono font-bold">฿8,950</td>
                           <td className="px-3 py-2.5 text-center"><span className="text-emerald-700">30 วัน</span></td>
                         </tr>
@@ -489,7 +512,7 @@ export const Customer360Page: React.FC = () => {
                           <td className="px-3 py-2.5 font-mono font-bold text-brand">SO-10398</td>
                           <td className="px-3 py-2.5 text-text-secondary">28 ส.ค. 2026</td>
                           <td className="px-3 py-2.5 text-text-primary">กระดาษการ์ดพิมพ์ A3 x 20 รีม</td>
-                          <td className="px-3 py-2.5"><span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px]">LINE</span></td>
+                          <td className="px-3 py-2.5"><span className="text-emerald-700 text-[11px] font-medium">LINE</span></td>
                           <td className="px-3 py-2.5 text-right font-mono font-bold">฿14,200</td>
                           <td className="px-3 py-2.5 text-center"><span className="text-emerald-700">30 วัน</span></td>
                         </tr>
@@ -497,7 +520,7 @@ export const Customer360Page: React.FC = () => {
                           <td className="px-3 py-2.5 font-mono font-bold text-brand">SO-10320</td>
                           <td className="px-3 py-2.5 text-text-secondary">10 ส.ค. 2026</td>
                           <td className="px-3 py-2.5 text-text-primary">หัวพิมพ์สำรอง + บริการล้างหัวพิมพ์</td>
-                          <td className="px-3 py-2.5"><span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-800 text-[10px]">3CX</span></td>
+                          <td className="px-3 py-2.5"><span className="text-blue-700 text-[11px] font-medium">3CX</span></td>
                           <td className="px-3 py-2.5 text-right font-mono font-bold">฿22,500</td>
                           <td className="px-3 py-2.5 text-center"><span className="text-emerald-700">30 วัน</span></td>
                         </tr>
@@ -643,9 +666,7 @@ export const Customer360Page: React.FC = () => {
                   {customerTicket.id} · {customerTicket.title}
                 </div>
                 <div className="flex items-center justify-between mt-2 text-xs">
-                  <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 text-[11px] font-medium border border-amber-200">
-                    {customerTicket.status}
-                  </span>
+                  <StatusBadge status={customerTicket.status} />
                   <span className="text-warn-text font-medium text-[11px]">
                     SLA เหลือ {customerTicket.slaFormatted}
                   </span>
