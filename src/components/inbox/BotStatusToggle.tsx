@@ -38,11 +38,11 @@ export const BotStatusToggle: React.FC<BotStatusToggleProps> = ({
       }
     >
       <span
-        className={`w-1.5 h-1.5 rounded-full ${
+        className={`w-2 h-2 rounded-full flex-shrink-0 ${
           isBotActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
         }`}
       />
-      <span>{isBotActive ? '● Bot Active' : '● Bot Paused (แอดมินดูแล)'}</span>
+      <span>{isBotActive ? 'Bot Active' : 'Bot Paused (แอดมินดูแล)'}</span>
     </button>
   );
 };

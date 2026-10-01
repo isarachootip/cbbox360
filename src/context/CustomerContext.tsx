@@ -49,6 +49,7 @@ interface CustomerContextType {
     isPrivate?: boolean
   ) => Promise<{ success: boolean; lineDelivery?: { success: boolean; error?: string } }>;
   toggleBotStatus: (convId: string, isBotActive: boolean) => Promise<void>;
+  updateConversationLineUserId: (convId: string, lineUserId: string) => Promise<boolean>;
   retrySendMessage: (convId: string, messageId: string, text: string) => Promise<void>;
   addTaskToConversation: (
     convId: string,
@@ -256,42 +257,27 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (res.ok) {
         const json = await res.json();
         const lineSuccess = json?.lineDelivery?.success !== false;
-        if (!lineSuccess) {
-          setConversations(prev =>
-            prev.map(c => {
-              if (c.id === convId) {
-                return {
-                  ...c,
-                  messages: c.messages.map(m =>
-                    m.id === tempMsgId
-                      ? {
-                          ...m,
-                          id: json?.message?.id || m.id,
-                          deliveryStatus: 'failed',
-                          failureReason: json?.lineDelivery?.error || 'LINE Push delivery failed',
-                        }
-                      : m
-                  ),
-                };
-              }
-              return c;
-            })
-          );
-        } else if (json?.message?.id) {
-          setConversations(prev =>
-            prev.map(c => {
-              if (c.id === convId) {
-                return {
-                  ...c,
-                  messages: c.messages.map(m =>
-                    m.id === tempMsgId ? { ...m, id: json.message.id, deliveryStatus: 'delivered' } : m
-                  ),
-                };
-              }
-              return c;
-            })
-          );
-        }
+        setConversations(prev =>
+          prev.map(c => {
+            if (c.id === convId) {
+              return {
+                ...c,
+                isBotActive: isPrivate ? c.isBotActive : false,
+                messages: c.messages.map(m =>
+                  m.id === tempMsgId
+                    ? {
+                        ...m,
+                        id: json?.message?.id || m.id,
+                        deliveryStatus: lineSuccess ? 'delivered' : 'failed',
+                        failureReason: lineSuccess ? undefined : json?.lineDelivery?.error || 'LINE Push delivery failed',
+                      }
+                    : m
+                ),
+              };
+            }
+            return c;
+          })
+        );
         return { success: true, lineDelivery: json?.lineDelivery };
       } else {
         const errJson = await res.json().catch(() => ({}));
@@ -343,6 +329,27 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
     } catch (err) {
       console.error('Failed to toggle bot status on server', err);
+    }
+  };
+
+  const updateConversationLineUserId = async (convId: string, lineUserId: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/conversations/${convId}/line-user`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineUserId: lineUserId.trim() }),
+      });
+
+      if (res.ok) {
+        setConversations(prev =>
+          prev.map(c => (c.id === convId ? { ...c, lineUserId: lineUserId.trim() } : c))
+        );
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Failed to update line user id on server', err);
+      return false;
     }
   };
 
@@ -795,6 +802,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateConversationStatus,
         addMessageToConversation,
         toggleBotStatus,
+        updateConversationLineUserId,
         retrySendMessage,
         addTaskToConversation,
         updateTaskStatus,

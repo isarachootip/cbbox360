@@ -23,6 +23,7 @@ import {
   Menu,
   ArrowLeft,
   X,
+  Edit3,
 } from 'lucide-react';
 import { useCustomer } from '../context/CustomerContext';
 import { useCannedResponses, CATEGORIES_CONFIG } from '../context/CannedResponseContext';
@@ -33,6 +34,7 @@ import { TierBadge } from '../components/common/TierBadge';
 import { CustomerSideCard } from '../components/common/CustomerSideCard';
 import { BotStatusToggle } from '../components/inbox/BotStatusToggle';
 import { ChatMessageItem } from '../components/inbox/ChatMessageItem';
+import { LineUserIdModal } from '../components/inbox/LineUserIdModal';
 import { CannedResponse, CannedResponseCategory } from '../types';
 
 export const InboxPage: React.FC = () => {
@@ -45,6 +47,7 @@ export const InboxPage: React.FC = () => {
     updateConversationStatus,
     addMessageToConversation,
     toggleBotStatus,
+    updateConversationLineUserId,
     retrySendMessage,
     addTaskToConversation,
     updateTaskStatus,
@@ -62,6 +65,7 @@ export const InboxPage: React.FC = () => {
   const [selectedConvId, setSelectedConvId] = useState<string>('conv-1');
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
   const [isCustomerDetailOpen, setIsCustomerDetailOpen] = useState(false);
+  const [isLineIdModalOpen, setIsLineIdModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'Open' | 'Pending' | 'Snoozed' | 'Resolved'>('Open');
   const [tabFilter, setTabFilter] = useState<'Mine' | 'Unassigned' | 'All'>('Mine');
   const [searchQuery, setSearchQuery] = useState('');
@@ -183,6 +187,16 @@ export const InboxPage: React.FC = () => {
         : 'หยุดการทำงานของ Bot ในห้องแชทนี้แล้ว (แอดมินดูแล)',
       'info'
     );
+  };
+
+  const handleSaveLineUserId = async (newId: string): Promise<boolean> => {
+    const success = await updateConversationLineUserId(selectedConv.id, newId);
+    if (success) {
+      showToast('บันทึกและผูก LINE User ID สำเร็จ', 'success');
+      return true;
+    }
+    showToast('เกิดข้อผิดพลาดในการบันทึก LINE User ID', 'error');
+    return false;
   };
 
   const handleCreateTaskSubmit = (e?: React.FormEvent) => {
@@ -404,6 +418,30 @@ export const InboxPage: React.FC = () => {
                 <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-emerald-700 flex-shrink-0">
                   {selectedConv.channel} · {selectedConv.channelAccount}
                 </span>
+                {selectedConv.channel === 'LINE' && (
+                  selectedConv.lineUserId ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsLineIdModalOpen(true)}
+                      className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-emerald-700 hover:text-emerald-800 transition-colors cursor-pointer"
+                      title={`LINE User ID: ${selectedConv.lineUserId} (คลิกเพื่อแก้ไข)`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      <span>LINE ผูกแล้ว</span>
+                      <Edit3 className="w-2.5 h-2.5 opacity-60" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsLineIdModalOpen(true)}
+                      className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-amber-600 hover:text-amber-700 transition-colors cursor-pointer"
+                      title="ห้องนี้ยังไม่มี LINE User ID คลิกเพื่อผูก ID ทดสอบส่งข้อความ"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      <span>ยังไม่ผูก LINE ID (คลิกเพื่อผูก)</span>
+                    </button>
+                  )
+                )}
               </div>
               <div className="text-[10px] sm:text-[11px] text-text-secondary mt-0.5 truncate">
                 มอบหมาย: {selectedConv.assignedTo} · ทีม {selectedConv.team} · #{selectedConv.id}
@@ -897,6 +935,18 @@ export const InboxPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* LINE User ID Setting Modal */}
+      {selectedConv && (
+        <LineUserIdModal
+          isOpen={isLineIdModalOpen}
+          onClose={() => setIsLineIdModalOpen(false)}
+          conversationId={selectedConv.id}
+          customerName={selectedConv.customerName}
+          currentLineUserId={selectedConv.lineUserId}
+          onSave={handleSaveLineUserId}
+        />
       )}
     </div>
   );

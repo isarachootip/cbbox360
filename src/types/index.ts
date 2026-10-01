@@ -242,6 +242,7 @@ export interface Conversation {
   messages: ChatMessage[];
   tabGroup: 'Mine' | 'Unassigned' | 'All';
   isBotActive?: boolean;
+  lineUserId?: string;
 }
 
 export interface CreditAccount {

@@ -51,11 +51,20 @@ export const sendMessage = async (req, res) => {
     let deliveryStatus = 'delivered';
     let failureReason = null;
 
-    if (!isPrivate && conv.line_user_id) {
-      lineDelivery = await sendLinePush(conv.line_user_id, text.trim());
-      if (!lineDelivery.success) {
+    if (!isPrivate && conv.channel === 'LINE') {
+      if (!conv.line_user_id) {
+        lineDelivery = {
+          success: false,
+          error: 'ห้องแชทนี้ยังไม่ได้ระบุ LINE User ID (ไม่สามารถส่งข้อความเข้า LINE ได้)',
+        };
         deliveryStatus = 'failed';
-        failureReason = lineDelivery.error || 'LINE Push delivery failed';
+        failureReason = 'ห้องแชทนี้ยังไม่ได้ระบุ LINE User ID (ไม่สามารถส่งข้อความเข้า LINE ได้)';
+      } else {
+        lineDelivery = await sendLinePush(conv.line_user_id, text.trim());
+        if (!lineDelivery || !lineDelivery.success) {
+          deliveryStatus = 'failed';
+          failureReason = lineDelivery?.error || 'LINE Push delivery failed';
+        }
       }
     }
 
@@ -120,6 +129,34 @@ export const toggleBotStatus = async (req, res) => {
     });
   } catch (err) {
     console.error('[PATCH bot-status Error]:', err.message);
+    return res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+};
+
+export const updateLineUserId = async (req, res) => {
+  const { id } = req.params;
+  const { lineUserId } = req.body;
+
+  if (!lineUserId || !lineUserId.trim()) {
+    return res.status(400).json({ error: 'lineUserId string is required' });
+  }
+
+  try {
+    const result = await query(
+      `UPDATE conversations SET line_user_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [lineUserId.trim(), id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      lineUserId: result.rows[0].line_user_id,
+      message: 'LINE User ID updated successfully',
+    });
+  } catch (err) {
+    console.error('[PATCH line-user Error]:', err.message);
     return res.status(500).json({ error: 'Database error', detail: err.message });
   }
 };
