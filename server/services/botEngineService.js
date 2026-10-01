@@ -1,118 +1,9 @@
 import { query } from '../../db.js';
+import { defaultBotSettings } from '../config/defaultBotSettings.js';
+import { generateGeminiReply } from './geminiService.js';
+import { isWithinBusinessHours } from '../utils/timeHelpers.js';
 
-let botSettings = {
-  isEnabled: true,
-  botName: 'CusBox AI Assistant',
-  operatingMode: 'always',
-  welcomeMessageEnabled: true,
-  welcomeCannedResponseId: 'cr-1',
-  offHoursMessageEnabled: true,
-  offHoursText:
-    'สวัสดีค่ะ ขณะนี้นอกเวลาทำการของศูนย์บริการ CusBox360 (เวลาทำการ จ.-ศ. 08:30 - 18:00 น.) คุณลูกค้าสามารถฝากข้อความหรือคำถามไว้ได้เลยนะคะ เจ้าหน้าที่จะรีบติดต่อกลับในเวลาทำการค่ะ 🙏',
-  businessHours: {
-    start: '08:30',
-    end: '18:00',
-    workdays: [1, 2, 3, 4, 5, 6],
-  },
-  humanHandoffEnabled: true,
-  humanHandoffKeywords: [
-    'ติดต่อเจ้าหน้าที่', 'คุยกับคน', 'พนักงาน', 'แอดมิน', 'คุยกับแอดมิน', 'ขอคุยกับคน', 'ติดต่อพนักงาน', 'agent', 'human',
-  ],
-  handoffMessage:
-    'ระบบได้ส่งเรื่องให้เจ้าหน้าที่ฝ่ายบริการลูกค้าเรียบร้อยแล้วค่ะ เจ้าหน้าที่จะเข้ามาดูแลและตอบกลับแชทนี้โดยเร็วที่สุดนะคะ กรุณารอสักครู่ค่ะ 👩‍💼',
-  rules: [
-    {
-      id: 'rule-bank',
-      name: 'แจ้งช่องทางชำระเงินและเลขบัญชี',
-      triggerType: 'keyword',
-      keywords: ['เลขบัญชี', 'โอนเงิน', 'ชำระเงิน', 'จ่ายเงิน', 'ช่องทางชำระ', 'เลขที่บัญชี', 'โอนที่ไหน', 'บัญชี'],
-      matchType: 'contains',
-      cannedResponseId: 'cr-10',
-      isActive: true,
-      priority: 1,
-    },
-    {
-      id: 'rule-tracking',
-      name: 'แจ้งเลขพัสดุและติดตามจัดส่ง',
-      triggerType: 'keyword',
-      keywords: ['เลขพัสดุ', 'พัสดุ', 'ส่งของหรือยัง', 'ส่งของยัง', 'เช็คพัสดุ', 'track', 'tracking', 'ตามของ'],
-      matchType: 'contains',
-      cannedResponseId: 'cr-11',
-      isActive: true,
-      priority: 2,
-    },
-    {
-      id: 'rule-delivery-time',
-      name: 'รอบจัดส่งสินค้าและการตัดรอบ',
-      triggerType: 'keyword',
-      keywords: ['รอบส่ง', 'ตัดรอบ', 'ส่งวันไหน', 'ส่งกี่โมง', 'กี่วันถึง', 'ได้รับเมื่อไหร่', 'รอบจัดส่ง'],
-      matchType: 'contains',
-      cannedResponseId: 'cr-12',
-      isActive: true,
-      priority: 3,
-    },
-    {
-      id: 'rule-slip',
-      name: 'ขอสลิปหลักฐานการโอนเงิน',
-      triggerType: 'keyword',
-      keywords: ['โอนแล้ว', 'ส่งสลิป', 'แนบสลิป', 'จ่ายแล้ว', 'โอนเงินเรียบร้อย'],
-      matchType: 'contains',
-      cannedResponseId: 'cr-6',
-      isActive: true,
-      priority: 4,
-    },
-    {
-      id: 'rule-hours',
-      name: 'สอบถามเวลาทำการและที่ตั้ง',
-      triggerType: 'keyword',
-      keywords: ['เปิดกี่โมง', 'ปิดกี่โมง', 'เวลาทำการ', 'เปิดวันไหน', 'เบอร์ติดต่อ', 'สำนักงาน'],
-      matchType: 'contains',
-      cannedResponseId: 'cr-13',
-      isActive: true,
-      priority: 5,
-    },
-    {
-      id: 'rule-warranty',
-      name: 'ประกันสินค้าและเงื่อนไขเปลี่ยนคืน',
-      triggerType: 'keyword',
-      keywords: ['เคลม', 'ประกัน', 'สินค้าชำรุด', 'เปลี่ยนสินค้า', 'พัง', 'มีประกันไหม', 'สินค้าเสีย', 'ส่งซ่อม'],
-      matchType: 'contains',
-      cannedResponseId: 'cr-14',
-      isActive: true,
-      priority: 6,
-    },
-    {
-      id: 'rule-tax',
-      name: 'ขอใบกำกับภาษีและใบเสร็จรับเงิน',
-      triggerType: 'keyword',
-      keywords: ['ใบกำกับภาษี', 'ใบเสร็จ', 'tax id', 'ออกบิล', 'ขอใบกำกับ', 'ภพ20', 'หัก ณ ที่จ่าย'],
-      matchType: 'contains',
-      cannedResponseId: 'cr-9',
-      isActive: true,
-      priority: 7,
-    },
-    {
-      id: 'rule-credit',
-      name: 'เงื่อนไขการขอเครดิตเทอม',
-      triggerType: 'keyword',
-      keywords: ['เครดิต', 'credit term', 'วงเงินเครดิต', 'ขอเครดิต', 'ขอผ่อน', 'วางบิล'],
-      matchType: 'contains',
-      cannedResponseId: 'cr-15',
-      isActive: true,
-      priority: 8,
-    },
-    {
-      id: 'rule-address',
-      name: 'ขอที่อยู่และเบอร์โทรจัดส่ง',
-      triggerType: 'keyword',
-      keywords: ['ส่งที่ไหน', 'แก้ที่อยู่', 'เปลี่ยนที่อยู่', 'ที่อยู่จัดส่ง'],
-      matchType: 'contains',
-      cannedResponseId: 'cr-5',
-      isActive: true,
-      priority: 9,
-    },
-  ],
-};
+let botSettings = { ...defaultBotSettings };
 
 export const initBotSettingsFromDb = async () => {
   try {
@@ -125,7 +16,7 @@ export const initBotSettingsFromDb = async () => {
     `);
     const res = await query(`SELECT config FROM bot_settings WHERE id = 'default' LIMIT 1`);
     if (res.rows.length > 0 && res.rows[0].config) {
-      botSettings = res.rows[0].config;
+      botSettings = { ...defaultBotSettings, ...res.rows[0].config };
       console.log('🤖 [Bot Settings] Loaded configuration from database');
     } else {
       await query(
@@ -155,10 +46,21 @@ export const updateBotSettings = async (newConfig) => {
   return botSettings;
 };
 
-export const matchBotReply = async (text, isNewConv, customerName) => {
+/**
+ * Matches bot reply with prioritized fallback pipeline:
+ * 1. Human Handoff -> 2. Keyword Rules -> 3. Welcome Message -> 4. Gemini AI -> 5. Fail-Safe Fallback
+ */
+export const matchBotReply = async (
+  text,
+  isNewConv = false,
+  customerName = 'คุณลูกค้า',
+  recentMessages = [],
+  now = new Date()
+) => {
   if (!botSettings || !botSettings.isEnabled) return null;
 
   const cleanText = (text || '').trim().toLowerCase();
+  const isOffHours = !isWithinBusinessHours(now, botSettings.businessHours);
 
   // 1. Human handoff check
   if (botSettings.humanHandoffEnabled) {
@@ -200,9 +102,9 @@ export const matchBotReply = async (text, isNewConv, customerName) => {
         }
         if (reply) {
           reply = reply
-            .replace(/{customer_name}/g, customerName || 'คุณลูกค้า')
-            .replace(/{order_code}/g, 'SO-10482')
-            .replace(/{tracking_no}/g, 'TH2609-88412');
+              .replace(/{customer_name}/g, customerName || 'คุณลูกค้า')
+              .replace(/{order_code}/g, 'SO-10482')
+              .replace(/{tracking_no}/g, 'TH2609-88412');
           return { replyText: reply, type: 'rule', ruleName: rule.name, matchedKeyword: kw };
         }
       }
@@ -229,5 +131,47 @@ export const matchBotReply = async (text, isNewConv, customerName) => {
     }
   }
 
-  return null;
+  // 4. Gemini AI Smart Fallback
+  const geminiKey = botSettings.geminiApiKey || process.env.GEMINI_API_KEY;
+  if (geminiKey) {
+    try {
+      const aiResult = await generateGeminiReply({
+        prompt: text,
+        recentMessages,
+        customerName,
+        isOffHours,
+        apiKey: geminiKey,
+      });
+
+      if (aiResult?.replyText) {
+        return {
+          replyText: aiResult.replyText,
+          type: 'ai',
+          isAi: true,
+          isOffHours,
+        };
+      }
+    } catch (aiErr) {
+      console.warn('[AI Reply Error]:', aiErr.message);
+    }
+  }
+
+  // 5. Fail-Safe Fallback: Never leave the conversation silent
+  if (isOffHours && botSettings.offHoursMessageEnabled && botSettings.offHoursText) {
+    return {
+      replyText: botSettings.offHoursText,
+      type: 'off_hours',
+      isOffHours: true,
+    };
+  }
+
+  const defaultFallback =
+    botSettings.fallbackMessage ||
+    'ขออภัยในความล่าช้าค่ะคุณลูกค้า 🙏 เจ้าหน้าที่ฝ่ายบริการลูกค้าได้รับข้อความแล้วและกำลังเร่งเข้ามาดูแลให้นะคะ';
+
+  return {
+    replyText: defaultFallback.replace(/{customer_name}/g, customerName || 'คุณลูกค้า'),
+    type: 'fallback',
+    isOffHours,
+  };
 };

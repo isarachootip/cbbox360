@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { CannedResponse, BotAutoReplyRule } from '../../types';
 import { useBot } from '../../context/BotContext';
+import { BotAiSettingsCard } from './BotAiSettingsCard';
 
 interface BotAutoReplyTabProps {
   cannedResponses: CannedResponse[];
@@ -194,6 +195,12 @@ export const BotAutoReplyTab: React.FC<BotAutoReplyTabProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Gemini AI Smart Fallback & Off-Hours Configuration */}
+        <BotAiSettingsCard
+          botSettings={botSettings}
+          updateBotSettings={updateBotSettings}
+        />
       </div>
 
       {/* Rules Table */}

@@ -391,6 +391,8 @@ export interface BotSettings {
   humanHandoffEnabled: boolean;
   humanHandoffKeywords: string[];
   handoffMessage: string;
+  fallbackMessage?: string;
+  geminiApiKey?: string;
   rules: BotAutoReplyRule[];
 }
 

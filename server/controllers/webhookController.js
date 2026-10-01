@@ -81,15 +81,30 @@ export const handleLineWebhook = async (req, res) => {
         console.log(`🤖 [Bot Paused]: Skipping auto-reply for conversation ${targetConvId} (Agent active)`);
       } else {
         try {
-          const botReply = await matchBotReply(text, isNew, customerName);
+          // Fetch last 6 recent messages to provide grounding context for AI
+          let recentMessages = [];
+          try {
+            const recentRes = await query(
+              `SELECT sender, text FROM messages WHERE conversation_id = $1 ORDER BY created_at DESC LIMIT 6`,
+              [targetConvId]
+            );
+            recentMessages = (recentRes.rows || []).reverse();
+          } catch (fetchMsgErr) {
+            console.warn('[Fetch Recent Messages Warning]:', fetchMsgErr.message);
+          }
+
+          const botReply = await matchBotReply(text, isNew, customerName, recentMessages);
           if (botReply && botReply.replyText) {
             const botMsgId = `m-bot-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
             const botTimeStr = getThaiTime();
+            const authorTag = botReply.isAi
+              ? '🤖 CusBox AI (Gemini)'
+              : '🤖 CusBox Bot (Auto-Reply)';
 
             // Store bot reply in DB
             await query(
-              `INSERT INTO messages (id, conversation_id, sender, author_name, text, time) VALUES ($1,$2,'agent','🤖 CusBox Bot (Auto-Reply)',$3,$4)`,
-              [botMsgId, targetConvId, botReply.replyText, botTimeStr]
+              `INSERT INTO messages (id, conversation_id, sender, author_name, text, time) VALUES ($1,$2,'agent',$3,$4,$5)`,
+              [botMsgId, targetConvId, authorTag, botReply.replyText, botTimeStr]
             );
 
             // Update conversation preview
