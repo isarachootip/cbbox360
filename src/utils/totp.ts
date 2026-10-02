@@ -125,9 +125,9 @@ export async function generateTotpCode(secret: string, timestamp = Date.now()): 
 }
 
 /**
- * Verifies a 6-digit TOTP code with time-drift tolerance (default +/- 1 step of 30s)
+ * Verifies a 6-digit TOTP code with time-drift tolerance (default +/- 2 steps of 30s = +/- 60s)
  */
-export async function verifyTotpCode(token: string, secret: string, windowSteps = 1): Promise<boolean> {
+export async function verifyTotpCode(token: string, secret: string, windowSteps = 2): Promise<boolean> {
   const cleanToken = token.trim().replace(/\s+/g, '');
   if (cleanToken.length !== 6 || !/^\d{6}$/.test(cleanToken)) {
     return false;

@@ -27,13 +27,17 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      const newSecret = user.twoFactorSecret || generateTotpSecret(20);
-      setSecret(newSecret);
+      setSecret((current) => current || user.twoFactorSecret || generateTotpSecret(20));
       setTestCode('');
       setErrorMsg('');
       setCopied(false);
+    } else {
+      setSecret('');
+      setTestCode('');
+      setErrorMsg('');
+      setShowManualKey(false);
     }
-  }, [isOpen, user]);
+  }, [isOpen, user.id, user.twoFactorSecret]);
 
   const totpUri = generateTotpUri(user.username, secret, 'CustBox360');
 
@@ -45,7 +49,8 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
 
   const handleVerifyAndSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (testCode.length !== 6) {
+    const clean = testCode.trim();
+    if (clean.length !== 6) {
       setErrorMsg('กรุณากรอกรหัส 6 หลักจากแอป');
       return;
     }
@@ -54,7 +59,7 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
     setErrorMsg('');
 
     try {
-      const isValid = await verifyTotpCode(testCode, secret);
+      const isValid = await verifyTotpCode(clean, secret, 2);
       if (isValid) {
         onEnrolled(secret);
         onClose();

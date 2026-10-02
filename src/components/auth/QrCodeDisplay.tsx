@@ -1,6 +1,5 @@
-import React, { useMemo } from 'react';
-import { generateQrMatrix } from '../../utils/qr/qrMatrix';
-import { Shield } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 
 interface QrCodeDisplayProps {
   value: string;
@@ -11,74 +10,65 @@ interface QrCodeDisplayProps {
 
 export const QrCodeDisplay: React.FC<QrCodeDisplayProps> = ({
   value,
-  size = 200,
+  size = 180,
   className = '',
-  showCenterIcon = true,
 }) => {
-  const matrix = useMemo(() => {
-    try {
-      return generateQrMatrix(value);
-    } catch (e) {
-      console.error('Failed to generate QR Matrix:', e);
-      return [];
-    }
-  }, [value]);
+  const [dataUrl, setDataUrl] = useState<string>('');
+  const [error, setError] = useState(false);
 
-  if (matrix.length === 0) {
+  useEffect(() => {
+    let isMounted = true;
+    if (!value) {
+      setDataUrl('');
+      return;
+    }
+
+    QRCode.toDataURL(value, {
+      width: Math.max(size * 2, 360),
+      margin: 2,
+      errorCorrectionLevel: 'M',
+      color: {
+        dark: '#0F2B4D',
+        light: '#FFFFFF',
+      },
+    })
+      .then((url) => {
+        if (isMounted) {
+          setDataUrl(url);
+          setError(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to generate QR Code:', err);
+        if (isMounted) setError(true);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [value, size]);
+
+  if (error || !dataUrl) {
     return (
       <div
         style={{ width: size, height: size }}
-        className={`flex items-center justify-center bg-gray-100 rounded-lg text-xs text-text-secondary ${className}`}
+        className={`flex items-center justify-center bg-gray-100 rounded-xl text-xs text-text-secondary ${className}`}
       >
-        กำลังโหลด QR Code...
+        {error ? 'ไม่สามารถสร้าง QR Code ได้' : 'กำลังโหลด QR Code...'}
       </div>
     );
   }
 
-  const moduleCount = matrix.length;
-  const padding = 4; // Quiet zone
-  const totalGridSize = moduleCount + padding * 2;
-  const cellSize = 10;
-  const viewBoxSize = totalGridSize * cellSize;
-
   return (
     <div
-      className={`relative inline-flex items-center justify-center p-3 bg-white rounded-xl border border-border shadow-xs ${className}`}
-      style={{ width: size + 24, height: size + 24 }}
+      className={`inline-flex items-center justify-center p-2.5 bg-white rounded-2xl border border-border shadow-xs ${className}`}
     >
-      <svg
-        viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
-        className="w-full h-full"
-        shapeRendering="crispEdges"
-      >
-        <rect width={viewBoxSize} height={viewBoxSize} fill="#FFFFFF" />
-        {matrix.map((row, r) =>
-          row.map((isDark, c) => {
-            if (!isDark) return null;
-            return (
-              <rect
-                key={`${r}-${c}`}
-                x={(c + padding) * cellSize}
-                y={(r + padding) * cellSize}
-                width={cellSize}
-                height={cellSize}
-                fill="#0F2B4D"
-              />
-            );
-          })
-        )}
-      </svg>
-
-      {/* Center Shield Badge for authentic professional look */}
-      {showCenterIcon && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-8 h-8 rounded-lg bg-white border border-border shadow-sm flex items-center justify-center p-1">
-            <div className="w-full h-full bg-brand-tint rounded flex items-center justify-center text-brand">
-              <Shield className="w-4 h-4 fill-brand/20 stroke-brand" />
-            </div>
-          </div>
-        </div>
-      )}
+      <img
+        src={dataUrl}
+        alt="2FA QR Code"
+        style={{ width: size, height: size }}
+        className="rounded-lg object-contain select-none"
+      />
     </div>
   );
 };

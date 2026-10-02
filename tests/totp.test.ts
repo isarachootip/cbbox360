@@ -55,4 +55,44 @@ describe('TOTP RFC 6238 & Base32 Engine', () => {
     const isWrongValid = await verifyTotpCode(wrongCode, secret);
     expect(isWrongValid).toBe(false);
   });
+
+  it('should match RFC 6238 official test vectors (SHA-1)', async () => {
+    // Secret: ASCII "12345678901234567890" -> Base32 "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
+    const secret = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
+    
+    // T = 59s -> 287082
+    expect(await generateTotpCode(secret, 59 * 1000)).toBe('287082');
+
+    // T = 1111111109s -> 081804
+    expect(await generateTotpCode(secret, 1111111109 * 1000)).toBe('081804');
+
+    // T = 1111111111s -> 050471
+    expect(await generateTotpCode(secret, 1111111111 * 1000)).toBe('050471');
+
+    // T = 1234567890s -> 005924
+    expect(await generateTotpCode(secret, 1234567890 * 1000)).toBe('005924');
+
+    // T = 2000000000s -> 279037
+    expect(await generateTotpCode(secret, 2000000000 * 1000)).toBe('279037');
+  });
+
+  it('should roundtrip random 20-byte buffer through base32Encode and base32Decode', () => {
+    for (let test = 0; test < 10; test++) {
+      const bytes = new Uint8Array(20);
+      for (let i = 0; i < 20; i++) bytes[i] = Math.floor(Math.random() * 256);
+      const encoded = base32Encode(bytes);
+      const decoded = base32Decode(encoded);
+      expect(Array.from(decoded)).toEqual(Array.from(bytes));
+    }
+  });
+
+  it('should generate valid QR code data url for authenticator app', async () => {
+    const QRCode = await import('qrcode');
+    const uri = generateTotpUri('sysadmin', 'JBSWY3DPEHPK3PXP', 'CustBox360');
+    const dataUrl = await QRCode.default.toDataURL(uri, {
+      errorCorrectionLevel: 'M',
+      margin: 2,
+    });
+    expect(dataUrl).toMatch(/^data:image\/png;base64,/);
+  });
 });
