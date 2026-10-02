@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (user.password !== password) {
-      return { success: false, error: 'รหัสผ่านไม่ถูกต้อง (ค่าเริ่มต้นคือ 1234)' };
+      return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
     }
 
     // Check if user has 2FA enabled
