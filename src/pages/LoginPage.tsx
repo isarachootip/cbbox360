@@ -14,11 +14,12 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { UserRole } from '../types';
+import { UserAccount, UserRole } from '../types';
+import { TwoFactorVerifyCard } from '../components/auth/TwoFactorVerifyCard';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, switchUser, users } = useAuth();
+  const { login, completeTwoFactorLogin, switchUser, users } = useAuth();
   const { showToast } = useToast();
 
   const [username, setUsername] = useState('');
@@ -26,6 +27,7 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [twoFactorPendingUser, setTwoFactorPendingUser] = useState<UserAccount | null>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +46,8 @@ export const LoginPage: React.FC = () => {
       if (result.success) {
         showToast(`ยินดีต้อนรับเข้าสู่ระบบ CusBox360`, 'success');
         navigate('/customers/C00123');
+      } else if (result.requireTwoFactor && result.user) {
+        setTwoFactorPendingUser(result.user);
       } else {
         setErrorMessage(result.error || 'เข้าสู่ระบบไม่สำเร็จ');
       }
@@ -51,6 +55,11 @@ export const LoginPage: React.FC = () => {
   };
 
   const handleQuickLogin = (uname: string) => {
+    const user = users.find((u) => u.username.toLowerCase() === uname.toLowerCase());
+    if (user && user.twoFactorEnabled && user.twoFactorSecret) {
+      setTwoFactorPendingUser(user);
+      return;
+    }
     const success = switchUser(uname);
     if (success) {
       showToast(`เข้าสู่ระบบด้วยสิทธิ์ ${uname} สำเร็จ`, 'success');
@@ -66,6 +75,25 @@ export const LoginPage: React.FC = () => {
     { username: 'SF_3', role: 'SF_3', label: 'Sales Force 3', color: 'text-amber-700', desc: 'สินเชื่อ / Credit Sales' },
     { username: 'supervisor', role: 'supervisor', label: 'Supervisor', color: 'text-indigo-700', desc: 'หัวหน้างานกำกับดูแล' },
   ];
+
+  if (twoFactorPendingUser && twoFactorPendingUser.twoFactorSecret) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#EAF2FC] via-[#F2F6FB] to-[#E3EEFB] flex items-center justify-center p-4 select-none font-sans">
+        <TwoFactorVerifyCard
+          username={twoFactorPendingUser.username}
+          secret={twoFactorPendingUser.twoFactorSecret}
+          onSuccess={() => {
+            completeTwoFactorLogin(twoFactorPendingUser);
+            showToast('ยืนยันตัวตน 2FA สำเร็จ ยินดีต้อนรับเข้าสู่ระบบ', 'success');
+            navigate('/customers/C00123');
+          }}
+          onCancel={() => {
+            setTwoFactorPendingUser(null);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#EAF2FC] via-[#F2F6FB] to-[#E3EEFB] flex items-center justify-center p-4 select-none font-sans">

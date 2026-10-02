@@ -288,6 +288,9 @@ export interface UserAccount {
   createdAt: string;
   lastLogin?: string;
   permissions?: string[];
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string;
+  twoFactorEnrolledAt?: string;
 }
 
 export interface UserProfile {

@@ -28,6 +28,7 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { KpiTile } from '../components/common/KpiTile';
 import { Modal } from '../components/common/Modal';
 import { RoleBadge } from '../components/common/RoleBadge';
+import { TwoFactorSetupModal } from '../components/auth/TwoFactorSetupModal';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { UserAccount, UserRole } from '../types';
@@ -42,6 +43,7 @@ export const UserManagementPage: React.FC = () => {
     deleteUser,
     resetPassword,
     toggleUserStatus,
+    toggleTwoFactor,
     switchUser,
   } = useAuth();
   const { showToast } = useToast();
@@ -59,6 +61,8 @@ export const UserManagementPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isTwoFactorModalOpen, setIsTwoFactorModalOpen] = useState(false);
+  const [userForTwoFactor, setUserForTwoFactor] = useState<UserAccount | null>(null);
 
   // Selected User for action
   const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
@@ -200,6 +204,26 @@ export const UserManagementPage: React.FC = () => {
     if (ok) {
       showToast(`สลับบัญชีผู้ใช้งานเป็น "${uname}" สำเร็จ`, 'success');
     }
+  };
+
+  const handleOpenTwoFactor = (u: UserAccount) => {
+    setUserForTwoFactor(u);
+    setIsTwoFactorModalOpen(true);
+  };
+
+  const handleToggleTwoFactor = (u: UserAccount) => {
+    if (u.twoFactorEnabled) {
+      toggleTwoFactor(u.id, false);
+      showToast(`ปิดการใช้งาน 2FA สำหรับ ${u.username} แล้ว`, 'info');
+    } else {
+      handleOpenTwoFactor(u);
+    }
+  };
+
+  const handleEnrolledTwoFactor = (secret: string) => {
+    if (!userForTwoFactor) return;
+    toggleTwoFactor(userForTwoFactor.id, true, secret);
+    showToast(`เปิดใช้งาน 2FA (Microsoft Authenticator) สำหรับ ${userForTwoFactor.username} สำเร็จ!`, 'success');
   };
 
   const handleExportUsers = () => {
@@ -381,6 +405,7 @@ export const UserManagementPage: React.FC = () => {
                       <th className="px-4 py-3 font-medium">รหัสผ่าน (Password)</th>
                       <th className="px-4 py-3 font-medium">บทบาท (Role)</th>
                       <th className="px-4 py-3 font-medium">แผนก / ฝ่ายงาน</th>
+                      <th className="px-4 py-3 font-medium text-center">2FA (MS Authen)</th>
                       <th className="px-4 py-3 font-medium text-center">สถานะ</th>
                       <th className="px-4 py-3 font-medium">เข้าสู่ระบบล่าสุด</th>
                       <th className="px-4 py-3 font-medium text-right">การจัดการ (Actions)</th>
@@ -437,6 +462,22 @@ export const UserManagementPage: React.FC = () => {
                             {u.department}
                           </td>
 
+                          {/* 2FA Status Toggle / Indicator */}
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => handleToggleTwoFactor(u)}
+                              title={u.twoFactorEnabled ? 'คลิกเพื่อปิด 2FA' : 'คลิกเพื่อผูกแอป Microsoft Authenticator'}
+                              className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold transition-all hover:opacity-80 cursor-pointer ${
+                                u.twoFactorEnabled
+                                  ? 'text-emerald-600'
+                                  : 'text-slate-400'
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${u.twoFactorEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                              <span>{u.twoFactorEnabled ? 'เปิดใช้งาน' : 'ไม่ได้เปิด'}</span>
+                            </button>
+                          </td>
+
                           {/* Status Toggle */}
                           <td className="px-4 py-3 text-center">
                             <button
@@ -472,6 +513,19 @@ export const UserManagementPage: React.FC = () => {
                                   <UserCheck className="w-4 h-4" />
                                 </button>
                               )}
+
+                              {/* 2FA Setup / QR Code Button */}
+                              <button
+                                onClick={() => handleOpenTwoFactor(u)}
+                                title={u.twoFactorEnabled ? 'ดู QR Code / จัดการ 2FA' : 'ตั้งค่า 2FA (สแกน MS Authenticator)'}
+                                className={`p-1 rounded transition-colors ${
+                                  u.twoFactorEnabled
+                                    ? 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'
+                                    : 'text-text-secondary hover:text-brand hover:bg-bg-app'
+                                }`}
+                              >
+                                <ShieldCheck className="w-4 h-4" />
+                              </button>
 
                               {/* Reset Password */}
                               <button
@@ -933,6 +987,19 @@ export const UserManagementPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* ================= MODAL: 2FA SETUP (MICROSOFT AUTHENTICATOR) ================= */}
+      {userForTwoFactor && (
+        <TwoFactorSetupModal
+          isOpen={isTwoFactorModalOpen}
+          onClose={() => {
+            setIsTwoFactorModalOpen(false);
+            setUserForTwoFactor(null);
+          }}
+          user={userForTwoFactor}
+          onEnrolled={handleEnrolledTwoFactor}
+        />
+      )}
 
     </div>
   );

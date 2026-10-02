@@ -5,7 +5,8 @@ import { initialUserAccounts } from '../data/users';
 interface AuthContextType {
   currentUser: UserAccount | null;
   users: UserAccount[];
-  login: (username: string, password: string) => { success: boolean; error?: string };
+  login: (username: string, password: string) => { success: boolean; requireTwoFactor?: boolean; user?: UserAccount; error?: string };
+  completeTwoFactorLogin: (user: UserAccount) => void;
   logout: () => void;
   switchUser: (username: string) => boolean;
   createUser: (user: Omit<UserAccount, 'id' | 'createdAt' | 'initials' | 'lastLogin' | 'roleLabel'> & { roleLabel?: string }) => { success: boolean; error?: string };
@@ -13,6 +14,7 @@ interface AuthContextType {
   deleteUser: (id: string) => { success: boolean; error?: string };
   resetPassword: (id: string, newPassword: string) => { success: boolean; error?: string };
   toggleUserStatus: (id: string) => void;
+  toggleTwoFactor: (id: string, enabled: boolean, secret?: string) => { success: boolean; error?: string };
   isAdmin: boolean;
   isSysAdmin: boolean;
 }
@@ -73,7 +75,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [currentUser]);
 
-  const login = (username: string, password: string): { success: boolean; error?: string } => {
+  const login = (
+    username: string,
+    password: string
+  ): { success: boolean; requireTwoFactor?: boolean; user?: UserAccount; error?: string } => {
     const trimmedUser = username.trim().toLowerCase();
     const user = users.find((u) => u.username.toLowerCase() === trimmedUser);
 
@@ -89,6 +94,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, error: 'รหัสผ่านไม่ถูกต้อง (ค่าเริ่มต้นคือ 1234)' };
     }
 
+    // Check if user has 2FA enabled
+    if (user.twoFactorEnabled && user.twoFactorSecret) {
+      return { success: false, requireTwoFactor: true, user };
+    }
+
     const now = new Date();
     const timeStr = `วันนี้ ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     const updatedUser = { ...user, lastLogin: timeStr };
@@ -96,6 +106,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentUser(updatedUser);
     setUsers((prev) => prev.map((u) => (u.id === user.id ? updatedUser : u)));
     return { success: true };
+  };
+
+  const completeTwoFactorLogin = (user: UserAccount) => {
+    const now = new Date();
+    const timeStr = `วันนี้ ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const updatedUser = { ...user, lastLogin: timeStr };
+
+    setCurrentUser(updatedUser);
+    setUsers((prev) => prev.map((u) => (u.id === user.id ? updatedUser : u)));
   };
 
   const logout = () => {
@@ -235,6 +254,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   };
 
+  const toggleTwoFactor = (id: string, enabled: boolean, secret?: string): { success: boolean; error?: string } => {
+    setUsers((prev) =>
+      prev.map((u) => {
+        if (u.id !== id) return u;
+        return {
+          ...u,
+          twoFactorEnabled: enabled,
+          twoFactorSecret: enabled ? (secret || u.twoFactorSecret) : undefined,
+          twoFactorEnrolledAt: enabled ? new Date().toISOString() : undefined,
+        };
+      })
+    );
+
+    if (currentUser?.id === id) {
+      setCurrentUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              twoFactorEnabled: enabled,
+              twoFactorSecret: enabled ? (secret || prev.twoFactorSecret) : undefined,
+              twoFactorEnrolledAt: enabled ? new Date().toISOString() : undefined,
+            }
+          : null
+      );
+    }
+
+    return { success: true };
+  };
+
   const isAdmin = currentUser?.role === 'sysadmin' || currentUser?.role === 'admin';
   const isSysAdmin = currentUser?.role === 'sysadmin';
 
@@ -244,6 +292,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentUser,
         users,
         login,
+        completeTwoFactorLogin,
         logout,
         switchUser,
         createUser,
@@ -251,6 +300,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deleteUser,
         resetPassword,
         toggleUserStatus,
+        toggleTwoFactor,
         isAdmin,
         isSysAdmin,
       }}
