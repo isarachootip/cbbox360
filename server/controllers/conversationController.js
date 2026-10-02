@@ -1,6 +1,6 @@
 import { query } from '../../db.js';
 import { getThaiTime, rowToConversation, rowToMessage } from '../utils/formatters.js';
-import { sendLinePush } from '../services/lineService.js';
+import { sendLinePush, sendLineReply } from '../services/lineService.js';
 
 export const getConversations = async (req, res) => {
   try {
@@ -46,7 +46,7 @@ export const sendMessage = async (req, res) => {
     const sender = isPrivate ? 'note' : 'agent';
     const author = authorName || 'วิภา ส.';
 
-    // Push to LINE if real user
+    // Push / Reply to LINE if real user
     let lineDelivery = { success: true };
     let deliveryStatus = 'delivered';
     let failureReason = null;
@@ -60,10 +60,28 @@ export const sendMessage = async (req, res) => {
         deliveryStatus = 'failed';
         failureReason = 'ห้องแชทนี้ยังไม่ได้ระบุ LINE User ID (ไม่สามารถส่งข้อความเข้า LINE ได้)';
       } else {
-        lineDelivery = await sendLinePush(conv.line_user_id, text.trim());
-        if (!lineDelivery || !lineDelivery.success) {
-          deliveryStatus = 'failed';
-          failureReason = lineDelivery?.error || 'LINE Push delivery failed';
+        // Priority 1: Check if there is a fresh replyToken within 50 seconds (Free & Instant)
+        let replySuccess = false;
+        const nowMs = Date.now();
+        const tokenTime = conv.last_reply_token_time ? new Date(conv.last_reply_token_time).getTime() : 0;
+        const isReplyTokenFresh = conv.last_reply_token && nowMs - tokenTime < 50000;
+
+        if (isReplyTokenFresh) {
+          replySuccess = await sendLineReply(conv.last_reply_token, text.trim());
+          if (replySuccess) {
+            lineDelivery = { success: true, method: 'reply' };
+            deliveryStatus = 'delivered';
+            await query(`UPDATE conversations SET last_reply_token = NULL WHERE id = $1`, [id]);
+          }
+        }
+
+        // Priority 2: Fallback to sendLinePush if reply token was not used or failed
+        if (!replySuccess) {
+          lineDelivery = await sendLinePush(conv.line_user_id, text.trim());
+          if (!lineDelivery || !lineDelivery.success) {
+            deliveryStatus = 'failed';
+            failureReason = lineDelivery?.error || 'LINE Push delivery failed';
+          }
         }
       }
     }

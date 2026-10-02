@@ -6,11 +6,13 @@ import pkg from 'pg';
 const { Pool } = pkg;
 
 if (!process.env.DATABASE_URL) {
-  console.error('❌ DATABASE_URL environment variable is not set!');
-  process.exit(1);
+  if (process.env.NODE_ENV !== 'test') {
+    console.error('❌ DATABASE_URL environment variable is not set!');
+    process.exit(1);
+  }
 }
 
-const dbUrl = process.env.DATABASE_URL;
+const dbUrl = process.env.DATABASE_URL || 'postgresql://localhost:5432/cb360_test';
 const useSsl =
   process.env.DB_SSL === 'true' ||
   dbUrl.includes('sslmode=require') ||

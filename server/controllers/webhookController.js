@@ -43,7 +43,7 @@ export const handleLineWebhook = async (req, res) => {
           [newMsgId, conv.id, text, timeStr]
         );
 
-        // Update conversation
+        // Update conversation with last_reply_token
         await query(
           `UPDATE conversations SET
             last_message_preview = $1,
@@ -52,9 +52,11 @@ export const handleLineWebhook = async (req, res) => {
             status = 'Open',
             customer_name = COALESCE($3, customer_name),
             customer_avatar = COALESCE($4, customer_avatar),
+            last_reply_token = $5,
+            last_reply_token_time = NOW(),
             updated_at = NOW()
-           WHERE id = $5`,
-          [text, timeStr, profile?.displayName || null, profile?.pictureUrl || null, conv.id]
+           WHERE id = $6`,
+          [text, timeStr, profile?.displayName || null, profile?.pictureUrl || null, evt.replyToken || null, conv.id]
         );
       } else {
         // New conversation
@@ -63,9 +65,9 @@ export const handleLineWebhook = async (req, res) => {
         const custId = userId || `C-LINE-${Date.now()}`;
 
         await query(
-          `INSERT INTO conversations (id, customer_id, customer_name, customer_avatar, customer_tier, channel, channel_account, time, last_message_preview, label, unread_count, status, assigned_to, team, tab_group, line_user_id)
-           VALUES ($1,$2,$3,$4,'MEMBER','LINE','cb360 Official',$5,$6,'LINE Live',1,'Open','วิภา ส.','Customer Care','Mine',$7)`,
-          [convId, custId, customerName, customerAvatar, timeStr, text, userId]
+          `INSERT INTO conversations (id, customer_id, customer_name, customer_avatar, customer_tier, channel, channel_account, time, last_message_preview, label, unread_count, status, assigned_to, team, tab_group, line_user_id, last_reply_token, last_reply_token_time)
+           VALUES ($1,$2,$3,$4,'MEMBER','LINE','cb360 Official',$5,$6,'LINE Live',1,'Open','วิภา ส.','Customer Care','Mine',$7,$8,NOW())`,
+          [convId, custId, customerName, customerAvatar, timeStr, text, userId, evt.replyToken || null]
         );
 
         await query(
@@ -74,8 +76,17 @@ export const handleLineWebhook = async (req, res) => {
         );
       }
 
-      // Check Bot Auto-Reply
-      const isBotActiveForConv = isNew ? true : existResult.rows[0]?.is_bot_active !== false;
+      // Check Bot Auto-Reply & Smart Auto-Resume
+      let isBotActiveForConv = isNew ? true : existResult.rows[0]?.is_bot_active !== false;
+
+      // Smart Auto-Resume: If customer sends a greeting, resume bot automatically
+      const cleanLower = text.trim().toLowerCase();
+      const isGreeting = ['สวัสดี', 'หวัดดี', 'ดีครับ', 'ดีค่ะ', 'hello', 'hi', 'hey'].some((g) => cleanLower.includes(g));
+      if (!isBotActiveForConv && isGreeting) {
+        isBotActiveForConv = true;
+        await query(`UPDATE conversations SET is_bot_active = TRUE WHERE id = $1`, [targetConvId]);
+        console.log(`🤖 [Smart Auto-Resume]: Resumed bot for conversation ${targetConvId} due to greeting keyword`);
+      }
 
       if (!isBotActiveForConv) {
         console.log(`🤖 [Bot Paused]: Skipping auto-reply for conversation ${targetConvId} (Agent active)`);
@@ -101,10 +112,30 @@ export const handleLineWebhook = async (req, res) => {
               ? '🤖 CusBox AI (Gemini)'
               : '🤖 CusBox Bot (Auto-Reply)';
 
+            // Send to LINE first to verify delivery
+            let lineDelivered = false;
+            let lineErrMsg = null;
+
+            if (evt.replyToken) {
+              lineDelivered = await sendLineReply(evt.replyToken, botReply.replyText);
+              if (!lineDelivered && userId) {
+                const pushRes = await sendLinePush(userId, botReply.replyText);
+                lineDelivered = pushRes.success;
+                if (!lineDelivered) lineErrMsg = pushRes.error;
+              }
+            } else if (userId) {
+              const pushRes = await sendLinePush(userId, botReply.replyText);
+              lineDelivered = pushRes.success;
+              if (!lineDelivered) lineErrMsg = pushRes.error;
+            }
+
+            const deliveryStatus = lineDelivered ? 'delivered' : 'failed';
+
             // Store bot reply in DB
             await query(
-              `INSERT INTO messages (id, conversation_id, sender, author_name, text, time) VALUES ($1,$2,'agent',$3,$4,$5)`,
-              [botMsgId, targetConvId, authorTag, botReply.replyText, botTimeStr]
+              `INSERT INTO messages (id, conversation_id, sender, author_name, text, time, delivery_status, failure_reason)
+               VALUES ($1,$2,'agent',$3,$4,$5,$6,$7)`,
+              [botMsgId, targetConvId, authorTag, botReply.replyText, botTimeStr, deliveryStatus, lineErrMsg]
             );
 
             // Update conversation preview
@@ -112,16 +143,6 @@ export const handleLineWebhook = async (req, res) => {
               `UPDATE conversations SET last_message_preview = $1, time = $2, updated_at = NOW() WHERE id = $3`,
               [botReply.replyText, botTimeStr, targetConvId]
             );
-
-            // Send to LINE
-            if (evt.replyToken) {
-              const success = await sendLineReply(evt.replyToken, botReply.replyText);
-              if (!success && userId) {
-                await sendLinePush(userId, botReply.replyText);
-              }
-            } else if (userId) {
-              await sendLinePush(userId, botReply.replyText);
-            }
           }
         } catch (botErr) {
           console.error('[Bot Auto-Reply Execution Error]:', botErr.message);

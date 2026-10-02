@@ -4,6 +4,7 @@ import webhookRoutes from './webhookRoutes.js';
 import conversationRoutes from './conversationRoutes.js';
 import botRoutes from './botRoutes.js';
 import cannedResponseRoutes from './cannedResponseRoutes.js';
+import connectorRoutes from './connectorRoutes.js';
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.get('/health', async (req, res) => {
 router.use('/webhooks', webhookRoutes);
 router.use('/conversations', conversationRoutes);
 router.use('/canned-responses', cannedResponseRoutes);
+router.use('/connectors', connectorRoutes);
 router.use('/', botRoutes);
 
 export default router;

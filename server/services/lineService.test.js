@@ -1,10 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { sendLinePush } from './lineService.js';
+
+// Mock db.js
+vi.mock('../../db.js', () => ({
+  query: vi.fn().mockResolvedValue({ rows: [] }),
+}));
+
+import { sendLinePush, _resetCachedTokenForTesting } from './lineService.js';
 import { env } from '../config/env.js';
 
 describe('lineService - sendLinePush', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    _resetCachedTokenForTesting();
     env.LINE_CHANNEL_ACCESS_TOKEN = 'test-token';
   });
 

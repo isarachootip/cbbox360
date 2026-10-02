@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Network,
   RefreshCw,
@@ -36,12 +36,12 @@ export const ConnectorsPage: React.FC = () => {
       try {
         const parsed = JSON.parse(saved);
         return parsed.map((c: ConnectorConfig) => {
-          if (c.id === 'conn-line' && (!c.accountName || c.accountName.includes('CusShop'))) {
+          if (c.id === 'conn-line' && (!c.accountName || c.accountName.includes('CusShop') || c.accountName.includes('@596vuzml'))) {
             return {
               ...c,
-              accountName: 'cb360 (@596vuzml)',
-              accountId: '@596vuzml',
-              basicId: '@596vuzml',
+              accountName: 'cb360 (@596vuzmi)',
+              accountId: '@596vuzmi',
+              basicId: '@596vuzmi',
               appId: '2011580063',
               appSecret: 'f2030ccfd113a46d89297e3919df39c1',
               accessToken: 'G6HhxgQDo/1Ji4LOomrfk8Eh4yhBn74w0i+T2vXPjdA2/8bRXZCtvXF9hSwFpjM0MKhTYasa+K/CKZjamIj9JhvqhXCKJXtH/I2YjgGpTkZgwNweMhhOe0GcuLKArE8W1B4tn68xsWeRD/0WY1cpowdB04t89/1O/w1cDnyilFU=',
@@ -69,9 +69,36 @@ export const ConnectorsPage: React.FC = () => {
   const [editForm, setEditForm] = useState<ConnectorConfig | null>(null);
   const [lineModalTab, setLineModalTab] = useState<'messaging' | 'liff' | 'richmenu' | 'tester'>('messaging');
   const [showSecret, setShowSecret] = useState(false);
-  const [testLineUid, setTestLineUid] = useState('U99182049102837461528');
+  const [testLineUid, setTestLineUid] = useState('U615200d32ab43996e7f301b4fed1e976');
   const [testLineMessage, setTestLineMessage] = useState('ยินดีต้อนรับสู่ระบบ CusBox 360 CDP · เชื่อมต่อ LINE Messaging API สำเร็จ');
   const [isVerifyingWebhook, setIsVerifyingWebhook] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
+
+  // Check live LINE connection on load
+  useEffect(() => {
+    fetch('/api/connectors/line')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.hasToken) {
+          setConnectors((prev) =>
+            prev.map((c) => {
+              if (c.id === 'conn-line') {
+                return {
+                  ...c,
+                  status: data.status === 'connected' ? 'connected' : 'error',
+                  accountName: data.botInfo?.displayName
+                    ? `${data.botInfo.displayName} (${data.botInfo.basicId || ''})`
+                    : c.accountName,
+                };
+              }
+              return c;
+            })
+          );
+        }
+      })
+      .catch((err) => console.debug('Could not fetch line connector status:', err));
+  }, []);
 
   // Simulator state
   const [simulatorChannel, setSimulatorChannel] = useState<'LINE' | 'Facebook' | '3CX'>('LINE');
@@ -168,9 +195,48 @@ export const ConnectorsPage: React.FC = () => {
     handleOpenConfig(lineConn);
   };
 
-  const handleSaveConfig = (e?: React.FormEvent) => {
+  const handleSaveConfig = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!editForm) return;
+
+    if (editForm.id === 'conn-line' && editForm.accessToken) {
+      setIsSaving(true);
+      try {
+        const res = await fetch('/api/connectors/line', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accessToken: editForm.accessToken,
+            appId: editForm.appId,
+            appSecret: editForm.appSecret,
+            basicId: editForm.basicId || editForm.accountId,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'connected') {
+          showToast(data.message || 'บันทึกการตั้งค่าและเชื่อมต่อ LINE สำเร็จ', 'success');
+          const updatedForm: ConnectorConfig = {
+            ...editForm,
+            status: 'connected',
+            accountName: data.botInfo?.displayName
+              ? `${data.botInfo.displayName} (${data.botInfo.basicId || ''})`
+              : editForm.accountName,
+          };
+          const updated = connectors.map((c) => (c.id === editForm.id ? updatedForm : c));
+          saveConnectors(updated);
+          setIsConfigModalOpen(false);
+          setIsSaving(false);
+          return;
+        } else {
+          showToast(data.message || data.error || 'การเชื่อมต่อ LINE ไม่ถูกต้อง', 'error');
+        }
+      } catch (err) {
+        console.error('Save connector error:', err);
+        showToast('เกิดข้อผิดพลาดในการบันทึกไปยังเซิร์ฟเวอร์', 'error');
+      } finally {
+        setIsSaving(false);
+      }
+    }
 
     const updated = connectors.map((c) => (c.id === editForm.id ? editForm : c));
     saveConnectors(updated);
@@ -185,18 +251,58 @@ export const ConnectorsPage: React.FC = () => {
     }, 350);
   };
 
-  const handleVerifyLineWebhook = () => {
+  const handleVerifyLineWebhook = async () => {
     setIsVerifyingWebhook(true);
     showToast('กำลังตรวจสอบการเชื่อมต่อ LINE Webhook...', 'info');
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/connectors/line');
+      const data = await res.json();
+      if (res.ok && data.status === 'connected') {
+        showToast(
+          `LINE Connected: ${data.botInfo?.displayName || 'OK'} (${data.botInfo?.basicId || ''})`,
+          'success'
+        );
+      } else {
+        showToast(`LINE Connection Issue: ${data.error || data.message || 'Error'}`, 'error');
+      }
+    } catch (err) {
+      showToast('ไม่สามารถเชื่อมต่อไปยังเซิร์ฟเวอร์ได้', 'error');
+    } finally {
       setIsVerifyingWebhook(false);
-      showToast('LINE Webhook Status: 200 OK (SSL Verified)', 'success');
-    }, 500);
+    }
   };
 
-  const handleSendTestLineMessage = () => {
-    if (!testLineUid.trim()) return;
-    showToast(`ส่งข้อความทดสอบไปยัง LINE UID (${testLineUid}) สำเร็จ (200 OK)`, 'success');
+  const handleSendTestLineMessage = async () => {
+    if (!testLineUid.trim()) {
+      showToast('กรุณาระบุ LINE User ID (UID)', 'error');
+      return;
+    }
+    if (!testLineMessage.trim()) {
+      showToast('กรุณากรอกข้อความทดสอบ', 'error');
+      return;
+    }
+
+    setIsSendingTest(true);
+    try {
+      const res = await fetch('/api/connectors/line/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: testLineUid.trim(),
+          text: testLineMessage.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(`ส่งข้อความทดสอบไปยัง LINE UID สำเร็จ (200 OK)`, 'success');
+      } else {
+        showToast(`ส่งข้อความล้มเหลว: ${data.error || 'LINE API error'}`, 'error');
+      }
+    } catch (err) {
+      showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์', 'error');
+    } finally {
+      setIsSendingTest(false);
+    }
   };
 
   const handleCopyWebhook = (url: string) => {
@@ -422,12 +528,13 @@ export const ConnectorsPage: React.FC = () => {
                 ยกเลิก
               </button>
               <button
+                disabled={isSaving}
                 onClick={() => handleSaveConfig()}
                 className={`px-4 py-2 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors ${
                   isEditingLine ? 'bg-[#06C755] hover:bg-[#05b34c]' : 'bg-brand hover:bg-brand-hover'
-                }`}
+                } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                บันทึกการตั้งค่า
+                {isSaving ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
               </button>
             </>
           }
@@ -724,19 +831,25 @@ export const ConnectorsPage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
+                      disabled={isSendingTest}
                       onClick={handleSendTestLineMessage}
-                      className="px-3.5 py-1.5 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg font-semibold flex items-center gap-1.5 shadow-sm"
+                      className={`px-3.5 py-1.5 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg font-semibold flex items-center gap-1.5 shadow-sm transition-colors ${
+                        isSendingTest ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
                     >
                       <Send className="w-3.5 h-3.5" />
-                      <span>ส่งข้อความทดสอบ</span>
+                      <span>{isSendingTest ? 'กำลังส่ง...' : 'ส่งข้อความทดสอบ'}</span>
                     </button>
                     <button
                       type="button"
+                      disabled={isVerifyingWebhook}
                       onClick={handleVerifyLineWebhook}
-                      className="px-3.5 py-1.5 border border-border hover:bg-bg-subtle text-text-primary rounded-lg font-semibold flex items-center gap-1.5"
+                      className={`px-3.5 py-1.5 border border-border hover:bg-bg-subtle text-text-primary rounded-lg font-semibold flex items-center gap-1.5 transition-colors ${
+                        isVerifyingWebhook ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
                     >
-                      <RefreshCw className="w-3.5 h-3.5 text-text-secondary" />
-                      <span>Ping Webhook (200 OK)</span>
+                      <RefreshCw className={`w-3.5 h-3.5 text-text-secondary ${isVerifyingWebhook ? 'animate-spin' : ''}`} />
+                      <span>{isVerifyingWebhook ? 'กำลังตรวจสอบ...' : 'Ping Webhook (200 OK)'}</span>
                     </button>
                   </div>
                 </div>

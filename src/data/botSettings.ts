@@ -33,6 +33,16 @@ export const initialBotSettings: BotSettings = {
   geminiApiKey: '',
   rules: [
     {
+      id: 'rule-greeting',
+      name: 'ทักทายและต้อนรับลูกค้า (Greeting)',
+      triggerType: 'keyword',
+      keywords: ['สวัสดี', 'สวัสดีครับ', 'สวัสดีค่ะ', 'หวัดดี', 'หวัดดีครับ', 'หวัดดีค่ะ', 'ดีครับ', 'ดีค่ะ', 'hello', 'hi', 'hey'],
+      matchType: 'contains',
+      cannedResponseId: 'cr-1',
+      isActive: true,
+      priority: 0,
+    },
+    {
       id: 'rule-bank',
       name: 'แจ้งช่องทางชำระเงินและเลขบัญชี',
       triggerType: 'keyword',
