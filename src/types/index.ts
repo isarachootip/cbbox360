@@ -222,6 +222,7 @@ export interface ChatMessage {
   task?: TaskDetails;
   deliveryStatus?: 'delivered' | 'failed' | 'sending';
   failureReason?: string;
+  botSource?: 'human' | 'bot_gemini' | 'bot_rule';
 }
 
 export interface Conversation {
@@ -397,6 +398,7 @@ export interface BotSettings {
   handoffMessage: string;
   fallbackMessage?: string;
   geminiApiKey?: string;
+  autoReplyTimeoutSeconds?: number;
   rules: BotAutoReplyRule[];
 }
 

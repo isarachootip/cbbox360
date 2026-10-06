@@ -174,7 +174,11 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
         {msg.authorName && (
           <span
             className={
-              msg.authorName.includes('Bot') ? 'text-brand font-semibold flex items-center gap-0.5' : ''
+              msg.botSource === 'bot_gemini' || msg.authorName.includes('AI') || msg.authorName.includes('Gemini')
+                ? 'text-purple-600 font-semibold flex items-center gap-0.5'
+                : msg.authorName.includes('Bot')
+                ? 'text-brand font-semibold flex items-center gap-0.5'
+                : ''
             }
           >
             · {msg.authorName}

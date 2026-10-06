@@ -36,6 +36,8 @@ import { BotStatusToggle } from '../components/inbox/BotStatusToggle';
 import { ChatMessageItem } from '../components/inbox/ChatMessageItem';
 import { LineUserIdModal } from '../components/inbox/LineUserIdModal';
 import { CannedResponse, CannedResponseCategory } from '../types';
+import { useAutoReplyTimer } from '../hooks/useAutoReplyTimer';
+import { callGemini } from '../services/geminiService';
 
 export const InboxPage: React.FC = () => {
   const navigate = useNavigate();
@@ -89,6 +91,56 @@ export const InboxPage: React.FC = () => {
   const selectedConv = conversations.find((c) => c.id === selectedConvId) || conversations[0];
   // Selected customer data from CDP
   const currentCustomer = customers.find((c) => c.id === selectedConv.customerId) || customers[0];
+
+  // 30-second AI Auto-Reply Timer logic
+  const lastCustomerMessage = [...(selectedConv?.messages || [])]
+    .reverse()
+    .find((m) => m.sender === 'customer');
+
+  const lastMessage = selectedConv?.messages?.[selectedConv.messages.length - 1];
+  const isCustomerWaiting = lastMessage?.sender === 'customer';
+
+  const handleAutoReplyTimeout = async () => {
+    const currentConv = conversations.find((c) => c.id === selectedConvId);
+    if (!currentConv) return;
+    const currentLast = currentConv.messages[currentConv.messages.length - 1];
+    if (currentLast?.sender !== 'customer' || currentConv.isBotActive === false) {
+      return;
+    }
+
+    let replyText = '';
+    const apiKey = botSettings.geminiApiKey || '';
+
+    if (apiKey) {
+      const aiRes = await callGemini({
+        botName: botSettings.botName || 'CusBox AI Assistant',
+        chatHistory: currentConv.messages,
+        customer: currentCustomer,
+        cannedResponses,
+        apiKey,
+      });
+      if (aiRes.success && aiRes.text) {
+        replyText = aiRes.text;
+      }
+    }
+
+    if (!replyText) {
+      replyText =
+        botSettings.fallbackMessage ||
+        'ขออภัยในความล่าช้าค่ะคุณลูกค้า 🙏 เจ้าหน้าที่ฝ่ายบริการลูกค้าได้รับข้อความแล้วและกำลังเร่งเข้ามาดูแลให้นะคะ มีเรื่องใดสอบถามเพิ่มเติมแจ้งไว้ได้เลยค่ะ';
+    }
+
+    await addMessageToConversation(currentConv.id, replyText, false);
+    showToast('AI ตอบกลับอัตโนมัติเนื่องจากไม่มีการตอบกลับภายใน 30 วินาที', 'info');
+  };
+
+  const { cancelTimer } = useAutoReplyTimer({
+    conversationId: selectedConv?.id || '',
+    lastCustomerMessageId: isCustomerWaiting ? (lastCustomerMessage?.id || null) : null,
+    isBotActive: selectedConv?.isBotActive !== false,
+    timeoutSeconds: botSettings.autoReplyTimeoutSeconds || 30,
+    onTimeout: handleAutoReplyTimeout,
+  });
 
   // Filter conversations
   const filteredConversations = conversations.filter((c) => {
@@ -164,6 +216,7 @@ export const InboxPage: React.FC = () => {
     if (e) e.preventDefault();
     if (!inputText.trim()) return;
 
+    cancelTimer();
     const textToSend = inputText.trim();
     const isPrivate = composerMode === 'note';
     setInputText('');
