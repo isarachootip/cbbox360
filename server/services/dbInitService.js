@@ -17,8 +17,23 @@ export const ensureDatabaseSchema = async () => {
         config JSONB NOT NULL,
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
+
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id TEXT PRIMARY KEY,
+        timestamp TIMESTAMPTZ DEFAULT NOW(),
+        user_id TEXT NOT NULL,
+        user_role TEXT,
+        action TEXT NOT NULL,
+        category TEXT NOT NULL,
+        resource TEXT,
+        ip_address TEXT,
+        status TEXT DEFAULT 'success',
+        details TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp DESC);
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(user_id);
     `);
-    console.log('✅ [DB Schema] Verified conversations, messages, and connector_settings schema');
+    console.log('✅ [DB Schema] Verified conversations, messages, connector_settings, and audit_logs schema');
   } catch (err) {
     console.warn('⚠️ [DB Schema Init Notice]:', err.message);
   }

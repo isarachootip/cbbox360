@@ -402,3 +402,20 @@ export interface BotSettings {
   rules: BotAutoReplyRule[];
 }
 
+export type AuditCategory = 'security' | 'access' | 'data' | 'system' | 'user';
+export type AuditStatus = 'success' | 'warning' | 'failure';
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  userId: string;
+  userRole?: string;
+  action: string;
+  category: AuditCategory;
+  resource?: string;
+  ipAddress: string;
+  status: AuditStatus;
+  details?: string;
+}
+
+

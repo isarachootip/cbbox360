@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserAccount, UserRole } from '../types';
 import { initialUserAccounts } from '../data/users';
+import { useAuditLog } from './AuditLogContext';
 
 interface AuthContextType {
   currentUser: UserAccount | null;
@@ -25,6 +26,7 @@ const USERS_STORAGE_KEY = 'cb360_users_data';
 const CURRENT_USER_STORAGE_KEY = 'cb360_current_user';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { logAction } = useAuditLog();
   // Load users from localStorage or initial
   const [users, setUsers] = useState<UserAccount[]>(() => {
     try {
@@ -83,25 +85,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const user = users.find((u) => u.username.toLowerCase() === trimmedUser);
 
     if (!user) {
+      logAction({
+        userId: username,
+        action: 'เข้าสู่ระบบล้มเหลว (User Not Found)',
+        category: 'security',
+        status: 'failure',
+        resource: 'Auth/Login',
+      });
       return { success: false, error: 'ไม่พบบัญชีผู้ใช้นี้ในระบบ' };
     }
 
     if (user.status === 'inactive') {
+      logAction({
+        userId: username,
+        userRole: user.role,
+        action: 'พยายามเข้าสู่ระบบแต่บัญชีถูกระงับ',
+        category: 'security',
+        status: 'warning',
+        resource: 'Auth/Login',
+      });
       return { success: false, error: 'บัญชีผู้ใช้นี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ' };
     }
 
     if (user.password !== password) {
+      logAction({
+        userId: username,
+        userRole: user.role,
+        action: 'เข้าสู่ระบบล้มเหลวด้วยรหัสผ่านผิด',
+        category: 'security',
+        status: 'failure',
+        resource: 'Auth/Login',
+      });
       return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
     }
 
     // Check if user has 2FA enabled
     if (user.twoFactorEnabled && user.twoFactorSecret) {
+      logAction({
+        userId: user.username,
+        userRole: user.role,
+        action: 'ร้องขอรหัสยืนยันตัวตน 2FA (TOTP)',
+        category: 'security',
+        status: 'success',
+        resource: 'Auth/2FA',
+      });
       return { success: false, requireTwoFactor: true, user };
     }
 
     const now = new Date();
     const timeStr = `วันนี้ ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     const updatedUser = { ...user, lastLogin: timeStr };
+
+    logAction({
+      userId: user.username,
+      userRole: user.role,
+      action: 'เข้าสู่ระบบสำเร็จ (Sign In Success)',
+      category: 'security',
+      status: 'success',
+      resource: 'Auth/Login',
+    });
 
     setCurrentUser(updatedUser);
     setUsers((prev) => prev.map((u) => (u.id === user.id ? updatedUser : u)));
@@ -113,11 +155,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const timeStr = `วันนี้ ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     const updatedUser = { ...user, lastLogin: timeStr };
 
+    logAction({
+      userId: user.username,
+      userRole: user.role,
+      action: 'ยืนยันตัวตน 2FA สำเร็จ เข้าสู่ระบบ',
+      category: 'security',
+      status: 'success',
+      resource: 'Auth/2FA',
+    });
+
     setCurrentUser(updatedUser);
     setUsers((prev) => prev.map((u) => (u.id === user.id ? updatedUser : u)));
   };
 
   const logout = () => {
+    if (currentUser) {
+      logAction({
+        userId: currentUser.username,
+        userRole: currentUser.role,
+        action: 'ออกจากระบบ (Sign Out)',
+        category: 'security',
+        status: 'success',
+        resource: 'Auth/Logout',
+      });
+    }
     setCurrentUser(null);
   };
 

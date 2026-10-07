@@ -29,7 +29,9 @@ import { KpiTile } from '../components/common/KpiTile';
 import { Modal } from '../components/common/Modal';
 import { RoleBadge } from '../components/common/RoleBadge';
 import { TwoFactorSetupModal } from '../components/auth/TwoFactorSetupModal';
+import { AuditLogsTab } from '../components/users/AuditLogsTab';
 import { useAuth } from '../context/AuthContext';
+import { useAuditLog } from '../context/AuditLogContext';
 import { useToast } from '../context/ToastContext';
 import { UserAccount, UserRole } from '../types';
 
@@ -47,6 +49,7 @@ export const UserManagementPage: React.FC = () => {
     switchUser,
   } = useAuth();
   const { showToast } = useToast();
+  const { logAction } = useAuditLog();
 
   // Active Main Tab
   const [activeTab, setActiveTab] = useState<'users' | 'matrix' | 'logs'>('users');
@@ -128,6 +131,13 @@ export const UserManagementPage: React.FC = () => {
 
     const res = createUser(formData);
     if (res.success) {
+      logAction({
+        userId: currentUser?.username || 'sysadmin',
+        userRole: currentUser?.role,
+        action: `สร้างบัญชีผู้ใช้ใหม่: ${formData.username} (${formData.role})`,
+        category: 'user',
+        resource: `User/${formData.username}`,
+      });
       showToast(`สร้างผู้ใช้ "${formData.username}" เรียบร้อยแล้ว`, 'success');
       setIsCreateModalOpen(false);
     } else {
@@ -156,6 +166,13 @@ export const UserManagementPage: React.FC = () => {
 
     const res = updateUser(selectedUser.id, formData);
     if (res.success) {
+      logAction({
+        userId: currentUser?.username || 'sysadmin',
+        userRole: currentUser?.role,
+        action: `แก้ไขข้อมูลผู้ใช้: ${selectedUser.username}`,
+        category: 'user',
+        resource: `User/${selectedUser.username}`,
+      });
       showToast(`แก้ไขข้อมูลผู้ใช้ "${selectedUser.username}" เรียบร้อย`, 'success');
       setIsEditModalOpen(false);
     } else {
@@ -175,6 +192,14 @@ export const UserManagementPage: React.FC = () => {
 
     const res = resetPassword(selectedUser.id, newPasswordInput.trim());
     if (res.success) {
+      logAction({
+        userId: currentUser?.username || 'sysadmin',
+        userRole: currentUser?.role,
+        action: `รีเซ็ตรหัสผ่านของผู้ใช้: ${selectedUser.username}`,
+        category: 'user',
+        status: 'warning',
+        resource: `User/${selectedUser.username}`,
+      });
       showToast(`รีเซ็ตรหัสผ่านของ "${selectedUser.username}" เป็น "${newPasswordInput.trim()}" แล้ว`, 'success');
       setIsResetPasswordModalOpen(false);
     } else {
@@ -192,6 +217,14 @@ export const UserManagementPage: React.FC = () => {
 
     const res = deleteUser(selectedUser.id);
     if (res.success) {
+      logAction({
+        userId: currentUser?.username || 'sysadmin',
+        userRole: currentUser?.role,
+        action: `ลบบัญชีผู้ใช้: ${selectedUser.username}`,
+        category: 'user',
+        status: 'warning',
+        resource: `User/${selectedUser.username}`,
+      });
       showToast(`ลบผู้ใช้ "${selectedUser.username}" เรียบร้อย`, 'success');
       setIsDeleteModalOpen(false);
     } else {
@@ -227,6 +260,13 @@ export const UserManagementPage: React.FC = () => {
   };
 
   const handleExportUsers = () => {
+    logAction({
+      userId: currentUser?.username || 'sysadmin',
+      userRole: currentUser?.role,
+      action: 'Export บัญชีรายชื่อผู้ใช้ทั้งหมด (CSV)',
+      category: 'data',
+      resource: 'User/Export',
+    });
     showToast('สร้างไฟล์ Export ข้อมูลบัญชีผู้ใช้ในระบบเรียบร้อย (CSV)', 'info');
   };
 
@@ -242,16 +282,6 @@ export const UserManagementPage: React.FC = () => {
     { name: 'Credit Sales & Limits', sysadmin: 'Full', admin: 'Full', SF_1: 'View Badge Only', SF_2: 'View Badge Only', SF_3: 'Manage Credit', supervisor: 'View/Approve' },
     { name: 'User Management (CRUD)', sysadmin: 'Full Access', admin: 'Full Access', SF_1: 'No', SF_2: 'No', SF_3: 'No', supervisor: 'View Only' },
     { name: 'Connectors & Webhooks', sysadmin: 'Full Config', admin: 'Full Config', SF_1: 'No', SF_2: 'No', SF_3: 'No', supervisor: 'No' },
-  ];
-
-  // Audit Logs mock data
-  const auditLogs = [
-    { id: 'log-1', time: 'วันนี้ 18:20', user: 'sysadmin', action: 'เข้าสู่ระบบ (Sign In)', ip: '192.168.1.100', status: 'Success' },
-    { id: 'log-2', time: 'วันนี้ 18:15', user: 'SF_2', action: 'ตอบกลับแชท LINE (ลูกค้า C00123)', ip: '192.168.1.104', status: 'Success' },
-    { id: 'log-3', time: 'วันนี้ 17:45', user: 'admin', action: 'ปรับปรุงการตั้งค่า Webhook (LINE OA)', ip: '192.168.1.101', status: 'Success' },
-    { id: 'log-4', time: 'วันนี้ 16:30', user: 'SF_1', action: 'สร้าง Deal ใหม่ใน Sales Pipeline (฿185,000)', ip: '192.168.1.103', status: 'Success' },
-    { id: 'log-5', time: 'วันนี้ 15:50', user: 'SF_3', action: 'อนุมัติขยายวงเงินสินเชื่อลูกค้า C00126', ip: '192.168.1.105', status: 'Success' },
-    { id: 'log-6', time: 'วันนี้ 14:10', user: 'supervisor', action: 'ตรวจสอบรายงาน CSAT ประจำสัปดาห์', ip: '192.168.1.106', status: 'Success' },
   ];
 
   return (
@@ -611,45 +641,7 @@ export const UserManagementPage: React.FC = () => {
         )}
 
         {/* TAB 3: AUDIT & SECURITY LOGS */}
-        {activeTab === 'logs' && (
-          <div className="bg-white rounded-card border border-border p-5 shadow-card space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-divider">
-              <h3 className="text-xs font-bold text-text-primary">
-                Security & Audit Logs
-              </h3>
-            </div>
-
-            <div className="border border-border rounded-lg overflow-hidden">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-bg-muted text-text-secondary border-b border-border">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">วัน-เวลา</th>
-                    <th className="px-4 py-3 font-medium">ชื่อผู้ใช้ (Username)</th>
-                    <th className="px-4 py-3 font-medium">กิจกรรมที่ทำ (Action)</th>
-                    <th className="px-4 py-3 font-medium font-mono">IP Address</th>
-                    <th className="px-4 py-3 font-medium text-center">สถานะ</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-divider">
-                  {auditLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-bg-subtle">
-                      <td className="px-4 py-2.5 font-mono text-text-secondary">{log.time}</td>
-                      <td className="px-4 py-2.5 font-mono font-bold text-text-primary">{log.user}</td>
-                      <td className="px-4 py-2.5 text-text-primary">{log.action}</td>
-                      <td className="px-4 py-2.5 font-mono text-text-secondary">{log.ip}</td>
-                      <td className="px-4 py-2.5 text-center">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <span>{log.status}</span>
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {activeTab === 'logs' && <AuditLogsTab />}
 
       </div>
 

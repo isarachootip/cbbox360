@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
+import { AuditLogProvider } from './context/AuditLogContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { MenuProvider } from './context/MenuContext';
 import { CustomerProvider } from './context/CustomerContext';
@@ -36,13 +37,14 @@ const ProtectedLayout: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <ToastProvider>
-      <AuthProvider>
-        <MenuProvider>
-          <CustomerProvider>
-            <CannedResponseProvider>
-              <BotProvider>
-                <BrowserRouter>
-                  <LayoutProvider>
+      <AuditLogProvider>
+        <AuthProvider>
+          <MenuProvider>
+            <CustomerProvider>
+              <CannedResponseProvider>
+                <BotProvider>
+                  <BrowserRouter>
+                    <LayoutProvider>
                     <Routes>
                       {/* Public Route */}
                       <Route path="/login" element={<LoginPage />} />
@@ -84,6 +86,7 @@ export const App: React.FC = () => {
           </CustomerProvider>
         </MenuProvider>
       </AuthProvider>
+      </AuditLogProvider>
     </ToastProvider>
   );
 };
