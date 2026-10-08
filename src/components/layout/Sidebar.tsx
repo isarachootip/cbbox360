@@ -137,34 +137,27 @@ export const Sidebar: React.FC = () => {
       >
         <div className="flex flex-col gap-5 overflow-y-auto custom-scrollbar">
           {/* Framed Logo & Mobile Close Button */}
-          <div className="flex items-center justify-between px-1 py-1">
-            <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="h-10 w-10 rounded-xl bg-white border border-sidebar-border shadow-sm flex items-center justify-center p-0.5 overflow-hidden flex-shrink-0 group-hover:border-brand/40 transition-colors">
-                <img
-                  src="/logo-icon.png"
-                  alt="Customer Box 360 Logo"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="font-extrabold text-[17px] text-[#0F2B4D] tracking-tight leading-none">
-                  CB<span className="text-[#1F6FD1]">360</span>
-                </span>
-                <span className="text-[10px] text-sidebar-label font-medium tracking-wide mt-0.5">
-                  Customer Box 360°
-                </span>
-              </div>
-            </Link>
-
+          <div className="relative flex flex-col items-center justify-center px-1 pt-1 pb-3 border-b border-sidebar-border/60">
             {/* Close button for mobile drawer */}
             <button
               type="button"
               onClick={closeMobileSidebar}
               aria-label="ปิดเมนูการนำทาง"
-              className="lg:hidden p-1.5 text-slate-500 hover:text-slate-800 hover:bg-black/5 rounded-lg transition-colors"
+              className="lg:hidden absolute top-0 right-0 p-1.5 text-slate-500 hover:text-slate-800 hover:bg-black/5 rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
+
+            <Link
+              to="/"
+              className="flex flex-col items-center justify-center text-center w-full group py-1"
+            >
+              <img
+                src="/logo-full-transparent.png"
+                alt="CB360 - Customer Box 360°"
+                className="w-full max-w-[155px] h-auto object-contain drop-shadow-sm group-hover:scale-[1.02] transition-transform duration-200"
+              />
+            </Link>
           </div>
 
         {/* Navigation Sections */}
