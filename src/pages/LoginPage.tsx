@@ -76,19 +76,19 @@ export const LoginPage: React.FC = () => {
         <div>
           {/* Framed Logo */}
           <div className="flex items-center gap-3 mb-8">
-            <div className="h-12 w-12 rounded-xl bg-white border border-border shadow-sm flex items-center justify-center p-1.5 overflow-hidden flex-shrink-0">
+            <div className="h-12 w-12 rounded-xl bg-white border border-border shadow-sm flex items-center justify-center p-1 overflow-hidden flex-shrink-0">
               <img
-                src="/logo.png"
-                alt="CustBox360 Logo"
+                src="/logo-icon.png"
+                alt="Customer Box 360 Logo"
                 className="w-full h-full object-contain"
               />
             </div>
             <div>
               <span className="font-extrabold text-2xl text-[#0F2B4D] tracking-tight block leading-none">
-                CustBox360
+                CB<span className="text-[#1F6FD1]">360</span>
               </span>
               <span className="text-[11px] text-sidebar-label tracking-wide font-medium mt-0.5 block">
-                Customer Data Platform & Activity Plug-ins
+                Customer Box 360° & Activity Plug-ins
               </span>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Users,
   Layers,
@@ -138,23 +138,23 @@ export const Sidebar: React.FC = () => {
         <div className="flex flex-col gap-5 overflow-y-auto custom-scrollbar">
           {/* Framed Logo & Mobile Close Button */}
           <div className="flex items-center justify-between px-1 py-1">
-            <div className="flex items-center gap-2.5">
-              <div className="h-10 w-10 rounded-xl bg-white border border-sidebar-border shadow-sm flex items-center justify-center p-1 overflow-hidden flex-shrink-0">
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <div className="h-10 w-10 rounded-xl bg-white border border-sidebar-border shadow-sm flex items-center justify-center p-0.5 overflow-hidden flex-shrink-0 group-hover:border-brand/40 transition-colors">
                 <img
-                  src="/logo.png"
-                  alt="CustBox360 Logo"
+                  src="/logo-icon.png"
+                  alt="Customer Box 360 Logo"
                   className="w-full h-full object-contain"
                 />
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="font-extrabold text-[17px] text-[#0F2B4D] tracking-tight leading-none">
-                  CustBox360
+                  CB<span className="text-[#1F6FD1]">360</span>
                 </span>
                 <span className="text-[10px] text-sidebar-label font-medium tracking-wide mt-0.5">
-                  CDP & Activity
+                  Customer Box 360°
                 </span>
               </div>
-            </div>
+            </Link>
 
             {/* Close button for mobile drawer */}
             <button
