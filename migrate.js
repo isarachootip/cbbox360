@@ -74,6 +74,29 @@ const createTables = async () => {
     );
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ai_summaries (
+      conversation_id TEXT PRIMARY KEY,
+      message_count   INTEGER NOT NULL DEFAULT 0,
+      result          JSONB NOT NULL,
+      created_at      TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS ai_usage_logs (
+      id               TEXT PRIMARY KEY,
+      user_id          TEXT NOT NULL,
+      conversation_id  TEXT NOT NULL,
+      feature          TEXT NOT NULL,
+      response_time_ms INTEGER DEFAULT 0,
+      status           TEXT DEFAULT 'success',
+      selected_label   TEXT,
+      selected_text    TEXT,
+      final_sent_text  TEXT,
+      was_edited       BOOLEAN,
+      created_at       TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+
   console.log('✅ Tables created.');
 };
 

@@ -6,6 +6,7 @@ import botRoutes from './botRoutes.js';
 import cannedResponseRoutes from './cannedResponseRoutes.js';
 import connectorRoutes from './connectorRoutes.js';
 import auditLogRoutes from './auditLogRoutes.js';
+import aiRoutes from './aiRoutes.js';
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.use('/conversations', conversationRoutes);
 router.use('/canned-responses', cannedResponseRoutes);
 router.use('/connectors', connectorRoutes);
 router.use('/audit-logs', auditLogRoutes);
+router.use('/ai', aiRoutes);
 router.use('/', botRoutes);
 
 export default router;

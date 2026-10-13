@@ -32,8 +32,31 @@ export const ensureDatabaseSchema = async () => {
       );
       CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp DESC);
       CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(user_id);
+
+      CREATE TABLE IF NOT EXISTS ai_summaries (
+        conversation_id TEXT PRIMARY KEY,
+        message_count INTEGER NOT NULL DEFAULT 0,
+        result JSONB NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS ai_usage_logs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        conversation_id TEXT NOT NULL,
+        feature TEXT NOT NULL,
+        response_time_ms INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'success',
+        selected_label TEXT,
+        selected_text TEXT,
+        final_sent_text TEXT,
+        was_edited BOOLEAN,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_conv ON ai_usage_logs(conversation_id);
+      CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_created ON ai_usage_logs(created_at DESC);
     `);
-    console.log('✅ [DB Schema] Verified conversations, messages, connector_settings, and audit_logs schema');
+    console.log('✅ [DB Schema] Verified conversations, messages, connector_settings, audit_logs, ai_summaries, and ai_usage_logs');
   } catch (err) {
     console.warn('⚠️ [DB Schema Init Notice]:', err.message);
   }

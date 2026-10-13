@@ -12,6 +12,7 @@ import {
 import { KpiTile } from '../../common/KpiTile';
 import { CannedResponse } from '../../../types';
 import { useBot } from '../../../context/BotContext';
+import { AiFeaturesToggleCard } from '../AiFeaturesToggleCard';
 
 interface OverviewTabProps {
   cannedResponses: CannedResponse[];
@@ -62,6 +63,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           subValue="เวลาทำการ 08:30 - 18:00 น."
         />
       </div>
+
+      {/* AI Copilot Features Toggle (Suggested Reply & AI Summary) */}
+      <AiFeaturesToggleCard />
 
       {/* Modules Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

@@ -398,8 +398,62 @@ export interface BotSettings {
   handoffMessage: string;
   fallbackMessage?: string;
   geminiApiKey?: string;
+  companyName?: string;
+  aiSuggestReplyEnabled?: boolean;
+  aiSummaryEnabled?: boolean;
   autoReplyTimeoutSeconds?: number;
   rules: BotAutoReplyRule[];
+}
+
+export interface SuggestedReplyOption {
+  label: string;
+  text: string;
+}
+
+export interface SuggestedReplyResult {
+  replies: SuggestedReplyOption[];
+  used_canned: string[];
+  missing_info: string[];
+  needs_human_check: boolean;
+  escalate: boolean;
+  logId?: string;
+}
+
+export type AiSummaryIntent =
+  | 'order_status'
+  | 'purchase'
+  | 'claim'
+  | 'complaint'
+  | 'billing'
+  | 'credit'
+  | 'pdpa_request'
+  | 'general';
+
+export type AiSummarySentiment = 'positive' | 'neutral' | 'negative' | 'angry';
+export type AiSummaryUrgency = 'low' | 'medium' | 'high';
+
+export interface AiSummaryResult {
+  summary: string;
+  intent: AiSummaryIntent;
+  sentiment: AiSummarySentiment;
+  urgency: AiSummaryUrgency;
+  done: string[];
+  pending: string[];
+  next_step: string;
+  suggest_ticket: {
+    create: boolean;
+    type: string;
+    title: string;
+  };
+  suggest_lead: {
+    create: boolean;
+    title: string;
+    est_value: number | null;
+  };
+  labels: string[];
+  cached?: boolean;
+  messageCount?: number;
+  logId?: string;
 }
 
 export type AuditCategory = 'security' | 'access' | 'data' | 'system' | 'user';
@@ -417,5 +471,6 @@ export interface AuditLogEntry {
   status: AuditStatus;
   details?: string;
 }
+
 
 

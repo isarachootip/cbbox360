@@ -6,13 +6,22 @@ import { TierBadge } from './TierBadge';
 import { GradeBadge } from './GradeBadge';
 import { useToast } from '../../context/ToastContext';
 import { useCustomer } from '../../context/CustomerContext';
+import { ChatMessage } from '../../types';
+import { AiSummaryCard } from '../inbox/AiSummaryCard';
 
 interface CustomerSideCardProps {
   customer: Customer;
+  conversationId?: string;
+  messages?: ChatMessage[];
   onOpenTask?: () => void;
 }
 
-export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({ customer, onOpenTask }) => {
+export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({
+  customer,
+  conversationId,
+  messages = [],
+  onOpenTask,
+}) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { deals, tickets } = useCustomer();
@@ -37,6 +46,13 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({ customer, on
     }
   };
 
+  const handleAddSuggestedLabel = (lbl: string) => {
+    if (!labels.includes(lbl)) {
+      setLabels([...labels, lbl]);
+      showToast(`เพิ่มป้ายกำกับแนะนำ "${lbl}" สำเร็จ`, 'success');
+    }
+  };
+
   return (
     <div className="w-[320px] flex-shrink-0 bg-white border-l border-border h-full overflow-y-auto custom-scrollbar flex flex-col p-4 text-[13px]">
       {/* Top Header */}
@@ -52,6 +68,18 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({ customer, on
           <ExternalLink className="w-3 h-3" />
         </button>
       </div>
+
+      {/* AI Summary Card at the top of CDP Panel */}
+      {conversationId && (
+        <div className="pt-3">
+          <AiSummaryCard
+            conversationId={conversationId}
+            customer={customer}
+            messages={messages}
+            onAddSuggestedLabel={handleAddSuggestedLabel}
+          />
+        </div>
+      )}
 
       {/* Customer Avatar & Name */}
       <div className="py-4 flex items-center gap-3">

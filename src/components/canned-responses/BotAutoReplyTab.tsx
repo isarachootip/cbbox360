@@ -13,6 +13,7 @@ import {
 import { CannedResponse, BotAutoReplyRule } from '../../types';
 import { useBot } from '../../context/BotContext';
 import { BotAiSettingsCard } from './BotAiSettingsCard';
+import { AiFeaturesToggleCard } from '../settings/AiFeaturesToggleCard';
 
 interface BotAutoReplyTabProps {
   cannedResponses: CannedResponse[];
@@ -50,6 +51,9 @@ export const BotAutoReplyTab: React.FC<BotAutoReplyTabProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* AI Copilot Features Toggle */}
+      <AiFeaturesToggleCard />
+
       {/* Master Bot Controller Card */}
       <div className="bg-white rounded-xl border border-border p-6 shadow-card space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">

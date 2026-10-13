@@ -35,9 +35,11 @@ import { CustomerSideCard } from '../components/common/CustomerSideCard';
 import { BotStatusToggle } from '../components/inbox/BotStatusToggle';
 import { ChatMessageItem } from '../components/inbox/ChatMessageItem';
 import { LineUserIdModal } from '../components/inbox/LineUserIdModal';
+import { AiSuggestedReplyPanel } from '../components/inbox/AiSuggestedReplyPanel';
 import { CannedResponse, CannedResponseCategory } from '../types';
 import { useAutoReplyTimer } from '../hooks/useAutoReplyTimer';
 import { callGemini } from '../services/geminiService';
+import { updateAiUsageLog } from '../services/aiAssistantApi';
 
 export const InboxPage: React.FC = () => {
   const navigate = useNavigate();
@@ -212,6 +214,11 @@ export const InboxPage: React.FC = () => {
     }
   };
 
+  const [activeAiSelection, setActiveAiSelection] = useState<{
+    logId?: string;
+    originalText: string;
+  } | null>(null);
+
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputText.trim()) return;
@@ -219,6 +226,14 @@ export const InboxPage: React.FC = () => {
     cancelTimer();
     const textToSend = inputText.trim();
     const isPrivate = composerMode === 'note';
+
+    if (!isPrivate && activeAiSelection?.logId) {
+      updateAiUsageLog(activeAiSelection.logId, {
+        finalSentText: textToSend,
+        wasEdited: textToSend !== activeAiSelection.originalText.trim(),
+      });
+    }
+    setActiveAiSelection(null);
     setInputText('');
     setIsSlashMenuOpen(false);
 
@@ -888,6 +903,22 @@ export const InboxPage: React.FC = () => {
                 </div>
               )}
 
+              {/* AI Suggested Reply Panel */}
+              {composerMode === 'reply' && selectedConv && (
+                <AiSuggestedReplyPanel
+                  conversationId={selectedConv.id}
+                  customer={currentCustomer}
+                  messages={selectedConv.messages}
+                  onSelectReply={(text, logId) => {
+                    setInputText(text);
+                    setActiveAiSelection({ logId, originalText: text });
+                    if (textareaRef.current) {
+                      textareaRef.current.focus();
+                    }
+                  }}
+                />
+              )}
+
               {/* Input Box */}
               <form onSubmit={handleSendMessage} className="relative">
                 <textarea
@@ -954,7 +985,12 @@ export const InboxPage: React.FC = () => {
 
       {/* ================= COLUMN 3: CDP CUSTOMER SIDE CARD (320px) ================= */}
       <div className="hidden xl:block h-full">
-        <CustomerSideCard customer={currentCustomer} onOpenTask={() => setComposerMode('task')} />
+        <CustomerSideCard
+          customer={currentCustomer}
+          conversationId={selectedConv?.id}
+          messages={selectedConv?.messages}
+          onOpenTask={() => setComposerMode('task')}
+        />
       </div>
 
       {/* Mobile & Tablet Drawer for CDP Info */}
@@ -980,6 +1016,8 @@ export const InboxPage: React.FC = () => {
             <div className="flex-1 overflow-y-auto">
               <CustomerSideCard
                 customer={currentCustomer}
+                conversationId={selectedConv?.id}
+                messages={selectedConv?.messages}
                 onOpenTask={() => {
                   setComposerMode('task');
                   setIsCustomerDetailOpen(false);

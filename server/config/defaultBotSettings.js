@@ -21,6 +21,9 @@ export const defaultBotSettings = {
   fallbackMessage:
     'ขออภัยในความล่าช้าค่ะคุณลูกค้า 🙏 เจ้าหน้าที่ฝ่ายบริการลูกค้าได้รับข้อความแล้วและกำลังเร่งเข้ามาดูแลให้โดยเร็วนะคะ มีเรื่องใดสอบถามเพิ่มเติมแจ้งไว้ได้เลยค่ะ',
   geminiApiKey: '',
+  companyName: 'CusBox360',
+  aiSuggestReplyEnabled: true,
+  aiSummaryEnabled: true,
   rules: [
     {
       id: 'rule-greeting',
