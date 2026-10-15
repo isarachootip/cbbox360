@@ -111,5 +111,28 @@ export const ensureDatabaseSchema = async () => {
   } catch (err) {
     console.warn('⚠️ [DB Schema Init Notice]:', err.message);
   }
+
+  // Phase 2B: medical roles + industry profiles (separate block so it isn't skipped by unrelated failures above)
+  try {
+    await query(`
+      ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+      ALTER TABLE users ADD CONSTRAINT users_role_check
+        CHECK (role IN ('sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor', 'doctor', 'nurse'));
+
+      CREATE TABLE IF NOT EXISTS customer_industry_profiles (
+        customer_id TEXT NOT NULL,
+        kind TEXT NOT NULL CHECK (kind IN ('hospital', 'auto_service', 'logistics')),
+        data JSONB NOT NULL,
+        updated_by TEXT NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (customer_id, kind)
+      );
+    `);
+    console.log('✅ [DB Schema] Verified medical roles and customer_industry_profiles');
+    return true;
+  } catch (err) {
+    console.warn('⚠️ [DB Schema Init Notice - Phase 2B]:', err.message);
+    return false;
+  }
 };
 

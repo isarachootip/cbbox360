@@ -40,6 +40,12 @@ export const env = {
   TOTP_ENCRYPTION_KEY:
     process.env.TOTP_ENCRYPTION_KEY || 'cb360-default-dev-totp-key-32bytes!',
   SESSION_TTL_HOURS: Number(process.env.SESSION_TTL_HOURS) || 8,
+  // Number of reverse-proxy hops to trust for client IP (Coolify/Traefik = 1). 0 when exposed directly.
+  TRUST_PROXY: process.env.TRUST_PROXY !== undefined
+    ? Number(process.env.TRUST_PROXY)
+    : (process.env.NODE_ENV === 'production' ? 1 : 0),
+  // Development only: password for seeded accounts (production always generates random ones).
+  SEED_DEFAULT_PASSWORD: process.env.SEED_DEFAULT_PASSWORD || '1234',
 };
 
 if (!env.LINE_CHANNEL_ACCESS_TOKEN) {

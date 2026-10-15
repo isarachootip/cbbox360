@@ -7,12 +7,16 @@ import apiRoutes from './server/routes/index.js';
 import webhookRoutes from './server/routes/webhookRoutes.js';
 import { initBotSettingsFromDb } from './server/services/botEngineService.js';
 import { ensureDatabaseSchema } from './server/services/dbInitService.js';
+import { ensureSeedUsers } from './server/services/userSeedService.js';
+import { userRepository } from './server/repositories/userRepository.js';
+import { hashPassword } from './server/utils/cryptoUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = env.PORT;
+app.set('trust proxy', env.TRUST_PROXY);
 
 // Middlewares
 app.use(cors());
@@ -26,8 +30,26 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Initialize DB schema & bot settings
-ensureDatabaseSchema();
+// Initialize DB schema, seed accounts (only if users table is empty) & bot settings
+ensureDatabaseSchema()
+  .then((ok) =>
+    ok
+      ? ensureSeedUsers({
+          userRepo: userRepository,
+          hashPassword,
+          nodeEnv: env.NODE_ENV,
+          defaultPassword: env.SEED_DEFAULT_PASSWORD,
+        })
+      : []
+  )
+  .then((created) => {
+    if (created.length === 0) return;
+    console.warn('🔐 [Auth] Seeded initial accounts. Each must change password on first login:');
+    created.forEach((c) =>
+      console.warn(`   - ${c.username}${env.NODE_ENV === 'production' ? ` / ${c.temporaryPassword}` : ' / (SEED_DEFAULT_PASSWORD)'}`)
+    );
+  })
+  .catch((err) => console.error('❌ [Auth Seed Error]:', err.message));
 initBotSettingsFromDb();
 
 // API Routes

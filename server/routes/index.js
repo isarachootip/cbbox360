@@ -7,6 +7,7 @@ import cannedResponseRoutes from './cannedResponseRoutes.js';
 import connectorRoutes from './connectorRoutes.js';
 import auditLogRoutes from './auditLogRoutes.js';
 import aiRoutes from './aiRoutes.js';
+import authRoutes from './authRoutes.js';
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.get('/health', async (req, res) => {
 });
 
 // Domain Routes
+router.use('/auth', authRoutes);
 router.use('/webhooks', webhookRoutes);
 router.use('/conversations', conversationRoutes);
 router.use('/canned-responses', cannedResponseRoutes);
