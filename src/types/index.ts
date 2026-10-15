@@ -272,7 +272,7 @@ export interface CreditLimitRequest {
   status: 'pending' | 'approved' | 'rejected';
 }
 
-export type UserRole = 'sysadmin' | 'admin' | 'SF_1' | 'SF_2' | 'SF_3' | 'supervisor';
+export type UserRole = 'sysadmin' | 'admin' | 'SF_1' | 'SF_2' | 'SF_3' | 'supervisor' | 'doctor' | 'nurse';
 
 export interface UserAccount {
   id: string;

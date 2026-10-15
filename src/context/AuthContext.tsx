@@ -2,13 +2,32 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserAccount, UserRole } from '../types';
 import { initialUserAccounts } from '../data/users';
 import { useAuditLog } from './AuditLogContext';
+import { AuthMode, AUTH_MODE, isServerAuth } from '../config/authMode';
+import { authApi, AUTH_ERROR_MESSAGES } from '../services/authApi';
+import { getRoleLabel, toUserAccount } from '../domain/auth/roles';
+import { verifyTotpCode } from '../utils/totp';
+
+export interface LoginOutcome {
+  success: boolean;
+  requireTwoFactor?: boolean;
+  error?: string;
+}
 
 interface AuthContextType {
+  authMode: AuthMode;
+  /** True while the server session is being restored on page load (server mode only). */
+  isAuthLoading: boolean;
+  /** Server mode: the account must set a new password before using the app. */
+  mustChangePassword: boolean;
   currentUser: UserAccount | null;
   users: UserAccount[];
-  login: (username: string, password: string) => { success: boolean; requireTwoFactor?: boolean; user?: UserAccount; error?: string };
-  completeTwoFactorLogin: (user: UserAccount) => void;
+  login: (username: string, password: string) => Promise<LoginOutcome>;
+  pendingTwoFactorUsername: string | null;
+  verifyTwoFactor: (code: string) => Promise<boolean>;
+  cancelTwoFactor: () => void;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  /** Demo mode only (impersonation is disabled with real authentication). */
   switchUser: (username: string) => boolean;
   createUser: (user: Omit<UserAccount, 'id' | 'createdAt' | 'initials' | 'lastLogin' | 'roleLabel'> & { roleLabel?: string }) => { success: boolean; error?: string };
   updateUser: (id: string, user: Partial<Omit<UserAccount, 'id' | 'createdAt'>>) => { success: boolean; error?: string };
@@ -41,8 +60,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return initialUserAccounts;
   });
 
-  // Load current user from localStorage or default to sysadmin
+  // Demo mode: load current user from localStorage (default sysadmin).
+  // Server mode: start logged out; the session is restored from the httpOnly cookie via /api/auth/me.
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
+    if (isServerAuth) return null;
     try {
       const saved = localStorage.getItem(CURRENT_USER_STORAGE_KEY);
       if (saved) {
@@ -54,6 +75,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     return initialUserAccounts[0]; // default to sysadmin
   });
+  const [isAuthLoading, setIsAuthLoading] = useState(isServerAuth);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [pendingTwoFactorUser, setPendingTwoFactorUser] = useState<UserAccount | null>(null);
+  const [pendingServerTwoFactor, setPendingServerTwoFactor] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isServerAuth) return;
+    authApi
+      .me()
+      .then((user) => {
+        setCurrentUser(user ? toUserAccount(user) : null);
+        setMustChangePassword(Boolean(user?.mustChangePassword));
+      })
+      .finally(() => setIsAuthLoading(false));
+  }, []);
 
   // Save users to localStorage whenever updated
   useEffect(() => {
@@ -64,8 +100,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [users]);
 
-  // Save current user to localStorage whenever updated
+  // Save current user to localStorage whenever updated (demo mode only)
   useEffect(() => {
+    if (isServerAuth) return;
     try {
       if (currentUser) {
         localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(currentUser));
@@ -77,10 +114,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [currentUser]);
 
-  const login = (
-    username: string,
-    password: string
-  ): { success: boolean; requireTwoFactor?: boolean; user?: UserAccount; error?: string } => {
+  const serverLogin = async (username: string, password: string): Promise<LoginOutcome> => {
+    const result = await authApi.login(username, password);
+    if (result.status === 'ok') {
+      setCurrentUser(toUserAccount(result.user));
+      setMustChangePassword(result.user.mustChangePassword);
+      return { success: true };
+    }
+    if (result.status === 'totp_required') {
+      setPendingServerTwoFactor(username);
+      return { success: false, requireTwoFactor: true };
+    }
+    return { success: false, error: AUTH_ERROR_MESSAGES[result.code] };
+  };
+
+  const verifyTwoFactor = async (code: string): Promise<boolean> => {
+    if (isServerAuth) {
+      const result = await authApi.verifyTotp(code);
+      if (result.status !== 'ok') return false;
+      setCurrentUser(toUserAccount(result.user));
+      setMustChangePassword(result.user.mustChangePassword);
+      setPendingServerTwoFactor(null);
+      return true;
+    }
+    if (!pendingTwoFactorUser?.twoFactorSecret) return false;
+    const valid = await verifyTotpCode(code, pendingTwoFactorUser.twoFactorSecret);
+    if (valid) {
+      completeTwoFactorLogin(pendingTwoFactorUser);
+      setPendingTwoFactorUser(null);
+    }
+    return valid;
+  };
+
+  const cancelTwoFactor = () => {
+    setPendingTwoFactorUser(null);
+    setPendingServerTwoFactor(null);
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (!isServerAuth) return { success: false, error: 'โหมดสาธิตไม่รองรับการเปลี่ยนรหัสผ่านที่เซิร์ฟเวอร์' };
+    const result = await authApi.changePassword(currentPassword, newPassword);
+    if (result.status !== 'ok') return { success: false, error: AUTH_ERROR_MESSAGES[result.code] };
+    setMustChangePassword(false);
+    return { success: true };
+  };
+
+  const login = async (username: string, password: string): Promise<LoginOutcome> => {
+    if (isServerAuth) return serverLogin(username, password);
+    return demoLogin(username, password);
+  };
+
+  /** Demo mode only: compares against mock accounts held in the browser. Not secure. */
+  const demoLogin = (username: string, password: string): LoginOutcome => {
     const trimmedUser = username.trim().toLowerCase();
     const user = users.find((u) => u.username.toLowerCase() === trimmedUser);
 
@@ -129,7 +214,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         status: 'success',
         resource: 'Auth/2FA',
       });
-      return { success: false, requireTwoFactor: true, user };
+      setPendingTwoFactorUser(user);
+      return { success: false, requireTwoFactor: true };
     }
 
     const now = new Date();
@@ -169,6 +255,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
+    if (isServerAuth) {
+      // Server writes its own audit entry; the session is revoked server-side.
+      void authApi.logout();
+      setCurrentUser(null);
+      setMustChangePassword(false);
+      return;
+    }
     if (currentUser) {
       logAction({
         userId: currentUser.username,
@@ -183,6 +276,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const switchUser = (username: string): boolean => {
+    // Impersonation without a password is a demo convenience only.
+    if (isServerAuth) return false;
     const user = users.find((u) => u.username.toLowerCase() === username.toLowerCase());
     if (user && user.status === 'active') {
       const now = new Date();
@@ -192,18 +287,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     }
     return false;
-  };
-
-  const getRoleLabel = (role: UserRole): string => {
-    switch (role) {
-      case 'sysadmin': return 'System Administrator (ดูแลระบบสูงสุด)';
-      case 'admin': return 'Administrator (ผู้ดูแลระบบ)';
-      case 'SF_1': return 'Sales Force 1 (ทีมขาย/Pipeline)';
-      case 'SF_2': return 'Sales Force 2 (บริการลูกค้า/Inbox/Case)';
-      case 'SF_3': return 'Sales Force 3 (สินเชื่อ/Credit Sales)';
-      case 'supervisor': return 'Supervisor (หัวหน้างานกำกับดูแล)';
-      default: return role;
-    }
   };
 
   const createUser = (
@@ -350,10 +433,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider
       value={{
+        authMode: AUTH_MODE,
+        isAuthLoading,
+        mustChangePassword,
         currentUser,
         users,
         login,
-        completeTwoFactorLogin,
+        pendingTwoFactorUsername: pendingServerTwoFactor ?? pendingTwoFactorUser?.username ?? null,
+        verifyTwoFactor,
+        cancelTwoFactor,
+        changePassword,
         logout,
         switchUser,
         createUser,

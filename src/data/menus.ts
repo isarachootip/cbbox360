@@ -12,7 +12,7 @@ export const initialMenuItems: MenuItemConfig[] = [
     order: 1,
     isSystem: true,
     description: 'โปรไฟล์ลูกค้า 360 องศา, ประวัติคำสั่งซื้อ, Timeline, กิจกรรม และ Credit',
-    allowedRoles: ['sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor'],
+    allowedRoles: ['sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor', 'doctor', 'nurse'],
   },
   {
     id: 'menu-segments',

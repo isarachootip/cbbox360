@@ -30,6 +30,10 @@ export const RoleBadge: React.FC<RoleBadgeProps> = ({
         return { text: 'text-amber-700', dot: 'bg-amber-600', label: 'SF_3 (Credit)' };
       case 'supervisor':
         return { text: 'text-indigo-700', dot: 'bg-indigo-600', label: 'supervisor' };
+      case 'doctor':
+        return { text: 'text-teal-700', dot: 'bg-teal-600', label: 'doctor' };
+      case 'nurse':
+        return { text: 'text-rose-700', dot: 'bg-rose-500', label: 'nurse' };
       default:
         return { text: 'text-slate-700', dot: 'bg-slate-500', label: r };
     }

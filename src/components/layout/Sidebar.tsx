@@ -38,7 +38,7 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { selectedCustomerId } = useCustomer();
-  const { currentUser, logout, switchUser, users } = useAuth();
+  const { currentUser, logout, switchUser, users, authMode } = useAuth();
   const { menus, getMenusByRole } = useMenu();
   const { showToast } = useToast();
 
@@ -300,6 +300,9 @@ export const Sidebar: React.FC = () => {
         {/* Dropdown Menu */}
         {isUserMenuOpen && (
           <div className="absolute bottom-full left-0 right-0 mb-1.5 bg-white border border-border rounded-xl shadow-xl p-2 z-50 space-y-2">
+            {/* Password-less account switching is a demo convenience; disabled with real authentication. */}
+            {authMode === 'demo' && (
+            <>
             <div className="text-[11px] font-bold text-text-secondary px-2 pt-1">
               สลับบัญชีผู้ใช้งาน (Quick Switch):
             </div>
@@ -333,6 +336,8 @@ export const Sidebar: React.FC = () => {
                 );
               })}
             </div>
+            </>
+            )}
 
             <div className="pt-1.5 border-t border-divider">
               <button

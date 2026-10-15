@@ -10,6 +10,7 @@ import { BotProvider } from './context/BotContext';
 import { LayoutProvider } from './context/LayoutContext';
 import { BusinessTemplateProvider } from './context/BusinessTemplateContext';
 import { AppLayout } from './components/layout/AppLayout';
+import { ForceChangePasswordCard } from './components/auth/ForceChangePasswordCard';
 import { LoginPage } from './pages/LoginPage';
 import { UserManagementPage } from './pages/UserManagementPage';
 import { MenuManagementPage } from './pages/MenuManagementPage';
@@ -28,9 +29,15 @@ import { PlaceholderPage } from './pages/PlaceholderPage';
 
 // Protected Route Component
 const ProtectedLayout: React.FC = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, isAuthLoading, mustChangePassword } = useAuth();
+  if (isAuthLoading) {
+    return <div className="min-h-screen flex items-center justify-center text-sm text-text-secondary">กำลังตรวจสอบการเข้าสู่ระบบ...</div>;
+  }
   if (!currentUser) {
     return <Navigate to="/login" replace />;
+  }
+  if (mustChangePassword) {
+    return <ForceChangePasswordCard />;
   }
   return <AppLayout />;
 };

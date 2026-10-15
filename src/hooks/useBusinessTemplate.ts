@@ -25,6 +25,9 @@ import {
 } from '../domain/templates/templateMerge';
 
 const DEFAULT_OPERATIONAL_ROLES: UserRole[] = ['sysadmin', 'admin', 'supervisor', 'SF_1', 'SF_2'];
+const ROLES_BY_TEMPLATE: Partial<Record<BusinessTemplateId, UserRole[]>> = {
+  hospital: [...DEFAULT_OPERATIONAL_ROLES, 'doctor', 'nurse'],
+};
 
 const DEFAULT_OPTIONS: TemplateApplyOptions = {
   mergeConnectors: true,
@@ -88,7 +91,8 @@ export const useBusinessTemplate = () => {
     }
 
     if (options.enableRecommendedMenus) {
-      const grants = computeMenuGrants(menus, preset.recommendedMenus, DEFAULT_OPERATIONAL_ROLES);
+      const roles = ROLES_BY_TEMPLATE[templateId] ?? DEFAULT_OPERATIONAL_ROLES;
+      const grants = computeMenuGrants(menus, preset.recommendedMenus, roles);
       persistMenuChanges(applyMenuGrants(menus, grants));
       added.menuGrants = grants;
     }

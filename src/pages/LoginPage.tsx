@@ -11,12 +11,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { UserAccount } from '../types';
 import { TwoFactorVerifyCard } from '../components/auth/TwoFactorVerifyCard';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, completeTwoFactorLogin } = useAuth();
+  const { login, pendingTwoFactorUsername, verifyTwoFactor, cancelTwoFactor } = useAuth();
   const { showToast } = useToast();
 
   const [username, setUsername] = useState('');
@@ -24,9 +23,8 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [twoFactorPendingUser, setTwoFactorPendingUser] = useState<UserAccount | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -36,35 +34,28 @@ export const LoginPage: React.FC = () => {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      const result = login(username, password);
-      setIsLoading(false);
+    const result = await login(username, password);
+    setIsLoading(false);
 
-      if (result.success) {
-        showToast(`ยินดีต้อนรับเข้าสู่ระบบ CusBox360`, 'success');
-        navigate('/customers/C00123');
-      } else if (result.requireTwoFactor && result.user) {
-        setTwoFactorPendingUser(result.user);
-      } else {
-        setErrorMessage(result.error || 'เข้าสู่ระบบไม่สำเร็จ');
-      }
-    }, 300);
+    if (result.success) {
+      showToast(`ยินดีต้อนรับเข้าสู่ระบบ CusBox360`, 'success');
+      navigate('/customers/C00123');
+    } else if (!result.requireTwoFactor) {
+      setErrorMessage(result.error || 'เข้าสู่ระบบไม่สำเร็จ');
+    }
   };
 
-  if (twoFactorPendingUser && twoFactorPendingUser.twoFactorSecret) {
+  if (pendingTwoFactorUsername) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#EAF2FC] via-[#F2F6FB] to-[#E3EEFB] flex items-center justify-center p-4 select-none font-sans">
         <TwoFactorVerifyCard
-          username={twoFactorPendingUser.username}
-          secret={twoFactorPendingUser.twoFactorSecret}
+          username={pendingTwoFactorUsername}
+          verify={verifyTwoFactor}
           onSuccess={() => {
-            completeTwoFactorLogin(twoFactorPendingUser);
             showToast('ยืนยันตัวตน 2FA สำเร็จ ยินดีต้อนรับเข้าสู่ระบบ', 'success');
             navigate('/customers/C00123');
           }}
-          onCancel={() => {
-            setTwoFactorPendingUser(null);
-          }}
+          onCancel={cancelTwoFactor}
         />
       </div>
     );

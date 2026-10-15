@@ -10,7 +10,7 @@ import {
 const STORAGE_KEY = 'cb360_business_template_state';
 
 const templateIdSchema = z.enum(['hospital', 'logistics', 'auto_service', 'b2b_wholesale']);
-const roleSchema = z.enum(['sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor']);
+const roleSchema = z.enum(['sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor', 'doctor', 'nurse']);
 
 const storedStateSchema = z.object({
   activeTemplateId: templateIdSchema,

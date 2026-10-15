@@ -1,17 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Lock, CheckCircle2, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
-import { verifyTotpCode } from '../../utils/totp';
 
 interface TwoFactorVerifyCardProps {
   username: string;
-  secret: string;
+  /** Verifies the 6-digit code (server-side in server mode; locally in demo mode). */
+  verify: (code: string) => Promise<boolean>;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
 export const TwoFactorVerifyCard: React.FC<TwoFactorVerifyCardProps> = ({
   username,
-  secret,
+  verify,
   onSuccess,
   onCancel,
 }) => {
@@ -79,7 +79,7 @@ export const TwoFactorVerifyCard: React.FC<TwoFactorVerifyCardProps> = ({
     setErrorMsg('');
 
     try {
-      const isValid = await verifyTotpCode(token, secret);
+      const isValid = await verify(token);
       if (isValid) {
         onSuccess();
       } else {

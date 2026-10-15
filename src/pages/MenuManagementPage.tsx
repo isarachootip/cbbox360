@@ -52,7 +52,7 @@ export const MenuManagementPage: React.FC = () => {
     disableAllForRole,
     resetToDefaults,
   } = useMenu();
-  const { currentUser, switchUser } = useAuth();
+  const { currentUser, switchUser, authMode } = useAuth();
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<'matrix' | 'crud' | 'preview'>('matrix');
@@ -89,6 +89,8 @@ export const MenuManagementPage: React.FC = () => {
     { role: 'SF_2', label: 'SF_2 (Service)', desc: 'ทีมบริการ & Customer Care', color: 'cyan' },
     { role: 'SF_3', label: 'SF_3 (Credit)', desc: 'ทีมสินเชื่อ & การเงิน', color: 'amber' },
     { role: 'supervisor', label: 'supervisor', desc: 'หัวหน้างาน & ตรวจสอบ', color: 'indigo' },
+    { role: 'doctor', label: 'doctor', desc: 'แพทย์ (ข้อมูลการแพทย์)', color: 'teal' },
+    { role: 'nurse', label: 'nurse', desc: 'พยาบาล (ข้อมูลการแพทย์)', color: 'rose' },
   ];
 
   const iconOptions = [
@@ -581,19 +583,21 @@ export const MenuManagementPage: React.FC = () => {
                     เมนูที่ผู้ใช้กลุ่มนี้มองเห็นและสามารถคลิกใช้งานได้จริง
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    const matchedUser = rolesList.find((r) => r.role === previewRole);
-                    if (matchedUser) {
-                      switchUser(previewRole);
-                      showToast(`สลับบัญชีผู้ใช้เป็น ${previewRole} เรียบร้อยแล้ว`, 'success');
-                    }
-                  }}
-                  className="px-3 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>ทดสอบสลับ Role จริง</span>
-                </button>
+                {authMode === 'demo' && (
+                  <button
+                    onClick={() => {
+                      const matchedUser = rolesList.find((r) => r.role === previewRole);
+                      if (matchedUser) {
+                        switchUser(previewRole);
+                        showToast(`สลับบัญชีผู้ใช้เป็น ${previewRole} เรียบร้อยแล้ว`, 'success');
+                      }
+                    }}
+                    className="px-3 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>ทดสอบสลับ Role จริง</span>
+                  </button>
+                )}
               </div>
 
               {/* Mock Sidebar Sections */}
