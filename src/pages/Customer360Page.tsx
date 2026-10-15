@@ -31,6 +31,11 @@ import { NewCustomerModal } from '../components/customer-list/NewCustomerModal';
 import { useCustomer } from '../context/CustomerContext';
 import { useToast } from '../context/ToastContext';
 import { TimelineEventType, TierType, CreditGrade } from '../types';
+import { useBusinessTemplateState } from '../context/BusinessTemplateContext';
+import { useIndustryProfile } from '../hooks/useIndustryProfile';
+import { templateToIndustryKind } from '../domain/industry/industryVariables';
+import { IndustryProfileTab, INDUSTRY_TAB_LABELS } from '../components/customer-360/industry/IndustryProfileTab';
+import { AllergyAlertBanner } from '../components/customer-360/industry/AllergyAlertBanner';
 
 export const Customer360Page: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -48,8 +53,15 @@ export const Customer360Page: React.FC = () => {
     addCustomer,
   } = useCustomer();
 
+  // Sync route customer
+  const customer = customers.find(c => c.id.toLowerCase() === (id || 'c00123').toLowerCase()) || selectedCustomer;
+
+  // Industry profile for the tenant's active business template (null kind for B2B)
+  const { state: templateState } = useBusinessTemplateState();
+  const industry = useIndustryProfile(customer.id, templateToIndustryKind(templateState.activeTemplateId));
+
   // Active tab in middle column
-  const [activeTab, setActiveTab] = useState<'Timeline' | 'Orders' | 'Service' | 'Credit' | 'Contacts' | 'Addresses' | 'Segments'>('Timeline');
+  const [activeTab, setActiveTab] = useState<'Timeline' | 'Orders' | 'Service' | 'Credit' | 'Contacts' | 'Addresses' | 'Segments' | 'Industry'>('Timeline');
   // Timeline filter
   const [timelineFilter, setTimelineFilter] = useState<string>('ทั้งหมด');
   // Modal for new customer
@@ -61,9 +73,6 @@ export const Customer360Page: React.FC = () => {
   // Search filter
   const [customerSearch, setCustomerSearch] = useState('');
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
-
-  // Sync route customer
-  const customer = customers.find(c => c.id.toLowerCase() === (id || 'c00123').toLowerCase()) || selectedCustomer;
 
   // Filtered timeline
   const filteredEvents = timelineEvents.filter((evt) => {
@@ -200,6 +209,7 @@ export const Customer360Page: React.FC = () => {
 
       {/* Main 3-Column Responsive Layout */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-3.5 sm:p-5">
+        <AllergyAlertBanner profile={industry.profile} className="max-w-[1600px] mx-auto mb-4" />
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] xl:grid-cols-[330px_1fr_320px] gap-4 max-w-[1600px] mx-auto">
           
           {/* ================= LEFT COLUMN: PROFILE CARD ================= */}
@@ -368,7 +378,10 @@ export const Customer360Page: React.FC = () => {
           <div className="bg-white rounded-card border border-border flex flex-col shadow-card overflow-hidden">
             {/* Tabs Header */}
             <div className="border-b border-border px-5 flex items-center gap-5 bg-white overflow-x-auto">
-              {(['Timeline', 'Orders', 'Service', 'Credit', 'Contacts', 'Addresses', 'Segments'] as const).map((tab) => {
+              {([
+                'Timeline', 'Orders', 'Service', 'Credit', 'Contacts', 'Addresses', 'Segments',
+                ...(industry.kind ? (['Industry'] as const) : []),
+              ] as const).map((tab) => {
                 const labelMap: Record<string, string> = {
                   Timeline: 'Timeline',
                   Orders: 'Orders',
@@ -377,6 +390,7 @@ export const Customer360Page: React.FC = () => {
                   Contacts: `ผู้ติดต่อ (${(customer.contacts || []).length})`,
                   Addresses: `ที่อยู่ & พิกัด (${(customer.addresses || []).length})`,
                   Segments: 'Segments',
+                  Industry: industry.kind ? INDUSTRY_TAB_LABELS[industry.kind] : '',
                 };
                 return (
                   <button
@@ -623,6 +637,9 @@ export const Customer360Page: React.FC = () => {
               {activeTab === 'Addresses' && (
                 <AddressesTab customer={customer} />
               )}
+
+              {/* Sub Tab: Industry profile (depends on active business template) */}
+              {activeTab === 'Industry' && <IndustryProfileTab industry={industry} />}
             </div>
           </div>
 
