@@ -7,7 +7,7 @@ import apiRoutes from './server/routes/index.js';
 import webhookRoutes from './server/routes/webhookRoutes.js';
 import { initBotSettingsFromDb } from './server/services/botEngineService.js';
 import { ensureDatabaseSchema } from './server/services/dbInitService.js';
-import { ensureSeedUsers } from './server/services/userSeedService.js';
+import { ensureAllSeedAccounts } from './server/services/userSeedService.js';
 import { userRepository } from './server/repositories/userRepository.js';
 import { hashPassword } from './server/utils/cryptoUtils.js';
 
@@ -30,23 +30,22 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Initialize DB schema, seed accounts (only if users table is empty) & bot settings
+// Initialize DB schema, seed accounts (PostgreSQL or in-memory fallback) & bot settings
 ensureDatabaseSchema()
-  .then((ok) =>
-    ok
-      ? ensureSeedUsers({
-          userRepo: userRepository,
-          hashPassword,
-          nodeEnv: env.NODE_ENV,
-          defaultPassword: env.SEED_DEFAULT_PASSWORD,
-        })
-      : []
+  .then(() =>
+    ensureAllSeedAccounts({
+      userRepo: userRepository,
+      hashPassword,
+      defaultPassword: env.SEED_DEFAULT_PASSWORD,
+      mustChangePassword: false,
+    })
   )
-  .then((created) => {
-    if (created.length === 0) return;
-    console.warn('🔐 [Auth] Seeded initial accounts. Each must change password on first login:');
-    created.forEach((c) =>
-      console.warn(`   - ${c.username}${env.NODE_ENV === 'production' ? ` / ${c.temporaryPassword}` : ' / (SEED_DEFAULT_PASSWORD)'}`)
+  .then((provisioned) => {
+    if (provisioned.length === 0) return;
+    console.log(
+      `🔐 [Auth] Provisioned/recovered ${provisioned.length} seed accounts: ${provisioned
+        .map((p) => `${p.username}(${p.action})`)
+        .join(', ')}`
     );
   })
   .catch((err) => console.error('❌ [Auth Seed Error]:', err.message));

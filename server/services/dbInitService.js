@@ -6,12 +6,18 @@ import { query } from '../../db.js';
 export const ensureDatabaseSchema = async () => {
   try {
     await query(`
-      ALTER TABLE conversations ADD COLUMN IF NOT EXISTS is_bot_active BOOLEAN DEFAULT TRUE;
-      ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_reply_token TEXT;
-      ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_reply_token_time TIMESTAMPTZ;
-      ALTER TABLE messages ADD COLUMN IF NOT EXISTS delivery_status TEXT DEFAULT 'delivered';
-      ALTER TABLE messages ADD COLUMN IF NOT EXISTS failure_reason TEXT;
+      ALTER TABLE IF EXISTS conversations ADD COLUMN IF NOT EXISTS is_bot_active BOOLEAN DEFAULT TRUE;
+      ALTER TABLE IF EXISTS conversations ADD COLUMN IF NOT EXISTS last_reply_token TEXT;
+      ALTER TABLE IF EXISTS conversations ADD COLUMN IF NOT EXISTS last_reply_token_time TIMESTAMPTZ;
+      ALTER TABLE IF EXISTS messages ADD COLUMN IF NOT EXISTS delivery_status TEXT DEFAULT 'delivered';
+      ALTER TABLE IF EXISTS messages ADD COLUMN IF NOT EXISTS failure_reason TEXT;
+    `);
+  } catch (err) {
+    console.warn('⚠️ [DB Schema Alter Notice]:', err.message);
+  }
 
+  try {
+    await query(`
       CREATE TABLE IF NOT EXISTS connector_settings (
         id TEXT PRIMARY KEY,
         config JSONB NOT NULL,
@@ -61,7 +67,7 @@ export const ensureDatabaseSchema = async () => {
         username TEXT UNIQUE NOT NULL,
         email TEXT,
         display_name TEXT NOT NULL,
-        role TEXT NOT NULL CHECK (role IN ('sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor')),
+        role TEXT NOT NULL CHECK (role IN ('sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor', 'doctor', 'nurse')),
         department TEXT,
         initials TEXT,
         avatar_bg TEXT DEFAULT '#CFE2F8',

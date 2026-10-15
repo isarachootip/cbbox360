@@ -31,3 +31,34 @@ export const ensureSeedUsers = async ({ userRepo, hashPassword, nodeEnv, default
   }
   return created;
 };
+
+/**
+ * Ensures all 8 seed accounts (including newly added roles like doctor/nurse) exist,
+ * and unlocks any seed account that has never logged in (`last_login_at == null` & `must_change_password == true`)
+ * so deployments on Coolify can sign in with `SEED_DEFAULT_PASSWORD` (default: '1234').
+ */
+export const ensureAllSeedAccounts = async ({
+  userRepo,
+  hashPassword,
+  defaultPassword = '1234',
+  mustChangePassword = false,
+}) => {
+  const passwordHash = await hashPassword(defaultPassword);
+  const provisioned = [];
+
+  for (const seed of SEED_USERS) {
+    const existing = await userRepo.findByUsername(seed.username);
+    if (!existing) {
+      await userRepo.insert({
+        ...seed,
+        passwordHash,
+        mustChangePassword,
+      });
+      provisioned.push({ username: seed.username, action: 'inserted' });
+    } else if (existing.last_login_at == null && existing.must_change_password === true) {
+      await userRepo.updatePassword(existing.id, passwordHash);
+      provisioned.push({ username: seed.username, action: 'unlocked' });
+    }
+  }
+  return provisioned;
+};
