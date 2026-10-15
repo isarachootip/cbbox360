@@ -8,6 +8,7 @@ import { CustomerProvider } from './context/CustomerContext';
 import { CannedResponseProvider } from './context/CannedResponseContext';
 import { BotProvider } from './context/BotContext';
 import { LayoutProvider } from './context/LayoutContext';
+import { BusinessTemplateProvider } from './context/BusinessTemplateContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
 import { UserManagementPage } from './pages/UserManagementPage';
@@ -43,6 +44,7 @@ export const App: React.FC = () => {
             <CustomerProvider>
               <CannedResponseProvider>
                 <BotProvider>
+                  <BusinessTemplateProvider>
                   <BrowserRouter>
                     <LayoutProvider>
                     <Routes>
@@ -81,6 +83,7 @@ export const App: React.FC = () => {
                     </Routes>
                   </LayoutProvider>
                 </BrowserRouter>
+                  </BusinessTemplateProvider>
               </BotProvider>
             </CannedResponseProvider>
           </CustomerProvider>

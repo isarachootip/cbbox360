@@ -78,7 +78,7 @@ export const SettingsPage: React.FC = () => {
     setEditingRuleId(rule.id);
     setRuleFormData({
       name: rule.name,
-      triggerType: 'keyword',
+      triggerType: rule.triggerType,
       keywordsStr: rule.keywords.join(', '),
       matchType: rule.matchType,
       cannedResponseId: rule.cannedResponseId || '',

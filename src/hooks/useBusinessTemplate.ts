@@ -1,186 +1,126 @@
-import { useState, useEffect } from 'react';
 import {
   BusinessTemplateId,
-  BusinessTemplatePreset,
-  ConnectorConfig,
+  MenuItemConfig,
   TemplateApplyOptions,
   UserRole,
 } from '../types';
 import { businessTemplates } from '../data/businessTemplates';
-import { initialConnectors } from '../data/connectors';
 import { useBot } from '../context/BotContext';
 import { useCannedResponses } from '../context/CannedResponseContext';
 import { useMenu } from '../context/MenuContext';
 import { useToast } from '../context/ToastContext';
+import { useBusinessTemplateState } from '../context/BusinessTemplateContext';
+import { loadStoredConnectors, saveStoredConnectors } from '../services/connectorStorage';
+import {
+  EMPTY_ADDED_RESOURCES,
+  TemplateAddedResources,
+  applyMenuGrants,
+  buildRulesToAdd,
+  computeMenuGrants,
+  removeTemplateConnectors,
+  removeTemplateRules,
+  revertMenuGrants,
+  selectNewCannedResponses,
+  selectNewConnectors,
+} from '../domain/templates/templateMerge';
 
-const TEMPLATE_STORAGE_KEY = 'cb360_business_template_state';
-const CONNECTORS_STORAGE_KEY = 'cb360_connectors_config';
 const DEFAULT_OPERATIONAL_ROLES: UserRole[] = ['sysadmin', 'admin', 'supervisor', 'SF_1', 'SF_2'];
 
-interface StoredTemplateState {
-  activeTemplateId: BusinessTemplateId;
-  appliedTemplateIds: BusinessTemplateId[];
-  lastAppliedAt?: string;
-}
+const DEFAULT_OPTIONS: TemplateApplyOptions = {
+  mergeConnectors: true,
+  mergeCannedResponses: true,
+  mergeBotRules: true,
+  enableRecommendedMenus: true,
+};
 
+/** Orchestrates applying / resetting templates across connectors, canned responses, bot rules and menus. */
 export const useBusinessTemplate = () => {
   const { settings: botSettings, updateSettings: updateBotSettings } = useBot();
-  const { cannedResponses, createCannedResponse } = useCannedResponses();
-  const { menus, updateMenu, resetToDefaults: resetMenus } = useMenu();
+  const { cannedResponses, createCannedResponse, deleteCannedResponse } = useCannedResponses();
+  const { menus, updateMenu } = useMenu();
   const { showToast } = useToast();
+  const { state, recordApplied, resetState } = useBusinessTemplateState();
 
-  const [state, setState] = useState<StoredTemplateState>(() => {
-    try {
-      const saved = localStorage.getItem(TEMPLATE_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved) as StoredTemplateState;
-        if (parsed && parsed.activeTemplateId) return parsed;
-      }
-    } catch (e) {
-      console.warn('Failed to parse business template state', e);
-    }
-    return { activeTemplateId: 'b2b_wholesale', appliedTemplateIds: ['b2b_wholesale'] };
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.error('Failed to save business template state', e);
-    }
-  }, [state]);
+  const persistMenuChanges = (next: MenuItemConfig[]) => {
+    next.forEach((m, i) => {
+      if (m !== menus[i]) updateMenu(m.id, { allowedRoles: m.allowedRoles });
+    });
+  };
 
   const applyTemplate = async (
     templateId: BusinessTemplateId,
-    options: TemplateApplyOptions = {
-      mergeConnectors: true,
-      mergeCannedResponses: true,
-      mergeBotRules: true,
-      enableRecommendedMenus: true,
-    }
+    options: TemplateApplyOptions = DEFAULT_OPTIONS
   ) => {
-    const preset: BusinessTemplatePreset | undefined = businessTemplates.find(
-      (t) => t.id === templateId
-    );
+    const preset = businessTemplates.find((t) => t.id === templateId);
     if (!preset) return;
+    const added: TemplateAddedResources = { ...EMPTY_ADDED_RESOURCES };
 
-    let addedConnectorsCount = 0;
-    let addedCannedCount = 0;
-    let addedRulesCount = 0;
-
-    if (options.mergeConnectors && preset.connectors.length > 0) {
-      try {
-        const raw = localStorage.getItem(CONNECTORS_STORAGE_KEY);
-        const currentConnectors: ConnectorConfig[] = raw
-          ? (JSON.parse(raw) as ConnectorConfig[])
-          : initialConnectors;
-
-        const existingIds = new Set(currentConnectors.map((c) => c.id));
-        const newConnectors = preset.connectors.filter((c) => !existingIds.has(c.id));
-        addedConnectorsCount = newConnectors.length;
-
-        if (newConnectors.length > 0) {
-          const merged = [...currentConnectors, ...newConnectors];
-          localStorage.setItem(CONNECTORS_STORAGE_KEY, JSON.stringify(merged));
-        }
-      } catch (e) {
-        console.error('Failed to merge connectors', e);
-      }
+    if (options.mergeConnectors) {
+      const current = loadStoredConnectors();
+      const newConnectors = selectNewConnectors(current, preset);
+      if (newConnectors.length > 0) saveStoredConnectors([...current, ...newConnectors]);
+      added.connectorIds = newConnectors.map((c) => c.id);
     }
 
-    const shortcutToIdMap = new Map<string, string>();
-    cannedResponses.forEach((cr) => shortcutToIdMap.set(cr.shortcut.toLowerCase(), cr.id));
-
-    if (options.mergeCannedResponses && preset.cannedResponses.length > 0) {
-      for (const item of preset.cannedResponses) {
-        const key = item.shortcut.toLowerCase();
-        if (!shortcutToIdMap.has(key)) {
-          const created = await createCannedResponse({
-            title: item.title,
-            shortcut: item.shortcut,
-            category: item.category,
-            content: item.content,
-            tags: item.tags,
-            isActive: item.isActive,
-          });
-          shortcutToIdMap.set(key, created.id);
-          addedCannedCount += 1;
-        }
-      }
-    }
-
-    if (options.mergeBotRules && preset.botRules.length > 0) {
-      const existingRuleNames = new Set(botSettings.rules.map((r) => r.name));
-      const newRules = preset.botRules
-        .filter((r) => !existingRuleNames.has(r.name))
-        .map((r, index) => {
-          const templateCr = preset.cannedResponses.find((c) => c.id === r.cannedResponseId);
-          const resolvedCrId = templateCr
-            ? shortcutToIdMap.get(templateCr.shortcut.toLowerCase()) || r.cannedResponseId
-            : r.cannedResponseId;
-
-          return {
-            ...r,
-            id: `${r.id}-${Date.now()}-${index}`,
-            cannedResponseId: resolvedCrId,
-            priority: botSettings.rules.length + index + 1,
-          };
+    const shortcutToId = new Map(cannedResponses.map((c) => [c.shortcut.toLowerCase(), c.id]));
+    if (options.mergeCannedResponses) {
+      const toCreate = selectNewCannedResponses(cannedResponses.map((c) => c.shortcut), preset);
+      const createdIds: string[] = [];
+      for (const item of toCreate) {
+        const created = await createCannedResponse({
+          title: item.title,
+          shortcut: item.shortcut,
+          category: item.category,
+          content: item.content,
+          tags: item.tags,
+          isActive: item.isActive,
         });
-
-      addedRulesCount = newRules.length;
-      if (newRules.length > 0) {
-        updateBotSettings({ rules: [...botSettings.rules, ...newRules] });
+        shortcutToId.set(item.shortcut.toLowerCase(), created.id);
+        createdIds.push(created.id);
       }
+      added.cannedResponseIds = createdIds;
     }
 
-    if (options.enableRecommendedMenus && preset.recommendedMenus.length > 0) {
-      preset.recommendedMenus.forEach((menuId) => {
-        const target = menus.find((m) => m.id === menuId);
-        if (target) {
-          const nextRoles: UserRole[] = Array.from(
-            new Set<UserRole>([...target.allowedRoles, ...DEFAULT_OPERATIONAL_ROLES])
-          );
-          updateMenu(menuId, { allowedRoles: nextRoles });
-        }
-      });
+    if (options.mergeBotRules) {
+      const newRules = buildRulesToAdd(botSettings.rules, preset, shortcutToId, Date.now());
+      if (newRules.length > 0) updateBotSettings({ rules: [...botSettings.rules, ...newRules] });
+      added.ruleIds = newRules.map((r) => r.id);
     }
 
-    const nowStr = new Date().toLocaleTimeString('th-TH', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    if (options.enableRecommendedMenus) {
+      const grants = computeMenuGrants(menus, preset.recommendedMenus, DEFAULT_OPERATIONAL_ROLES);
+      persistMenuChanges(applyMenuGrants(menus, grants));
+      added.menuGrants = grants;
+    }
 
-    setState((prev) => ({
-      activeTemplateId: templateId,
-      appliedTemplateIds: Array.from(new Set([...prev.appliedTemplateIds, templateId])),
-      lastAppliedAt: `วันนี้ ${nowStr} น.`,
-    }));
-
+    recordApplied(templateId, added);
     showToast(
-      `ติดตั้งเทมเพลต "${preset.name}" สำเร็จ (+${addedConnectorsCount} API, +${addedCannedCount} ข้อความ, +${addedRulesCount} กฎบอท)`,
+      `ติดตั้งเทมเพลต "${preset.name}" สำเร็จ (+${added.connectorIds.length} API, +${added.cannedResponseIds.length} ข้อความ, +${added.ruleIds.length} กฎบอท)`,
       'success'
     );
   };
 
-  const resetToDefaultTemplate = () => {
+  /** Removes only what templates added. User-edited connectors, own rules and own menu roles are kept. */
+  const resetToDefaultTemplate = async () => {
     try {
-      localStorage.setItem(CONNECTORS_STORAGE_KEY, JSON.stringify(initialConnectors));
-      const cleanedRules = botSettings.rules.filter(
-        (r) =>
-          !r.name.startsWith('[Hospital]') &&
-          !r.name.startsWith('[Logistics]') &&
-          !r.name.startsWith('[Auto Service]')
+      const tracked = state.addedResources;
+      saveStoredConnectors(
+        removeTemplateConnectors(loadStoredConnectors(), businessTemplates, tracked.connectorIds)
       );
-      updateBotSettings({ rules: cleanedRules });
-      resetMenus();
-      setState({
-        activeTemplateId: 'b2b_wholesale',
-        appliedTemplateIds: ['b2b_wholesale'],
-        lastAppliedAt: undefined,
-      });
-      showToast('รีเซ็ตกลับเป็นค่าเริ่มต้น (B2B Wholesale) เรียบร้อยแล้ว', 'info');
+      const remainingRules = removeTemplateRules(botSettings.rules, businessTemplates, tracked.ruleIds);
+      if (remainingRules.length !== botSettings.rules.length) {
+        updateBotSettings({ rules: remainingRules });
+      }
+      const existingCannedIds = new Set(cannedResponses.map((c) => c.id));
+      for (const id of tracked.cannedResponseIds) {
+        if (existingCannedIds.has(id)) await deleteCannedResponse(id);
+      }
+      persistMenuChanges(revertMenuGrants(menus, tracked.menuGrants));
+      resetState();
+      showToast('ลบรายการที่มาจากเทมเพลตแล้ว (การตั้งค่าที่คุณแก้เองยังอยู่ครบ)', 'info');
     } catch (e) {
       console.error('Failed to reset template', e);
+      showToast('รีเซ็ตเทมเพลตไม่สำเร็จ', 'error');
     }
   };
 

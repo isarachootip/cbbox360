@@ -1,10 +1,10 @@
 import React from 'react';
 import { Modal } from '../common/Modal';
-import { CannedResponse } from '../../types';
+import { BotTriggerType, CannedResponse } from '../../types';
 
 export interface BotRuleFormData {
   name: string;
-  triggerType: 'keyword';
+  triggerType: BotTriggerType;
   keywordsStr: string;
   matchType: 'contains' | 'exact';
   cannedResponseId: string;
