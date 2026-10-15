@@ -1,5 +1,10 @@
 import { FieldError, industryProfileSchema, toFieldErrors } from '../domain/industry/schemas';
-import { IndustryKind, IndustryProfile } from '../types/industryProfile';
+import {
+  IndustryKind,
+  IndustryProfile,
+  MedicalAccess,
+  RedactedHospitalProfile,
+} from '../types/industryProfile';
 
 export const INDUSTRY_PROFILES_STORAGE_KEY = 'cb360_industry_profiles';
 
@@ -7,11 +12,17 @@ export type SaveProfileResult =
   | { ok: true; profile: IndustryProfile }
   | { ok: false; errors: FieldError[] };
 
-/**
- * Async on purpose: Phase 2B swaps in an HTTP implementation without touching the UI.
- */
+export interface LoadedProfile {
+  access: MedicalAccess;
+  profile: IndustryProfile | null;
+  /** Set instead of `profile` when the server withholds hospital details (PDPA minimisation). */
+  redacted: RedactedHospitalProfile | null;
+  error?: string;
+}
+
+/** Async so the localStorage (demo) and HTTP (server) implementations are interchangeable. */
 export interface IndustryProfileRepository {
-  get(customerId: string, kind: IndustryKind): Promise<IndustryProfile | null>;
+  get(customerId: string, kind: IndustryKind): Promise<LoadedProfile>;
   save(customerId: string, profile: IndustryProfile): Promise<SaveProfileResult>;
 }
 
@@ -53,12 +64,16 @@ export const createLocalIndustryProfileRepository = (
   async get(customerId, kind) {
     const store = readStore(storage);
     const key = profileKey(customerId, kind);
+    let profile: IndustryProfile | null;
     if (key in store) {
       // Stored data is untrusted (user-editable localStorage): validate before use.
       const result = industryProfileSchema.safeParse(store[key]);
-      return result.success && result.data.kind === kind ? result.data : null;
+      profile = result.success && result.data.kind === kind ? result.data : null;
+    } else {
+      profile = seed[customerId]?.find((p) => p.kind === kind) ?? null;
     }
-    return seed[customerId]?.find((p) => p.kind === kind) ?? null;
+    // Demo mode has no server-side roles; everything is visible.
+    return { access: 'full', profile, redacted: null };
   },
 
   async save(customerId, profile) {

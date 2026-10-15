@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import {
   createLocalIndustryProfileRepository,
   createMemoryStorage,
@@ -20,9 +20,9 @@ const seed: Record<string, IndustryProfile[]> = { C00123: [patient] };
 describe('LocalIndustryProfileRepository', () => {
   it('falls back to seed data when nothing is stored', async () => {
     const repo = createLocalIndustryProfileRepository(createMemoryStorage(), seed);
-    expect(await repo.get('C00123', 'hospital')).toEqual(patient);
-    expect(await repo.get('C00123', 'auto_service')).toBeNull();
-    expect(await repo.get('UNKNOWN', 'hospital')).toBeNull();
+    expect((await repo.get('C00123', 'hospital')).profile).toEqual(patient);
+    expect((await repo.get('C00123', 'auto_service')).profile).toBeNull();
+    expect((await repo.get('UNKNOWN', 'hospital')).profile).toBeNull();
   });
 
   it('saves a valid profile and reads it back (stored value overrides seed)', async () => {
@@ -31,15 +31,15 @@ describe('LocalIndustryProfileRepository', () => {
     const updated = { ...patient, drugAllergies: [] };
     const result = await repo.save('C00123', updated);
     expect(result.ok).toBe(true);
-    expect(await repo.get('C00123', 'hospital')).toEqual(updated);
+    expect((await repo.get('C00123', 'hospital')).profile).toEqual(updated);
   });
 
   it('keeps profiles of different industries for the same customer separately', async () => {
     const repo = createLocalIndustryProfileRepository(createMemoryStorage());
     await repo.save('C1', patient);
     await repo.save('C1', { kind: 'auto_service', vehicles: [] });
-    expect((await repo.get('C1', 'hospital'))?.kind).toBe('hospital');
-    expect((await repo.get('C1', 'auto_service'))?.kind).toBe('auto_service');
+    expect((await repo.get('C1', 'hospital')).profile?.kind).toBe('hospital');
+    expect((await repo.get('C1', 'auto_service')).profile?.kind).toBe('auto_service');
   });
 
   it('rejects invalid data with field errors and does not write', async () => {
@@ -55,9 +55,9 @@ describe('LocalIndustryProfileRepository', () => {
     const storage = createMemoryStorage();
     storage.setItem(INDUSTRY_PROFILES_STORAGE_KEY, '{not json');
     const repo = createLocalIndustryProfileRepository(storage, seed);
-    expect(await repo.get('C00123', 'hospital')).toEqual(patient);
+    expect((await repo.get('C00123', 'hospital')).profile).toEqual(patient);
 
     storage.setItem(INDUSTRY_PROFILES_STORAGE_KEY, JSON.stringify({ 'C9:hospital': { kind: 'hospital' } }));
-    expect(await repo.get('C9', 'hospital')).toBeNull();
+    expect((await repo.get('C9', 'hospital')).profile).toBeNull();
   });
 });

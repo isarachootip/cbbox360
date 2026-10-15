@@ -14,13 +14,17 @@ import {
 
 interface HospitalProfileFormProps {
   initial: HospitalProfile | null;
+  /** Fields shown read-only (e.g. for nurses). The server enforces the same rule. */
+  lockedFields?: ReadonlySet<string>;
   onSave: UseIndustryProfileResult['save'];
   onDone: () => void;
 }
 
 const BLOOD_TYPES: BloodType[] = ['A', 'B', 'AB', 'O', 'unknown'];
+const lockedInputClass = `${inputClass} disabled:bg-slate-50 disabled:text-text-muted disabled:cursor-not-allowed`;
 
-export const HospitalProfileForm: React.FC<HospitalProfileFormProps> = ({ initial, onSave, onDone }) => {
+export const HospitalProfileForm: React.FC<HospitalProfileFormProps> = ({ initial, lockedFields, onSave, onDone }) => {
+  const isLocked = (field: string) => lockedFields?.has(field) ?? false;
   const [hn, setHn] = useState(initial?.hn ?? '');
   const [bloodType, setBloodType] = useState<BloodType>(initial?.bloodType ?? 'unknown');
   const [allergies, setAllergies] = useState(initial?.drugAllergies.join(', ') ?? '');
@@ -56,14 +60,17 @@ export const HospitalProfileForm: React.FC<HospitalProfileFormProps> = ({ initia
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {lockedFields && (
+        <p className="text-[11px] text-text-muted">ตำแหน่งพยาบาลแก้ไขได้เฉพาะ แพ้ยา, สิทธิ์การรักษา และผู้ติดต่อฉุกเฉิน</p>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
           <label className={labelClass}>HN (รหัสผู้ป่วย) *</label>
-          <input className={inputClass} value={hn} onChange={(e) => setHn(e.target.value)} placeholder="HN-6904812" />
+          <input className={lockedInputClass} disabled={isLocked('hn')} value={hn} onChange={(e) => setHn(e.target.value)} placeholder="HN-6904812" />
         </div>
         <div>
           <label className={labelClass}>กรุ๊ปเลือด</label>
-          <select className={inputClass} value={bloodType} onChange={(e) => setBloodType(e.target.value as BloodType)}>
+          <select className={lockedInputClass} disabled={isLocked('bloodType')} value={bloodType} onChange={(e) => setBloodType(e.target.value as BloodType)}>
             {BLOOD_TYPES.map((b) => (
               <option key={b} value={b}>
                 {b === 'unknown' ? 'ไม่ทราบ' : b}
@@ -73,18 +80,18 @@ export const HospitalProfileForm: React.FC<HospitalProfileFormProps> = ({ initia
         </div>
         <div>
           <label className={labelClass}>แพทย์ประจำ</label>
-          <input className={inputClass} value={doctor} onChange={(e) => setDoctor(e.target.value)} />
+          <input className={lockedInputClass} disabled={isLocked('preferredDoctor')} value={doctor} onChange={(e) => setDoctor(e.target.value)} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>ประวัติแพ้ยา (คั่นด้วย ,)</label>
-          <input className={inputClass} value={allergies} onChange={(e) => setAllergies(e.target.value)} placeholder="Penicillin, Aspirin" />
+          <input className={lockedInputClass} disabled={isLocked('drugAllergies')} value={allergies} onChange={(e) => setAllergies(e.target.value)} placeholder="Penicillin, Aspirin" />
         </div>
         <div>
           <label className={labelClass}>โรคประจำตัว (คั่นด้วย ,)</label>
-          <input className={inputClass} value={conditions} onChange={(e) => setConditions(e.target.value)} />
+          <input className={lockedInputClass} disabled={isLocked('chronicConditions')} value={conditions} onChange={(e) => setConditions(e.target.value)} />
         </div>
       </div>
 

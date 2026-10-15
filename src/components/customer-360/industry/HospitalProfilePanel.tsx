@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import { Pencil, Stethoscope } from 'lucide-react';
-import { HospitalProfile } from '../../../types/industryProfile';
+import { HospitalProfile, MedicalAccess } from '../../../types/industryProfile';
 import { UseIndustryProfileResult } from '../../../hooks/useIndustryProfile';
 import { getPolicyStatus } from '../../../domain/industry/hospitalRules';
+import { HOSPITAL_FIELDS, NURSE_EDITABLE_FIELDS } from '../../../../shared/medicalAccessPolicy.js';
 import { HospitalProfileForm } from './HospitalProfileForm';
 import { COVERAGE_LABELS } from './InsurancePolicyEditor';
 import { EXPIRY_DISPLAY, IndustryStatusDot } from './IndustryStatusDot';
 import { primaryButtonClass, secondaryButtonClass } from './FormErrorList';
 
+const NURSE_LOCKED_FIELDS: ReadonlySet<string> = new Set(
+  HOSPITAL_FIELDS.filter((f) => !(NURSE_EDITABLE_FIELDS as readonly string[]).includes(f))
+);
+
 interface HospitalProfilePanelProps {
   profile: HospitalProfile | null;
+  access: MedicalAccess;
   onSave: UseIndustryProfileResult['save'];
 }
 
@@ -20,12 +26,20 @@ const Row: React.FC<{ label: string; children: React.ReactNode }> = ({ label, ch
   </div>
 );
 
-export const HospitalProfilePanel: React.FC<HospitalProfilePanelProps> = ({ profile, onSave }) => {
+export const HospitalProfilePanel: React.FC<HospitalProfilePanelProps> = ({ profile, access, onSave }) => {
   const [isEditing, setIsEditing] = useState(false);
   const today = new Date();
+  const isNurse = access === 'nurse';
 
   if (isEditing) {
-    return <HospitalProfileForm initial={profile} onSave={onSave} onDone={() => setIsEditing(false)} />;
+    return (
+      <HospitalProfileForm
+        initial={profile}
+        lockedFields={isNurse ? NURSE_LOCKED_FIELDS : undefined}
+        onSave={onSave}
+        onDone={() => setIsEditing(false)}
+      />
+    );
   }
 
   if (!profile) {
@@ -33,9 +47,13 @@ export const HospitalProfilePanel: React.FC<HospitalProfilePanelProps> = ({ prof
       <div className="py-10 text-center space-y-3">
         <Stethoscope className="w-8 h-8 text-slate-300 mx-auto" />
         <p className="text-xs text-text-secondary">ยังไม่มีข้อมูลผู้ป่วยสำหรับลูกค้ารายนี้</p>
-        <button type="button" onClick={() => setIsEditing(true)} className={primaryButtonClass}>
-          สร้างข้อมูลผู้ป่วย
-        </button>
+        {isNurse ? (
+          <p className="text-[11px] text-text-muted">การสร้างข้อมูลผู้ป่วยใหม่ต้องทำโดยแพทย์หรือ admin</p>
+        ) : (
+          <button type="button" onClick={() => setIsEditing(true)} className={primaryButtonClass}>
+            สร้างข้อมูลผู้ป่วย
+          </button>
+        )}
       </div>
     );
   }

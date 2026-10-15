@@ -209,7 +209,7 @@ export const Customer360Page: React.FC = () => {
 
       {/* Main 3-Column Responsive Layout */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-3.5 sm:p-5">
-        <AllergyAlertBanner profile={industry.profile} className="max-w-[1600px] mx-auto mb-4" />
+        <AllergyAlertBanner profile={industry.profile} redacted={industry.redacted} className="max-w-[1600px] mx-auto mb-4" />
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] xl:grid-cols-[330px_1fr_320px] gap-4 max-w-[1600px] mx-auto">
           
           {/* ================= LEFT COLUMN: PROFILE CARD ================= */}

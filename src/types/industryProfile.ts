@@ -5,6 +5,7 @@ import {
   industryProfileSchema,
   insurancePolicySchema,
   logisticsProfileSchema,
+  redactedHospitalProfileSchema,
   vehicleSchema,
 } from '../domain/industry/schemas';
 
@@ -20,3 +21,7 @@ export type IndustryKind = IndustryProfile['kind'];
 export type CoverageType = InsurancePolicy['coverageType'];
 export type BloodType = HospitalProfile['bloodType'];
 export type LogisticsServiceType = LogisticsProfile['defaultService'];
+export type RedactedHospitalProfile = z.infer<typeof redactedHospitalProfileSchema>;
+
+/** Mirrors shared/medicalAccessPolicy.js (the server is the authority). */
+export type MedicalAccess = 'full' | 'nurse' | 'redacted';

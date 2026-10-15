@@ -8,27 +8,33 @@ import connectorRoutes from './connectorRoutes.js';
 import auditLogRoutes from './auditLogRoutes.js';
 import aiRoutes from './aiRoutes.js';
 import authRoutes from './authRoutes.js';
+import industryProfileRoutes from './industryProfileRoutes.js';
+import { requireAuth, requireRole } from '../services/authContainer.js';
+import { bindActor } from '../middlewares/bindActor.js';
 
 const router = Router();
 
-// Health Check
+// Health Check (public; no internal error details)
 router.get('/health', async (req, res) => {
   try {
     await query('SELECT 1');
     res.status(200).json({ status: 'ok', db: 'connected', time: new Date().toISOString() });
-  } catch (err) {
-    res.status(500).json({ status: 'error', db: 'disconnected', error: err.message });
+  } catch {
+    res.status(500).json({ status: 'error', db: 'disconnected' });
   }
 });
 
-// Domain Routes
+// Public: login flow, and LINE/Meta webhooks (authenticated by signature, not session)
 router.use('/auth', authRoutes);
 router.use('/webhooks', webhookRoutes);
-router.use('/conversations', conversationRoutes);
-router.use('/canned-responses', cannedResponseRoutes);
-router.use('/connectors', connectorRoutes);
-router.use('/audit-logs', auditLogRoutes);
-router.use('/ai', aiRoutes);
-router.use('/', botRoutes);
+
+// Everything below requires a logged-in session
+router.use('/conversations', requireAuth, conversationRoutes);
+router.use('/canned-responses', requireAuth, cannedResponseRoutes);
+router.use('/connectors', requireAuth, requireRole('sysadmin', 'admin'), connectorRoutes);
+router.use('/audit-logs', requireAuth, bindActor, auditLogRoutes);
+router.use('/ai', requireAuth, bindActor, aiRoutes);
+router.use('/customers', requireAuth, industryProfileRoutes);
+router.use('/', requireAuth, botRoutes);
 
 export default router;

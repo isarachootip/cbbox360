@@ -3,6 +3,7 @@ import { UseIndustryProfileResult } from '../../../hooks/useIndustryProfile';
 import { HospitalProfilePanel } from './HospitalProfilePanel';
 import { VehicleList } from './VehicleList';
 import { LogisticsProfilePanel } from './LogisticsProfilePanel';
+import { RedactedPatientNotice } from './RedactedPatientNotice';
 
 export const INDUSTRY_TAB_LABELS = {
   hospital: 'ข้อมูลผู้ป่วย',
@@ -12,14 +13,22 @@ export const INDUSTRY_TAB_LABELS = {
 
 /** Renders the profile panel for the tenant's active industry template. */
 export const IndustryProfileTab: React.FC<{ industry: UseIndustryProfileResult }> = ({ industry }) => {
-  const { kind, profile, isLoading, save } = industry;
+  const { kind, profile, access, redacted, error, isLoading, save } = industry;
 
   if (!kind) return null;
   if (isLoading) return <p className="text-xs text-text-muted py-6 text-center">กำลังโหลดข้อมูล...</p>;
+  if (error) return <p className="text-xs text-red-600 py-6 text-center">{error}</p>;
 
   switch (kind) {
     case 'hospital':
-      return <HospitalProfilePanel profile={profile?.kind === 'hospital' ? profile : null} onSave={save} />;
+      if (access === 'redacted') return <RedactedPatientNotice redacted={redacted} />;
+      return (
+        <HospitalProfilePanel
+          profile={profile?.kind === 'hospital' ? profile : null}
+          access={access}
+          onSave={save}
+        />
+      );
     case 'auto_service':
       return <VehicleList profile={profile?.kind === 'auto_service' ? profile : null} onSave={save} />;
     case 'logistics':
