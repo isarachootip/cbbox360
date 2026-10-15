@@ -301,7 +301,7 @@ export interface UserProfile {
   avatarBg?: string;
 }
 
-export type ConnectorCategory = 'social' | 'voice' | 'email' | 'web';
+export type ConnectorCategory = 'social' | 'voice' | 'email' | 'web' | 'industry';
 export type ConnectorStatus = 'connected' | 'disconnected' | 'error';
 
 export interface ConnectorConfig {
@@ -472,5 +472,27 @@ export interface AuditLogEntry {
   details?: string;
 }
 
+export type BusinessTemplateId = 'hospital' | 'logistics' | 'auto_service' | 'b2b_wholesale';
 
+export interface TemplateApplyOptions {
+  mergeConnectors: boolean;
+  mergeCannedResponses: boolean;
+  mergeBotRules: boolean;
+  enableRecommendedMenus: boolean;
+}
 
+export interface BusinessTemplatePreset {
+  id: BusinessTemplateId;
+  name: string;
+  thaiTitle: string;
+  tagline: string;
+  description: string;
+  iconName: 'hospital' | 'truck' | 'car' | 'building';
+  accentColor: 'emerald' | 'blue' | 'amber' | 'purple';
+  recommendedMenus: string[];
+  customVariables: { key: string; label: string; example: string }[];
+  workflowHighlights: string[];
+  connectors: ConnectorConfig[];
+  cannedResponses: Omit<CannedResponse, 'usageCount' | 'createdAt' | 'updatedAt'>[];
+  botRules: BotAutoReplyRule[];
+}

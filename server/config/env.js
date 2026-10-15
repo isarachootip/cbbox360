@@ -28,6 +28,7 @@ try {
 }
 
 export const env = {
+  NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: process.env.PORT || 3000,
   DATABASE_URL: process.env.DATABASE_URL || '',
   LINE_CHANNEL_ID: process.env.LINE_CHANNEL_ID || '2011580063',
@@ -36,8 +37,12 @@ export const env = {
     process.env.LINE_CHANNEL_ACCESS_TOKEN ||
     'G6HhxgQDo/1Ji4LOomrfk8Eh4yhBn74w0i+T2vXPjdA2/8bRXZCtvXF9hSwFpjM0MKhTYasa+K/CKZjamIj9JhvqhXCKJXtH/I2YjgGpTkZgwNweMhhOe0GcuLKArE8W1B4tn68xsWeRD/0WY1cpowdB04t89/1O/w1cDnyilFU=',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+  TOTP_ENCRYPTION_KEY:
+    process.env.TOTP_ENCRYPTION_KEY || 'cb360-default-dev-totp-key-32bytes!',
+  SESSION_TTL_HOURS: Number(process.env.SESSION_TTL_HOURS) || 8,
 };
 
 if (!env.LINE_CHANNEL_ACCESS_TOKEN) {
   console.warn('[Security Warning]: LINE_CHANNEL_ACCESS_TOKEN is not set in environment variables.');
 }
+

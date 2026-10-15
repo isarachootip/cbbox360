@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Network,
   RefreshCw,
@@ -17,6 +18,10 @@ import {
   ShieldCheck,
   Smartphone,
   Layers,
+  Briefcase,
+  Stethoscope,
+  Truck,
+  Car,
 } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { KpiTile } from '../components/common/KpiTile';
@@ -27,6 +32,7 @@ import { useCustomer } from '../context/CustomerContext';
 import { ConnectorConfig } from '../types';
 
 export const ConnectorsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const { addMessageToConversation } = useCustomer();
 
@@ -116,6 +122,7 @@ export const ConnectorsPage: React.FC = () => {
     if (categoryFilter === 'social') return c.category === 'social';
     if (categoryFilter === 'voice') return c.category === 'voice';
     if (categoryFilter === 'email_web') return c.category === 'email' || c.category === 'web';
+    if (categoryFilter === 'industry') return c.category === 'industry';
     return true;
   });
 
@@ -171,6 +178,30 @@ export const ConnectorsPage: React.FC = () => {
         return (
           <div className="w-10 h-10 rounded-xl bg-teal-600 text-white font-bold flex items-center justify-center text-xs shadow-sm flex-shrink-0">
             <Globe className="w-4 h-4" />
+          </div>
+        );
+      case 'hospital':
+        return (
+          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center text-xs shadow-sm flex-shrink-0">
+            <Stethoscope className="w-4 h-4" />
+          </div>
+        );
+      case 'shield':
+        return (
+          <div className="w-10 h-10 rounded-xl bg-teal-600 text-white font-bold flex items-center justify-center text-xs shadow-sm flex-shrink-0">
+            <ShieldCheck className="w-4 h-4" />
+          </div>
+        );
+      case 'truck':
+        return (
+          <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-sm flex-shrink-0">
+            <Truck className="w-4 h-4" />
+          </div>
+        );
+      case 'car':
+        return (
+          <div className="w-10 h-10 rounded-xl bg-amber-600 text-white font-bold flex items-center justify-center text-xs shadow-sm flex-shrink-0">
+            <Car className="w-4 h-4" />
           </div>
         );
       default:
@@ -339,6 +370,13 @@ export const ConnectorsPage: React.FC = () => {
         actionButton={
           <div className="flex items-center gap-2">
             <button
+              onClick={() => navigate('/settings?tab=templates')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-border hover:bg-bg-subtle text-brand rounded-lg text-xs font-semibold shadow-sm transition-colors"
+            >
+              <Briefcase className="w-3.5 h-3.5 text-brand" />
+              <span>เทมเพลตธุรกิจ (Hospital / Logistics / Auto)</span>
+            </button>
+            <button
               onClick={handleOpenLineConfig}
               className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
             >
@@ -392,12 +430,13 @@ export const ConnectorsPage: React.FC = () => {
 
         {/* Category Filters Bar - CLEAN */}
         <div className="flex items-center justify-between bg-white rounded-card border border-border p-2.5 shadow-card">
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             {[
               { key: 'ทั้งหมด', label: 'ทั้งหมด' },
               { key: 'social', label: 'Social & Messaging' },
               { key: 'voice', label: 'Voice (3CX)' },
               { key: 'email_web', label: 'Email & Web' },
+              { key: 'industry', label: 'Industry API (HIS / Logistics / DMS)' },
             ].map((cat) => (
               <button
                 key={cat.key}

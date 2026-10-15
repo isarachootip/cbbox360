@@ -275,6 +275,15 @@ export const CannedResponseProvider: React.FC<{ children: React.ReactNode }> = (
       company_name: 'บจก. คัสบอกซ์ สามหกศูนย์ (CusBox360)',
       phone: '081-892-5678',
       credit_term: '30 วัน',
+      hn_number: 'HN-6904812',
+      doctor_name: 'นพ. กิตติพงศ์ วงศ์เวช',
+      department: 'ศูนย์อายุรกรรมหัวใจ ชั้น 3',
+      appoint_date: '22 ต.ค. 2026 เวลา 09:30 น.',
+      courier_name: 'สมศักดิ์ (089-234-5678)',
+      cod_amount: '2,450 บาท',
+      license_plate: '1กข-9988 กรุงเทพฯ',
+      mileage_km: '80,000 กม.',
+      job_order_no: 'JO-2610-084',
       ...customVars,
     };
 
