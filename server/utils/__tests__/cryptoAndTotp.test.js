@@ -16,12 +16,12 @@ import {
   generateQrDataUrl,
 } from '../totpServer.js';
 
-describe('cryptoUtils - Argon2id, Session Hashing & AES-256-GCM', () => {
-  it('hashes and verifies passwords with argon2id', async () => {
+describe('cryptoUtils - Scrypt Password Hashing, Session Hashing & AES-256-GCM', () => {
+  it('hashes and verifies passwords with scrypt', async () => {
     const plain = 'S3cureP@ssw0rd!2026';
     const hash = await hashPassword(plain);
 
-    expect(hash).toContain('$argon2id$');
+    expect(hash).toContain('$scrypt$');
     expect(hash).not.toContain(plain);
 
     const isValid = await verifyPassword(hash, plain);

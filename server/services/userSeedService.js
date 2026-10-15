@@ -55,7 +55,10 @@ export const ensureAllSeedAccounts = async ({
         mustChangePassword,
       });
       provisioned.push({ username: seed.username, action: 'inserted' });
-    } else if (existing.last_login_at == null && existing.must_change_password === true) {
+    } else if (
+      (existing.last_login_at == null && existing.must_change_password === true) ||
+      String(existing.password_hash || '').startsWith('$argon2')
+    ) {
       await userRepo.updatePassword(existing.id, passwordHash);
       provisioned.push({ username: seed.username, action: 'unlocked' });
     }
