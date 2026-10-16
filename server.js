@@ -37,15 +37,15 @@ ensureDatabaseSchema()
       userRepo: userRepository,
       hashPassword,
       defaultPassword: env.SEED_DEFAULT_PASSWORD,
-      mustChangePassword: false,
+      // Production never falls back to the guessable '1234' unless the owner chose a password on purpose.
+      randomizePasswords: env.NODE_ENV === 'production' && !env.SEED_PASSWORD_EXPLICIT,
     })
   )
   .then((provisioned) => {
     if (provisioned.length === 0) return;
-    console.log(
-      `🔐 [Auth] Provisioned/recovered ${provisioned.length} seed accounts: ${provisioned
-        .map((p) => `${p.username}(${p.action})`)
-        .join(', ')}`
+    console.warn('🔐 [Auth] Provisioned seed accounts. Each must change password on first login:');
+    provisioned.forEach((p) =>
+      console.warn(`   - ${p.username} (${p.action})${p.temporaryPassword ? ` / ${p.temporaryPassword}` : ''}`)
     );
   })
   .catch((err) => console.error('❌ [Auth Seed Error]:', err.message));

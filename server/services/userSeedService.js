@@ -33,35 +33,40 @@ export const ensureSeedUsers = async ({ userRepo, hashPassword, nodeEnv, default
 };
 
 /**
- * Ensures all 8 seed accounts (including newly added roles like doctor/nurse) exist,
- * and unlocks any seed account that has never logged in (`last_login_at == null` & `must_change_password == true`)
- * so deployments on Coolify can sign in with `SEED_DEFAULT_PASSWORD` (default: '1234').
+ * Ensures all seed accounts exist (including roles added later, e.g. doctor/nurse) and recovers
+ * seed accounts that cannot be used: never logged in yet, or hashed by the removed argon2 implementation.
+ * Every provisioned account must change its password on first login.
+ *
+ * @param {boolean} randomizePasswords when true (production without an explicit SEED_DEFAULT_PASSWORD)
+ *   each account gets a unique random password, returned once as `temporaryPassword` for the server log.
  */
 export const ensureAllSeedAccounts = async ({
   userRepo,
   hashPassword,
-  defaultPassword = '1234',
-  mustChangePassword = false,
+  defaultPassword,
+  randomizePasswords = false,
 }) => {
-  const passwordHash = await hashPassword(defaultPassword);
   const provisioned = [];
 
   for (const seed of SEED_USERS) {
     const existing = await userRepo.findByUsername(seed.username);
-    if (!existing) {
-      await userRepo.insert({
-        ...seed,
-        passwordHash,
-        mustChangePassword,
-      });
-      provisioned.push({ username: seed.username, action: 'inserted' });
-    } else if (
-      (existing.last_login_at == null && existing.must_change_password === true) ||
-      String(existing.password_hash || '').startsWith('$argon2')
-    ) {
-      await userRepo.updatePassword(existing.id, passwordHash);
-      provisioned.push({ username: seed.username, action: 'unlocked' });
-    }
+    const isUnusable =
+      existing &&
+      ((existing.last_login_at == null && existing.must_change_password === true) ||
+        String(existing.password_hash || '').startsWith('$argon2'));
+    if (existing && !isUnusable) continue;
+
+    const password = randomizePasswords ? generateTemporaryPassword(16) : defaultPassword;
+    const passwordHash = await hashPassword(password);
+    if (existing) await userRepo.resetPassword(existing.id, passwordHash);
+    else await userRepo.insert({ ...seed, passwordHash, mustChangePassword: true });
+
+    provisioned.push({
+      username: seed.username,
+      action: existing ? 'reset' : 'inserted',
+      ...(randomizePasswords ? { temporaryPassword: password } : {}),
+    });
   }
   return provisioned;
 };
+

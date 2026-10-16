@@ -46,6 +46,8 @@ export const env = {
     : (process.env.NODE_ENV === 'production' ? 1 : 0),
   // Development only: password for seeded accounts (production always generates random ones).
   SEED_DEFAULT_PASSWORD: process.env.SEED_DEFAULT_PASSWORD || '1234',
+  // True only when SEED_DEFAULT_PASSWORD was set on purpose; production ignores the '1234' fallback.
+  SEED_PASSWORD_EXPLICIT: Boolean(process.env.SEED_DEFAULT_PASSWORD),
 };
 
 if (!env.LINE_CHANNEL_ACCESS_TOKEN) {

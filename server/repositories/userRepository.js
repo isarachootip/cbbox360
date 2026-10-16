@@ -106,6 +106,24 @@ export const userRepository = {
     }
   },
 
+  async resetPassword(id, passwordHash) {
+    const mem = inMemoryUsers.get(id);
+    if (mem) {
+      mem.password_hash = passwordHash;
+      mem.must_change_password = true;
+      mem.failed_attempts = 0;
+      mem.locked_until = null;
+    }
+    try {
+      await query(
+        `UPDATE users SET password_hash = $2, must_change_password = TRUE, failed_attempts = 0, locked_until = NULL, updated_at = NOW() WHERE id = $1`,
+        [id, passwordHash]
+      );
+    } catch {
+      // Handled in memory
+    }
+  },
+
   async count() {
     try {
       const r = await query(`SELECT COUNT(*)::int AS n FROM users`);
