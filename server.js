@@ -31,6 +31,11 @@ app.use(
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Initialize DB schema, seed accounts (PostgreSQL or in-memory fallback) & bot settings
+const validSysadminPassword =
+  env.SYSADMIN_INITIAL_PASSWORD.length >= 8 ? env.SYSADMIN_INITIAL_PASSWORD : undefined;
+if (env.SYSADMIN_INITIAL_PASSWORD && !validSysadminPassword) {
+  console.warn('⚠️ [Auth] SYSADMIN_INITIAL_PASSWORD must be at least 8 characters; ignoring it.');
+}
 ensureDatabaseSchema()
   .then(() =>
     ensureAllSeedAccounts({
@@ -39,6 +44,7 @@ ensureDatabaseSchema()
       defaultPassword: env.SEED_DEFAULT_PASSWORD,
       // Production never falls back to the guessable '1234' unless the owner chose a password on purpose.
       randomizePasswords: env.NODE_ENV === 'production' && !env.SEED_PASSWORD_EXPLICIT,
+      sysadminPassword: validSysadminPassword,
     })
   )
   .then((provisioned) => {

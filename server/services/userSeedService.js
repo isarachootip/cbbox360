@@ -39,12 +39,14 @@ export const ensureSeedUsers = async ({ userRepo, hashPassword, nodeEnv, default
  *
  * @param {boolean} randomizePasswords when true (production without an explicit SEED_DEFAULT_PASSWORD)
  *   each account gets a unique random password, returned once as `temporaryPassword` for the server log.
+ * @param {string} [sysadminPassword] owner-chosen password for the `sysadmin` account only. Never reported back.
  */
 export const ensureAllSeedAccounts = async ({
   userRepo,
   hashPassword,
   defaultPassword,
   randomizePasswords = false,
+  sysadminPassword,
 }) => {
   const provisioned = [];
 
@@ -56,7 +58,12 @@ export const ensureAllSeedAccounts = async ({
         String(existing.password_hash || '').startsWith('$argon2'));
     if (existing && !isUnusable) continue;
 
-    const password = randomizePasswords ? generateTemporaryPassword(16) : defaultPassword;
+    const isOwnerChosen = seed.username === 'sysadmin' && Boolean(sysadminPassword);
+    const password = isOwnerChosen
+      ? sysadminPassword
+      : randomizePasswords
+        ? generateTemporaryPassword(16)
+        : defaultPassword;
     const passwordHash = await hashPassword(password);
     if (existing) await userRepo.resetPassword(existing.id, passwordHash);
     else await userRepo.insert({ ...seed, passwordHash, mustChangePassword: true });
@@ -64,9 +71,10 @@ export const ensureAllSeedAccounts = async ({
     provisioned.push({
       username: seed.username,
       action: existing ? 'reset' : 'inserted',
-      ...(randomizePasswords ? { temporaryPassword: password } : {}),
+      ...(randomizePasswords && !isOwnerChosen ? { temporaryPassword: password } : {}),
     });
   }
   return provisioned;
 };
+
 

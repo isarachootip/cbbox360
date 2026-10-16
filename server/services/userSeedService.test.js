@@ -79,6 +79,23 @@ describe('ensureAllSeedAccounts', () => {
     });
   });
 
+  it('sysadminPassword applies to sysadmin only; other accounts stay random and the owner password is never reported', async () => {
+    const repo = makeSeedRepo([]);
+    const provisioned = await ensureAllSeedAccounts({
+      userRepo: repo, hashPassword, defaultPassword: '1234', randomizePasswords: true, sysadminPassword: 'owner-chosen-pass',
+    });
+
+    const inserted = Object.fromEntries(repo.insert.mock.calls.map(([u]) => [u.username, u]));
+    expect(inserted.sysadmin.passwordHash).toBe('hash:owner-chosen-pass');
+    expect(inserted.sysadmin.mustChangePassword).toBe(true);
+    expect(inserted.doctor.passwordHash).not.toBe('hash:owner-chosen-pass');
+    expect(inserted.doctor.passwordHash).not.toBe('hash:1234');
+
+    const sysadminEntry = provisioned.find((p) => p.username === 'sysadmin');
+    expect(sysadminEntry).toEqual({ username: 'sysadmin', action: 'inserted' });
+    expect(provisioned.find((p) => p.username === 'doctor').temporaryPassword).toBeTruthy();
+  });
+
   it('recovers accounts whose hash was created by the removed argon2 implementation', async () => {
     const repo = makeSeedRepo([
       { id: 'usr-2', username: 'admin', last_login_at: '2026-10-15T10:00:00Z', must_change_password: false, password_hash: '$argon2id$v=19$abc' },

@@ -48,6 +48,8 @@ export const env = {
   SEED_DEFAULT_PASSWORD: process.env.SEED_DEFAULT_PASSWORD || '1234',
   // True only when SEED_DEFAULT_PASSWORD was set on purpose; production ignores the '1234' fallback.
   SEED_PASSWORD_EXPLICIT: Boolean(process.env.SEED_DEFAULT_PASSWORD),
+  // Optional: initial password for the `sysadmin` account only (min 8 chars). Set it in the host's env, never in git.
+  SYSADMIN_INITIAL_PASSWORD: process.env.SYSADMIN_INITIAL_PASSWORD || '',
 };
 
 if (!env.LINE_CHANNEL_ACCESS_TOKEN) {
