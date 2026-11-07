@@ -20,6 +20,36 @@ export const extractFirstName = (fullName = 'ลูกค้า') => {
   return parts[0] || 'ลูกค้า';
 };
 
+export const formatServerKnowledge = (companyProfile, knowledgeItems = [], fallbackText = '') => {
+  const lines = [];
+
+  if (companyProfile && typeof companyProfile === 'object') {
+    if (companyProfile.companyName) lines.push(`- ชื่อบริษัท/หน่วยงาน: ${companyProfile.companyName}`);
+    if (companyProfile.businessType) lines.push(`- ประเภทธุรกิจ: ${companyProfile.businessType}`);
+    if (companyProfile.description) lines.push(`- บริการและรายละเอียดธุรกิจ: ${companyProfile.description}`);
+    if (companyProfile.phone) lines.push(`- เบอร์โทรศัพท์ติดต่อ: ${companyProfile.phone}`);
+    if (companyProfile.email) lines.push(`- อีเมลติดต่อ: ${companyProfile.email}`);
+    if (companyProfile.lineId) lines.push(`- LINE Official: ${companyProfile.lineId}`);
+    if (companyProfile.website) lines.push(`- เว็บไซต์: ${companyProfile.website}`);
+    if (companyProfile.address) lines.push(`- ที่อยู่/สถานที่ตั้ง: ${companyProfile.address}`);
+    if (companyProfile.businessHoursText) lines.push(`- เวลาทำการ: ${companyProfile.businessHoursText}`);
+  }
+
+  const activeItems = Array.isArray(knowledgeItems)
+    ? knowledgeItems.filter((item) => item && item.isActive !== false)
+    : [];
+
+  for (const item of activeItems) {
+    lines.push(`- [${item.title}]: ${item.content}`);
+  }
+
+  if (lines.length === 0) {
+    return (fallbackText || '').trim();
+  }
+
+  return lines.join('\n').trim();
+};
+
 export const selectRelevantCannedResponses = (cannedList = [], messages = [], limit = 7) => {
   if (!Array.isArray(cannedList) || cannedList.length === 0) return [];
 
@@ -74,6 +104,8 @@ export const formatConversationLines = (messages = [], { includePrivateNotes = f
 export const buildAiPromptPayload = ({
   mode = 'suggest_reply', // 'suggest_reply' | 'summary'
   companyName = 'CusBox360',
+  companyProfile = null,
+  knowledgeItems = [],
   agentParticle = 'ค่ะ',
   customerContext = {},
   messages = [],
@@ -81,10 +113,12 @@ export const buildAiPromptPayload = ({
 }) => {
   const promptFilename = mode === 'summary' ? 'summary.md' : 'suggest_reply.md';
   const rawTemplate = readPromptFile(promptFilename);
-  const knowledgeText = readPromptFile('knowledge.md');
+  const fallbackKnowledgeText = readPromptFile('knowledge.md');
+  const knowledgeText = formatServerKnowledge(companyProfile, knowledgeItems, fallbackKnowledgeText);
 
   const [systemPart, userPart] = rawTemplate.split('---USER_MESSAGE---');
 
+  const resolvedCompanyName = companyProfile?.companyName || companyName || 'CusBox360';
   const customerName = customerContext.name || customerContext.customerName || 'คุณลูกค้า';
   const customerFirstName = extractFirstName(customerName);
   const customerId = customerContext.id || customerContext.customerId || 'C00123';
@@ -118,7 +152,7 @@ export const buildAiPromptPayload = ({
   const replaceTokens = (str) =>
     (str || '')
       .replace(/^#\s*System Prompt\s*/i, '')
-      .replace(/\{company_name\}/g, companyName)
+      .replace(/\{company_name\}/g, resolvedCompanyName)
       .replace(/\{agent_particle\}/g, agentParticle)
       .replace(/\{customer_first_name\}/g, customerFirstName)
       .replace(/\{customer_id\}/g, customerId)
@@ -130,7 +164,7 @@ export const buildAiPromptPayload = ({
       .replace(/\{consent_line\}/g, consentLine)
       .replace(/\{conversation_history\}/g, conversationHistory)
       .replace(/\{canned_responses\}/g, cannedText)
-      .replace(/\{knowledge\}/g, knowledgeText.trim())
+      .replace(/\{knowledge\}/g, knowledgeText)
       .trim();
 
   return {

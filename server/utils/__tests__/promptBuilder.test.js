@@ -41,4 +41,47 @@ describe('promptBuilder - buildAiPromptPayload', () => {
 
     expect(userMessage).toContain('โน้ตภายใน: ลูกค้ารีบใช้ของมาก');
   });
+
+  it('injects custom companyProfile and active knowledgeItems into {knowledge}', () => {
+    const { systemInstruction, userMessage } = buildAiPromptPayload({
+      mode: 'suggest_reply',
+      companyName: 'CarePlus Hospital',
+      companyProfile: {
+        companyName: 'โรงพยาบาลแคร์พลัส (CarePlus Hospital)',
+        businessType: 'โรงพยาบาลเอกชนและศูนย์ตรวจสุขภาพ',
+        description: 'ตรวจรักษาโรคทั่วไปและนัดหมายแพทย์',
+        phone: '02-099-8888',
+        email: 'contact@careplushospital.co.th',
+        lineId: '@careplushospital',
+        website: 'https://www.careplushospital.co.th',
+        address: '199 ถ.สุขุมวิท กรุงเทพฯ',
+        businessHoursText: 'เปิดบริการ 24 ชั่วโมง',
+      },
+      knowledgeItems: [
+        {
+          id: 'km-1',
+          title: 'การเตรียมตัวตรวจสุขภาพ',
+          category: 'policies_sla',
+          content: 'งดน้ำและอาหาร 8-12 ชั่วโมงก่อนเจาะเลือด',
+          isActive: true,
+        },
+        {
+          id: 'km-2',
+          title: 'หัวข้อปิดใช้งาน',
+          category: 'faq',
+          content: 'ข้อมูลที่ไม่ควรแสดง',
+          isActive: false,
+        },
+      ],
+      customerContext: { id: 'C00123', name: 'สมชาย ใจดี', tier: 'PLATINUM' },
+      messages: sampleMessages,
+    });
+
+    const combined = `${systemInstruction}\n${userMessage}`;
+    expect(combined).toContain('โรงพยาบาลแคร์พลัส (CarePlus Hospital)');
+    expect(combined).toContain('02-099-8888');
+    expect(combined).toContain('contact@careplushospital.co.th');
+    expect(combined).toContain('งดน้ำและอาหาร 8-12 ชั่วโมงก่อนเจาะเลือด');
+    expect(combined).not.toContain('ข้อมูลที่ไม่ควรแสดง');
+  });
 });

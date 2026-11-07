@@ -1,4 +1,5 @@
 import { BotSettings } from '../types';
+import { defaultCompanyProfile, defaultKnowledgeItems } from './templateKnowledgePresets';
 
 export const initialBotSettings: BotSettings = {
   isEnabled: true,
@@ -32,6 +33,8 @@ export const initialBotSettings: BotSettings = {
     'ขออภัยในความล่าช้าค่ะคุณลูกค้า 🙏 เจ้าหน้าที่ฝ่ายบริการลูกค้าได้รับข้อความแล้วและกำลังเร่งเข้ามาดูแลให้นะคะ มีเรื่องใดสอบถามเพิ่มเติมแจ้งไว้ได้เลยค่ะ',
   geminiApiKey: '',
   companyName: 'CusBox360',
+  companyProfile: defaultCompanyProfile,
+  knowledgeItems: defaultKnowledgeItems,
   aiSuggestReplyEnabled: true,
   aiSummaryEnabled: true,
   rules: [

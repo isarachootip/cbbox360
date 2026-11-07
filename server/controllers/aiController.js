@@ -121,6 +121,8 @@ export const postSuggestReply = async (req, res) => {
   const { systemInstruction, userMessage } = buildAiPromptPayload({
     mode: 'suggest_reply',
     companyName,
+    companyProfile: botSettings.companyProfile,
+    knowledgeItems: botSettings.knowledgeItems,
     agentParticle: particle,
     customerContext,
     messages,
@@ -157,6 +159,7 @@ export const postSuggestReply = async (req, res) => {
       customerContext,
       messages,
       agentParticle: particle,
+      companyProfile: botSettings.companyProfile,
     });
     status = 'fallback_local';
   }
@@ -218,6 +221,8 @@ export const postAiSummary = async (req, res) => {
   const { systemInstruction, userMessage } = buildAiPromptPayload({
     mode: 'summary',
     companyName: botSettings.companyName || 'CusBox360',
+    companyProfile: botSettings.companyProfile,
+    knowledgeItems: botSettings.knowledgeItems,
     agentParticle: 'ค่ะ',
     customerContext,
     messages,

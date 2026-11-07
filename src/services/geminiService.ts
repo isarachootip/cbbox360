@@ -1,16 +1,26 @@
 /**
  * geminiService.ts
  * Calls Google Gemini API to generate an AI reply for customer chat.
- * Context includes: chat history, customer CDP data, and canned responses KB.
+ * Context includes: chat history, customer CDP data, company profile & KM, and canned responses KB.
  */
 
-import { ChatMessage, Customer, CannedResponse } from '../types';
+import {
+  ChatMessage,
+  Customer,
+  CannedResponse,
+  CompanyProfile,
+  KnowledgeItem,
+} from '../types';
+import { formatKnowledgeForPrompt } from '../domain/templates/knowledgeMerge';
+import { defaultCompanyProfile, defaultKnowledgeItems } from '../data/templateKnowledgePresets';
 
 export interface GeminiReplyContext {
   botName: string;
   chatHistory: ChatMessage[];
   customer: Pick<Customer, 'name' | 'tier' | 'phone' | 'lastOrderCode'> | null;
   cannedResponses: CannedResponse[];
+  companyProfile?: CompanyProfile;
+  knowledgeItems?: KnowledgeItem[];
   apiKey: string;
 }
 
@@ -20,15 +30,19 @@ export interface GeminiReplyResult {
   error?: string;
 }
 
-/** Build a concise system prompt incorporating business knowledge. */
-function buildSystemPrompt(
+/** Build a concise system prompt incorporating business knowledge and company profile. */
+export function buildSystemPrompt(
   botName: string,
   customer: GeminiReplyContext['customer'],
-  cannedResponses: CannedResponse[]
+  cannedResponses: CannedResponse[],
+  companyProfile: CompanyProfile = defaultCompanyProfile,
+  knowledgeItems: KnowledgeItem[] = defaultKnowledgeItems
 ): string {
-  const knowledgeBase = cannedResponses
+  const companyAndKmText = formatKnowledgeForPrompt(companyProfile, knowledgeItems);
+
+  const cannedKb = cannedResponses
     .filter((cr) => cr.isActive)
-    .slice(0, 20)
+    .slice(0, 15)
     .map((cr) => `- ${cr.title}: ${cr.content.slice(0, 200)}`)
     .join('\n');
 
@@ -37,12 +51,14 @@ function buildSystemPrompt(
     : 'ไม่ทราบข้อมูลลูกค้า';
 
   return [
-    `คุณคือ ${botName} ผู้ช่วยฝ่ายบริการลูกค้าของ CusBox360.`,
+    `คุณคือ ${botName} ผู้ช่วยฝ่ายบริการลูกค้าของ ${companyProfile.companyName}.`,
     `ตอบภาษาไทยด้วยน้ำเสียงสุภาพ กระชับ และเป็นมิตร ไม่เกิน 3-4 ประโยค`,
     `ข้อมูลลูกค้าปัจจุบัน: ${customerInfo}`,
-    `ความรู้ที่มี (Knowledge Base):\n${knowledgeBase || 'ไม่มีข้อมูลเพิ่มเติม'}`,
+    companyAndKmText,
+    `ข้อความตอบกลับมาตรฐาน (Canned Responses):\n${cannedKb || 'ไม่มีข้อมูลเพิ่มเติม'}`,
+    `หากลูกค้าถามชื่อบริษัท ทำธุรกิจอะไร เบอร์โทร อีเมล หรือที่อยู่ ให้ตอบตามข้อมูลบริษัทด้านบนอย่างชัดเจน`,
     `ถ้าไม่แน่ใจคำตอบ ให้บอกว่าจะส่งเรื่องให้เจ้าหน้าที่ดูแล ห้ามแต่งข้อมูล`,
-  ].join('\n');
+  ].join('\n\n');
 }
 
 /** Build conversation turns from chat history (last 20 messages). */
@@ -67,7 +83,13 @@ export async function callGemini(ctx: GeminiReplyContext): Promise<GeminiReplyRe
     return { success: false, text: '', error: 'Gemini API Key ยังไม่ได้ตั้งค่า' };
   }
 
-  const systemPrompt = buildSystemPrompt(ctx.botName, ctx.customer, ctx.cannedResponses);
+  const systemPrompt = buildSystemPrompt(
+    ctx.botName,
+    ctx.customer,
+    ctx.cannedResponses,
+    ctx.companyProfile ?? defaultCompanyProfile,
+    ctx.knowledgeItems ?? defaultKnowledgeItems
+  );
   const turns = buildChatTurns(ctx.chatHistory);
 
   // Gemini requires at least one user turn at the end

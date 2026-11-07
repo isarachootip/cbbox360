@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CannedResponse, CannedResponseCategory } from '../types';
 import { mockCannedResponses } from '../data/cannedResponses';
+import { defaultCompanyProfile } from '../data/templateKnowledgePresets';
 import { useToast } from './ToastContext';
 
 interface CannedResponseContextType {
@@ -267,12 +268,26 @@ export const CannedResponseProvider: React.FC<{ children: React.ReactNode }> = (
     template: string,
     customVars?: Record<string, string>
   ): string => {
+    let profile = defaultCompanyProfile;
+    try {
+      const savedBot = localStorage.getItem('cb360_bot_settings');
+      if (savedBot) {
+        const parsed = JSON.parse(savedBot);
+        if (parsed?.companyProfile) profile = parsed.companyProfile;
+      }
+    } catch (_e) {
+      // Fallback to defaultCompanyProfile
+    }
     const defaultVars: Record<string, string> = {
+      company_name: profile.companyName,
+      company_phone: profile.phone,
+      company_email: profile.email,
+      company_address: profile.address,
+      business_type: profile.businessType,
       customer_name: 'สมชาย ใจดี',
       order_code: 'SO-10482',
       tracking_no: 'TH2609-88412',
       agent_name: 'วิภา ส.',
-      company_name: 'บจก. คัสบอกซ์ สามหกศูนย์ (CusBox360)',
       phone: '081-892-5678',
       credit_term: '30 วัน',
       hn_number: 'HN-6904812',

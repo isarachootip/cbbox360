@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { BotSettings, BotAutoReplyRule } from '../types';
+import { BotSettings, BotAutoReplyRule, CompanyProfile, KnowledgeItem } from '../types';
 import { initialBotSettings } from '../data/botSettings';
+import { defaultCompanyProfile, defaultKnowledgeItems } from '../data/templateKnowledgePresets';
+import { matchKnowledgeOrCompanyReply } from '../domain/templates/knowledgeMerge';
 import { useCannedResponses } from './CannedResponseContext';
 import { useToast } from './ToastContext';
 
 interface TestMatchResult {
   matched: boolean;
-  type: 'handoff' | 'rule' | 'welcome' | 'off_hours' | 'none';
+  type: 'handoff' | 'rule' | 'welcome' | 'off_hours' | 'km' | 'none';
   rule?: BotAutoReplyRule;
   replyText: string;
   matchedKeyword?: string;
@@ -15,6 +17,11 @@ interface TestMatchResult {
 interface BotContextType {
   settings: BotSettings;
   updateSettings: (partial: Partial<BotSettings>) => void;
+  updateCompanyProfile: (partial: Partial<CompanyProfile>) => void;
+  addKnowledgeItem: (item: Omit<KnowledgeItem, 'id'>) => void;
+  updateKnowledgeItem: (id: string, partial: Partial<KnowledgeItem>) => void;
+  deleteKnowledgeItem: (id: string) => void;
+  toggleKnowledgeItemActive: (id: string) => void;
   toggleBot: () => void;
   addRule: (rule: Omit<BotAutoReplyRule, 'id'>) => void;
   updateRule: (id: string, partial: Partial<BotAutoReplyRule>) => void;
@@ -25,8 +32,17 @@ interface BotContextType {
 }
 
 const BotContext = createContext<BotContextType | undefined>(undefined);
-
 const STORAGE_KEY = 'cb360_bot_settings';
+
+const normalizeBotSettings = (raw: Partial<BotSettings>): BotSettings => ({
+  ...initialBotSettings,
+  ...raw,
+  companyProfile: {
+    ...defaultCompanyProfile,
+    ...(raw.companyProfile || {}),
+  },
+  knowledgeItems: Array.isArray(raw.knowledgeItems) ? raw.knowledgeItems : defaultKnowledgeItems,
+});
 
 export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { cannedResponses, replaceVariables } = useCannedResponses();
@@ -39,7 +55,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed.isEnabled === 'boolean') {
-          return parsed;
+          return normalizeBotSettings(parsed);
         }
       }
     } catch (e) {
@@ -48,7 +64,6 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return initialBotSettings;
   });
 
-  // Sync to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
@@ -57,7 +72,6 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [settings]);
 
-  // Initial fetch from backend if available
   useEffect(() => {
     const fetchRemoteSettings = async () => {
       try {
@@ -65,10 +79,10 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (res.ok) {
           const json = await res.json();
           if (json?.data) {
-            setSettings(json.data);
+            setSettings(normalizeBotSettings(json.data));
           }
         }
-      } catch (err) {
+      } catch (_err) {
         // Fallback to local
       }
     };
@@ -83,7 +97,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSettings),
       });
-    } catch (err) {
+    } catch (_err) {
       // Ignore network fail in offline mode
     } finally {
       setIsSaving(false);
@@ -99,6 +113,74 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('บันทึกการตั้งค่า Bot เรียบร้อยแล้ว', 'success');
   };
 
+  const updateCompanyProfile = (partial: Partial<CompanyProfile>) => {
+    setSettings((prev) => {
+      const nextProfile: CompanyProfile = {
+        ...(prev.companyProfile ?? defaultCompanyProfile),
+        ...partial,
+      };
+      const updated: BotSettings = {
+        ...prev,
+        companyProfile: nextProfile,
+        companyName: nextProfile.companyName,
+      };
+      saveToBackend(updated);
+      return updated;
+    });
+    showToast('บันทึกข้อมูลองค์กรเรียบร้อยแล้ว', 'success');
+  };
+
+  const addKnowledgeItem = (itemData: Omit<KnowledgeItem, 'id'>) => {
+    const newItem: KnowledgeItem = { ...itemData, id: `km-${Date.now()}` };
+    setSettings((prev) => {
+      const current = prev.knowledgeItems ?? defaultKnowledgeItems;
+      const updated = { ...prev, knowledgeItems: [newItem, ...current] };
+      saveToBackend(updated);
+      return updated;
+    });
+    showToast(`เพิ่มหัวข้อความรู้ "${newItem.title}" สำเร็จ`, 'success');
+  };
+
+  const updateKnowledgeItem = (id: string, partial: Partial<KnowledgeItem>) => {
+    setSettings((prev) => {
+      const current = prev.knowledgeItems ?? defaultKnowledgeItems;
+      const updated = {
+        ...prev,
+        knowledgeItems: current.map((item) => (item.id === id ? { ...item, ...partial } : item)),
+      };
+      saveToBackend(updated);
+      return updated;
+    });
+    showToast('อัปเดตหัวข้อความรู้ AI สำเร็จ', 'success');
+  };
+
+  const deleteKnowledgeItem = (id: string) => {
+    setSettings((prev) => {
+      const current = prev.knowledgeItems ?? defaultKnowledgeItems;
+      const updated = {
+        ...prev,
+        knowledgeItems: current.filter((item) => item.id !== id),
+      };
+      saveToBackend(updated);
+      return updated;
+    });
+    showToast('ลบหัวข้อความรู้ AI สำเร็จ', 'info');
+  };
+
+  const toggleKnowledgeItemActive = (id: string) => {
+    setSettings((prev) => {
+      const current = prev.knowledgeItems ?? defaultKnowledgeItems;
+      const updated = {
+        ...prev,
+        knowledgeItems: current.map((item) =>
+          item.id === id ? { ...item, isActive: !item.isActive } : item
+        ),
+      };
+      saveToBackend(updated);
+      return updated;
+    });
+  };
+
   const toggleBot = () => {
     setSettings((prev) => {
       const updated = { ...prev, isEnabled: !prev.isEnabled };
@@ -112,10 +194,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addRule = (ruleData: Omit<BotAutoReplyRule, 'id'>) => {
-    const newRule: BotAutoReplyRule = {
-      ...ruleData,
-      id: `rule-${Date.now()}`,
-    };
+    const newRule: BotAutoReplyRule = { ...ruleData, id: `rule-${Date.now()}` };
     setSettings((prev) => {
       const updated = { ...prev, rules: [...prev.rules, newRule] };
       saveToBackend(updated);
@@ -126,8 +205,10 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateRule = (id: string, partial: Partial<BotAutoReplyRule>) => {
     setSettings((prev) => {
-      const updatedRules = prev.rules.map((r) => (r.id === id ? { ...r, ...partial } : r));
-      const updated = { ...prev, rules: updatedRules };
+      const updated = {
+        ...prev,
+        rules: prev.rules.map((r) => (r.id === id ? { ...r, ...partial } : r)),
+      };
       saveToBackend(updated);
       return updated;
     });
@@ -136,8 +217,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const deleteRule = (id: string) => {
     setSettings((prev) => {
-      const updatedRules = prev.rules.filter((r) => r.id !== id);
-      const updated = { ...prev, rules: updatedRules };
+      const updated = { ...prev, rules: prev.rules.filter((r) => r.id !== id) };
       saveToBackend(updated);
       return updated;
     });
@@ -146,8 +226,10 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const toggleRuleActive = (id: string) => {
     setSettings((prev) => {
-      const updatedRules = prev.rules.map((r) => (r.id === id ? { ...r, isActive: !r.isActive } : r));
-      const updated = { ...prev, rules: updatedRules };
+      const updated = {
+        ...prev,
+        rules: prev.rules.map((r) => (r.id === id ? { ...r, isActive: !r.isActive } : r)),
+      };
       saveToBackend(updated);
       return updated;
     });
@@ -155,30 +237,19 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const testMatch = (userText: string, customVars?: Record<string, string>): TestMatchResult => {
     if (!settings.isEnabled) {
-      return {
-        matched: false,
-        type: 'none',
-        replyText: 'Bot ปิดใช้งานอยู่ (Inactive)',
-      };
+      return { matched: false, type: 'none', replyText: 'Bot ปิดใช้งานอยู่ (Inactive)' };
     }
-
     const cleanInput = userText.trim().toLowerCase();
 
-    // 1. Check Human Handoff Keywords
     if (settings.humanHandoffEnabled) {
       const handoffHit = settings.humanHandoffKeywords.some((kw) =>
         cleanInput.includes(kw.trim().toLowerCase())
       );
       if (handoffHit) {
-        return {
-          matched: true,
-          type: 'handoff',
-          replyText: settings.handoffMessage,
-        };
+        return { matched: true, type: 'handoff', replyText: settings.handoffMessage };
       }
     }
 
-    // 2. Check Keyword Rules
     const activeRules = settings.rules
       .filter((r) => r.isActive)
       .sort((a, b) => a.priority - b.priority);
@@ -187,21 +258,12 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       for (const kw of rule.keywords) {
         const cleanKw = kw.trim().toLowerCase();
         if (!cleanKw) continue;
-
-        let hit = false;
-        if (rule.matchType === 'exact') {
-          hit = cleanInput === cleanKw;
-        } else {
-          hit = cleanInput.includes(cleanKw);
-        }
-
+        const hit = rule.matchType === 'exact' ? cleanInput === cleanKw : cleanInput.includes(cleanKw);
         if (hit) {
           let text = rule.customReplyText;
           if (!text && rule.cannedResponseId) {
             const canned = cannedResponses.find((c) => c.id === rule.cannedResponseId);
-            if (canned) {
-              text = replaceVariables(canned.content, customVars);
-            }
+            if (canned) text = replaceVariables(canned.content, customVars);
           }
           return {
             matched: true,
@@ -212,6 +274,20 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           };
         }
       }
+    }
+
+    const kmHit = matchKnowledgeOrCompanyReply(
+      userText,
+      settings.companyProfile ?? defaultCompanyProfile,
+      settings.knowledgeItems ?? defaultKnowledgeItems
+    );
+    if (kmHit.matched) {
+      return {
+        matched: true,
+        type: 'km',
+        replyText: kmHit.replyText,
+        matchedKeyword: kmHit.matchedTopic,
+      };
     }
 
     return {
@@ -226,6 +302,11 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         settings,
         updateSettings,
+        updateCompanyProfile,
+        addKnowledgeItem,
+        updateKnowledgeItem,
+        deleteKnowledgeItem,
+        toggleKnowledgeItemActive,
         toggleBot,
         addRule,
         updateRule,

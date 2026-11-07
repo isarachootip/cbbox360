@@ -1,4 +1,5 @@
 import { BusinessTemplatePreset } from '../types';
+import { templateCompanyProfiles, templateKnowledgeItems } from './templateKnowledgePresets';
 import {
   hospitalConnectors,
   logisticsConnectors,
@@ -27,6 +28,8 @@ export const businessTemplates: BusinessTemplatePreset[] = [
       'แจ้งเตือนการเตรียมตัวก่อนตรวจสุขภาพ (งดน้ำ-อาหาร) และส่งผลแล็บปลอดภัยตาม PDPA',
     ],
     connectors: hospitalConnectors,
+    companyProfile: templateCompanyProfiles.hospital,
+    knowledgeItems: templateKnowledgeItems.hospital,
     cannedResponses: [
       {
         id: 'cr-hosp-appoint',
@@ -99,6 +102,8 @@ export const businessTemplates: BusinessTemplatePreset[] = [
       'บริหารวงเงินเครดิตค่าขนส่งรายเดือนและแจ้งรอบโอนเงิน COD',
     ],
     connectors: logisticsConnectors,
+    companyProfile: templateCompanyProfiles.logistics,
+    knowledgeItems: templateKnowledgeItems.logistics,
     cannedResponses: [
       {
         id: 'cr-logis-track',
@@ -162,6 +167,8 @@ export const businessTemplates: BusinessTemplatePreset[] = [
       'สร้าง Lead ต่ออายุประกันภัยรถยนต์และ พ.ร.บ. ล่วงหน้า 60 วันเข้า Sales Pipeline',
     ],
     connectors: autoServiceConnectors,
+    companyProfile: templateCompanyProfiles.auto_service,
+    knowledgeItems: templateKnowledgeItems.auto_service,
     cannedResponses: [
       {
         id: 'cr-auto-booking',
@@ -223,6 +230,8 @@ export const businessTemplates: BusinessTemplatePreset[] = [
       'เชื่อมระบบโทรศัพท์ 3CX Pop-up ข้อมูลลูกค้าทันทีเมื่อมีสายเข้า',
     ],
     connectors: [],
+    companyProfile: templateCompanyProfiles.b2b_wholesale,
+    knowledgeItems: templateKnowledgeItems.b2b_wholesale,
     cannedResponses: [],
     botRules: [],
   },

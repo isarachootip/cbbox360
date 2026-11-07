@@ -1,3 +1,4 @@
+export type { CompanyProfile, KnowledgeCategory, KnowledgeItem } from './knowledge';
 export type TierType = 'MEMBER' | 'SILVER' | 'GOLD' | 'PLATINUM';
 export type CreditGrade = 'A' | 'B' | 'C' | 'D';
 export type ChannelType = 'LINE' | 'Facebook' | '3CX' | 'Web form' | 'Sales rep' | 'Email';
@@ -399,6 +400,8 @@ export interface BotSettings {
   fallbackMessage?: string;
   geminiApiKey?: string;
   companyName?: string;
+  companyProfile?: import('./knowledge').CompanyProfile;
+  knowledgeItems?: import('./knowledge').KnowledgeItem[];
   aiSuggestReplyEnabled?: boolean;
   aiSummaryEnabled?: boolean;
   autoReplyTimeoutSeconds?: number;
@@ -479,6 +482,7 @@ export interface TemplateApplyOptions {
   mergeCannedResponses: boolean;
   mergeBotRules: boolean;
   enableRecommendedMenus: boolean;
+  mergeKnowledgeBase?: boolean;
 }
 
 export interface BusinessTemplatePreset {
@@ -495,4 +499,7 @@ export interface BusinessTemplatePreset {
   connectors: ConnectorConfig[];
   cannedResponses: Omit<CannedResponse, 'usageCount' | 'createdAt' | 'updatedAt'>[];
   botRules: BotAutoReplyRule[];
+  companyProfile: import('./knowledge').CompanyProfile;
+  knowledgeItems: import('./knowledge').KnowledgeItem[];
+  exportKnowledge?: boolean;
 }

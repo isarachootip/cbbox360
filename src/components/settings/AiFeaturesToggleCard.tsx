@@ -3,11 +3,11 @@ import { Sparkles, FileText, Building2 } from 'lucide-react';
 import { useBot } from '../../context/BotContext';
 
 export const AiFeaturesToggleCard: React.FC = () => {
-  const { settings, updateSettings } = useBot();
+  const { settings, updateSettings, updateCompanyProfile } = useBot();
 
   const suggestReplyEnabled = settings.aiSuggestReplyEnabled !== false;
   const summaryEnabled = settings.aiSummaryEnabled !== false;
-  const companyName = settings.companyName || 'CusBox360';
+  const companyName = settings.companyProfile?.companyName || settings.companyName || 'CusBox360';
 
   return (
     <div className="bg-white rounded-xl border border-border p-5 shadow-card space-y-4">
@@ -32,7 +32,7 @@ export const AiFeaturesToggleCard: React.FC = () => {
           <input
             type="text"
             value={companyName}
-            onChange={(e) => updateSettings({ companyName: e.target.value })}
+            onChange={(e) => updateCompanyProfile({ companyName: e.target.value })}
             placeholder="CusBox360"
             className="px-2.5 py-1 text-xs border border-border rounded-lg focus:outline-none focus:border-brand w-36 font-medium text-text-primary"
           />

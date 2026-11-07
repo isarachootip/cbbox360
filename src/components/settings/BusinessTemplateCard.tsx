@@ -11,6 +11,7 @@ import {
   MessageSquare,
   CheckCircle2,
   ExternalLink,
+  BookOpen,
 } from 'lucide-react';
 import { BusinessTemplatePreset } from '../../types';
 
@@ -109,6 +110,12 @@ export const BusinessTemplateCard: React.FC<BusinessTemplateCardProps> = ({
           <span className="inline-flex items-center gap-1.5">
             <Bot className="w-3.5 h-3.5 text-purple-600" />
             <strong className="text-text-primary">{template.botRules.length}</strong> กฎ Auto-Reply
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <BookOpen className="w-3.5 h-3.5 text-amber-600" />
+            <strong className="text-text-primary">{template.knowledgeItems.length}</strong> หัวข้อ KM
+          </span>
+          <span className="hidden">
           </span>
         </div>
 

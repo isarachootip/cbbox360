@@ -89,6 +89,7 @@ export const buildSmartLocalSuggestReply = ({
   customerContext = {},
   messages = [],
   agentParticle = 'ค่ะ',
+  companyProfile = null,
 }) => {
   const firstName = extractFirstName(customerContext.name || customerContext.customerName || 'ลูกค้า');
   const lastCustomerMsg = [...messages].reverse().find((m) => m.sender === 'customer')?.text || '';
@@ -99,7 +100,31 @@ export const buildSmartLocalSuggestReply = ({
   const isEscalate =
     /ร้องเรียน|ผู้จัดการ|หัวหน้า|ฟ้อง|กฎหมาย|pdpa|ลบข้อมูล|คุยกับคน|ไม่พอใจมาก/.test(lower);
   const isRefundOrDiscount = /คืนเงิน|ส่วนลด|ลดราคา|ชดเชย|เพิ่มวงเงิน|ยกเว้นค่าปรับ/.test(lower);
+  const isCompanyInquiry = /บริษัทชื่อ|ทำธุรกิจ|ธุรกิจอะไร|เบอร์โทร|อีเมล|email|ติดต่อ|ที่อยู่/.test(lower);
   const isQuote = /ใบเสนอราคา|สั่งซื้อ|ราคา|เครื่องพิมพ์/.test(lower);
+
+  if (isCompanyInquiry && companyProfile) {
+    return {
+      replies: [
+        {
+          label: 'แจ้งข้อมูลบริษัทและธุรกิจ',
+          text: `สวัสดี${agentParticle}คุณ${firstName} เราคือ ${companyProfile.companyName} ดำเนินธุรกิจ${companyProfile.businessType} (${companyProfile.description}) ยินดีให้บริการ${agentParticle}`,
+        },
+        {
+          label: 'แจ้งเบอร์โทรและอีเมลติดต่อ',
+          text: `คุณ${firstName}สามารถติดต่อเราได้ที่เบอร์โทร ${companyProfile.phone} หรืออีเมล ${companyProfile.email} ในเวลาทำการ (${companyProfile.businessHoursText}) ได้เลย${agentParticle}`,
+        },
+        {
+          label: 'แจ้งที่อยู่และช่องทางออนไลน์',
+          text: `สถานที่ตั้งของเราอยู่ที่ ${companyProfile.address} หรือติดต่อผ่าน LINE Official: ${companyProfile.lineId || '-'} และเว็บไซต์ ${companyProfile.website || '-'} ได้ตลอด${agentParticle}`,
+        },
+      ],
+      used_canned: ['/ทักทายทั่วไป'],
+      missing_info: [],
+      needs_human_check: false,
+      escalate: isEscalate,
+    };
+  }
 
   if (isQuote) {
     return {

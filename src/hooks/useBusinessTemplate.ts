@@ -5,6 +5,7 @@ import {
   UserRole,
 } from '../types';
 import { businessTemplates } from '../data/businessTemplates';
+import { defaultKnowledgeItems } from '../data/templateKnowledgePresets';
 import { useBot } from '../context/BotContext';
 import { useCannedResponses } from '../context/CannedResponseContext';
 import { useMenu } from '../context/MenuContext';
@@ -23,6 +24,11 @@ import {
   selectNewCannedResponses,
   selectNewConnectors,
 } from '../domain/templates/templateMerge';
+import {
+  mergeCompanyProfile,
+  removeTemplateKnowledgeItems,
+  selectNewKnowledgeItems,
+} from '../domain/templates/knowledgeMerge';
 
 const DEFAULT_OPERATIONAL_ROLES: UserRole[] = ['sysadmin', 'admin', 'supervisor', 'SF_1', 'SF_2'];
 const ROLES_BY_TEMPLATE: Partial<Record<BusinessTemplateId, UserRole[]>> = {
@@ -34,9 +40,10 @@ const DEFAULT_OPTIONS: TemplateApplyOptions = {
   mergeCannedResponses: true,
   mergeBotRules: true,
   enableRecommendedMenus: true,
+  mergeKnowledgeBase: true,
 };
 
-/** Orchestrates applying / resetting templates across connectors, canned responses, bot rules and menus. */
+/** Orchestrates applying / resetting templates across connectors, canned responses, bot rules, KM and menus. */
 export const useBusinessTemplate = () => {
   const { settings: botSettings, updateSettings: updateBotSettings } = useBot();
   const { cannedResponses, createCannedResponse, deleteCannedResponse } = useCannedResponses();
@@ -84,10 +91,28 @@ export const useBusinessTemplate = () => {
       added.cannedResponseIds = createdIds;
     }
 
+    let updatedRules = botSettings.rules;
     if (options.mergeBotRules) {
       const newRules = buildRulesToAdd(botSettings.rules, preset, shortcutToId, Date.now());
-      if (newRules.length > 0) updateBotSettings({ rules: [...botSettings.rules, ...newRules] });
+      if (newRules.length > 0) {
+        updatedRules = [...botSettings.rules, ...newRules];
+      }
       added.ruleIds = newRules.map((r) => r.id);
+    }
+
+    if (options.mergeKnowledgeBase !== false) {
+      const currentKm = botSettings.knowledgeItems ?? defaultKnowledgeItems;
+      const newKm = selectNewKnowledgeItems(currentKm, preset);
+      const nextProfile = mergeCompanyProfile(botSettings.companyProfile, preset, businessTemplates);
+      updateBotSettings({
+        rules: updatedRules,
+        companyProfile: nextProfile,
+        companyName: nextProfile.companyName,
+        knowledgeItems: [...currentKm, ...newKm],
+      });
+      added.knowledgeItemIds = newKm.map((k) => k.id);
+    } else if (updatedRules !== botSettings.rules) {
+      updateBotSettings({ rules: updatedRules });
     }
 
     if (options.enableRecommendedMenus) {
@@ -99,12 +124,12 @@ export const useBusinessTemplate = () => {
 
     recordApplied(templateId, added);
     showToast(
-      `ติดตั้งเทมเพลต "${preset.name}" สำเร็จ (+${added.connectorIds.length} API, +${added.cannedResponseIds.length} ข้อความ, +${added.ruleIds.length} กฎบอท)`,
+      `ติดตั้งเทมเพลต "${preset.name}" สำเร็จ (+${added.connectorIds.length} API, +${added.cannedResponseIds.length} ข้อความ, +${added.ruleIds.length} กฎบอท, +${(added.knowledgeItemIds ?? []).length} KM)`,
       'success'
     );
   };
 
-  /** Removes only what templates added. User-edited connectors, own rules and own menu roles are kept. */
+  /** Removes only what templates added. User-edited connectors, own rules, own KM and own menu roles are kept. */
   const resetToDefaultTemplate = async () => {
     try {
       const tracked = state.addedResources;
@@ -112,16 +137,28 @@ export const useBusinessTemplate = () => {
         removeTemplateConnectors(loadStoredConnectors(), businessTemplates, tracked.connectorIds)
       );
       const remainingRules = removeTemplateRules(botSettings.rules, businessTemplates, tracked.ruleIds);
-      if (remainingRules.length !== botSettings.rules.length) {
-        updateBotSettings({ rules: remainingRules });
-      }
+      const userKm = removeTemplateKnowledgeItems(
+        botSettings.knowledgeItems ?? defaultKnowledgeItems,
+        businessTemplates,
+        tracked.knowledgeItemIds ?? []
+      );
+      const defaultPreset = businessTemplates.find((t) => t.id === 'b2b_wholesale')!;
+      const resetProfile = mergeCompanyProfile(botSettings.companyProfile, defaultPreset, businessTemplates);
+
+      updateBotSettings({
+        rules: remainingRules,
+        companyProfile: resetProfile,
+        companyName: resetProfile.companyName,
+        knowledgeItems: [...defaultKnowledgeItems, ...userKm],
+      });
+
       const existingCannedIds = new Set(cannedResponses.map((c) => c.id));
       for (const id of tracked.cannedResponseIds) {
         if (existingCannedIds.has(id)) await deleteCannedResponse(id);
       }
       persistMenuChanges(revertMenuGrants(menus, tracked.menuGrants));
       resetState();
-      showToast('ลบรายการที่มาจากเทมเพลตแล้ว (การตั้งค่าที่คุณแก้เองยังอยู่ครบ)', 'info');
+      showToast('ลบรายการที่มาจากเทมเพลตแล้ว (การตั้งค่าและ KM ที่คุณแก้เองยังอยู่ครบ)', 'info');
     } catch (e) {
       console.error('Failed to reset template', e);
       showToast('รีเซ็ตเทมเพลตไม่สำเร็จ', 'error');

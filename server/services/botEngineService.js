@@ -101,8 +101,13 @@ export const matchBotReply = async (
           }
         }
         if (reply) {
+          const profile = botSettings.companyProfile || {};
           reply = reply
               .replace(/{customer_name}/g, customerName || 'คุณลูกค้า')
+              .replace(/{company_name}/g, profile.companyName || botSettings.companyName || 'CusBox360')
+              .replace(/{company_phone}/g, profile.phone || '02-123-4567')
+              .replace(/{company_email}/g, profile.email || 'sales@cusbox360.co.th')
+              .replace(/{company_address}/g, profile.address || '')
               .replace(/{order_code}/g, 'SO-10482')
               .replace(/{tracking_no}/g, 'TH2609-88412');
           return { replyText: reply, type: 'rule', ruleName: rule.name, matchedKeyword: kw };
@@ -140,6 +145,9 @@ export const matchBotReply = async (
         recentMessages,
         customerName,
         isOffHours,
+        companyName: botSettings.companyName,
+        companyProfile: botSettings.companyProfile,
+        knowledgeItems: botSettings.knowledgeItems,
         apiKey: geminiKey,
       });
 

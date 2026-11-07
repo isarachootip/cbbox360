@@ -5,6 +5,7 @@ import {
   Bot,
   Clock,
   Briefcase,
+  BookOpen,
 } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { useBot } from '../context/BotContext';
@@ -14,10 +15,11 @@ import { BotAutoReplyRule, CannedResponse } from '../types';
 import { OverviewTab } from '../components/settings/tabs/OverviewTab';
 import { BusinessHoursTab } from '../components/settings/tabs/BusinessHoursTab';
 import { BusinessTemplatesTab } from '../components/settings/tabs/BusinessTemplatesTab';
+import { CompanyKnowledgeTab } from '../components/settings/tabs/CompanyKnowledgeTab';
 import { BotAutoReplyTab } from '../components/canned-responses/BotAutoReplyTab';
 import { BotRuleModal, BotRuleFormData } from '../components/canned-responses/BotRuleModal';
 
-type SettingsTabType = 'overview' | 'templates' | 'bot' | 'hours';
+type SettingsTabType = 'overview' | 'templates' | 'knowledge' | 'bot' | 'hours';
 
 export const SettingsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -25,6 +27,8 @@ export const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTabType>(
     initialTab === 'templates'
       ? 'templates'
+      : initialTab === 'knowledge'
+      ? 'knowledge'
       : initialTab === 'bot'
       ? 'bot'
       : initialTab === 'hours'
@@ -124,11 +128,13 @@ export const SettingsPage: React.FC = () => {
     setIsRuleModalOpen(false);
   };
 
+  const activeKmCount = (settings.knowledgeItems ?? []).filter((k) => k.isActive).length;
+
   return (
     <div className="flex-1 flex flex-col h-full bg-bg-app overflow-y-auto custom-scrollbar select-none">
       <PageHeader
         title="ตั้งค่าระบบ (System Settings)"
-        subtitle="ศูนย์ควบคุมการตั้งค่าระบบ เทมเพลตธุรกิจ สิทธิ์ผู้ใช้ บอทตอบกลับอัตโนมัติ และการเชื่อมต่อทุกช่องทาง"
+        subtitle="ศูนย์ควบคุมการตั้งค่าระบบ เทมเพลตธุรกิจ ข้อมูลองค์กร & คลังความรู้ AI บอทตอบกลับอัตโนมัติ และการเชื่อมต่อทุกช่องทาง"
         actionButton={
           <div className="flex items-center gap-2">
             <span
@@ -184,6 +190,18 @@ export const SettingsPage: React.FC = () => {
           </button>
 
           <button
+            onClick={() => handleTabChange('knowledge')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'knowledge'
+                ? 'bg-brand text-white shadow-xs'
+                : 'text-text-secondary hover:text-text-primary hover:bg-white/60'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>ข้อมูลองค์กร & คลังความรู้ AI ({activeKmCount} KM)</span>
+          </button>
+
+          <button
             onClick={() => handleTabChange('bot')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${
               activeTab === 'bot'
@@ -217,8 +235,13 @@ export const SettingsPage: React.FC = () => {
         )}
 
         {activeTab === 'templates' && (
-          <BusinessTemplatesTab onSwitchToBotTab={() => handleTabChange('bot')} />
+          <BusinessTemplatesTab
+            onSwitchToBotTab={() => handleTabChange('bot')}
+            onSwitchToKnowledgeTab={() => handleTabChange('knowledge')}
+          />
         )}
+
+        {activeTab === 'knowledge' && <CompanyKnowledgeTab />}
 
         {activeTab === 'bot' && (
           <BotAutoReplyTab

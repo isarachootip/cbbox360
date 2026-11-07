@@ -35,6 +35,39 @@ describe('geminiService', () => {
     expect(systemPrompt).toContain('CusBox360');
   });
 
+  it('should include companyProfile (business type, phone, email) and active knowledgeItems in buildGeminiPrompt', () => {
+    const promptText = buildGeminiPrompt({
+      prompt: 'บริษัทชื่ออะไร ทำธุรกิจอะไร ขอเบอร์โทรกับอีเมลหน่อยครับ',
+      recentMessages: [],
+      customerName: 'คุณสมชาย',
+      isOffHours: false,
+      companyName: 'SpeedXpress 3PL',
+      companyProfile: {
+        companyName: 'บจก. สปีดเอ็กซ์เพรส โลจิสติกส์',
+        businessType: 'ขนส่งพัสดุด่วนและคลังสินค้าครบวงจร',
+        description: 'ส่งด่วนทั่วไทย เก็บเงินปลายทาง COD',
+        phone: '02-777-9000',
+        email: 'cs@speedxpress.co.th',
+        address: 'นิคมบางพลี สมุทรปราการ',
+        businessHoursText: '08:00 - 20:00 น.',
+      },
+      knowledgeItems: [
+        {
+          id: 'km-logis-1',
+          title: 'ค่าธรรมเนียม COD',
+          content: 'ค่าธรรมเนียม COD 2% โอนคืน T+1',
+          isActive: true,
+        },
+      ],
+    });
+
+    expect(promptText).toContain('บจก. สปีดเอ็กซ์เพรส โลจิสติกส์');
+    expect(promptText).toContain('ขนส่งพัสดุด่วนและคลังสินค้าครบวงจร');
+    expect(promptText).toContain('02-777-9000');
+    expect(promptText).toContain('cs@speedxpress.co.th');
+    expect(promptText).toContain('ค่าธรรมเนียม COD 2% โอนคืน T+1');
+  });
+
   it('should call Gemini API and return generated reply text on success', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,

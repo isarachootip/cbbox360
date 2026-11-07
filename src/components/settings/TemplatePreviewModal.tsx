@@ -5,6 +5,7 @@ import {
   Layers,
   Code,
   Sparkles,
+  BookOpen,
 } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { BusinessTemplatePreset, TemplateApplyOptions } from '../../types';
@@ -21,6 +22,7 @@ const OPTION_ITEMS: { key: keyof TemplateApplyOptions; title: string; subtitle: 
   { key: 'mergeConnectors', title: 'Industry Connectors', subtitle: 'API & Webhook เฉพาะอุตสาหกรรม' },
   { key: 'mergeCannedResponses', title: 'Canned Responses', subtitle: 'ชุดข้อความตอบกลับด่วน' },
   { key: 'mergeBotRules', title: 'Bot Auto-Reply Rules', subtitle: 'คีย์เวิร์ดบอทตอบอัตโนมัติ' },
+  { key: 'mergeKnowledgeBase', title: 'AI Knowledge Base & Profile', subtitle: 'คลังความรู้และข้อมูลติดต่อธุรกิจ' },
   { key: 'enableRecommendedMenus', title: 'Sidebar & Role Preset', subtitle: 'เปิดสิทธิ์เมนูหลักที่เกี่ยวข้อง' },
 ];
 
@@ -36,6 +38,7 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
     mergeCannedResponses: true,
     mergeBotRules: true,
     enableRecommendedMenus: true,
+    mergeKnowledgeBase: true,
   });
 
   if (!template) return null;
@@ -79,7 +82,7 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
               >
                 <input
                   type="checkbox"
-                  checked={options[item.key]}
+                  checked={Boolean(options[item.key])}
                   onChange={() => toggleOption(item.key)}
                   className="rounded text-brand focus:ring-brand"
                 />
@@ -92,11 +95,33 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
           </div>
         </div>
 
+        <div className="space-y-2">
+          <div className="text-xs font-bold text-text-primary flex items-center gap-1.5">
+            <BookOpen className="w-3.5 h-3.5 text-amber-600" />
+            <span>1. ข้อมูลองค์กรตัวอย่าง & คลังความรู้ AI ({template.knowledgeItems.length} หัวข้อ KM)</span>
+          </div>
+          <div className="p-3 rounded-lg border border-border bg-white text-xs space-y-1">
+            <div className="font-bold text-text-primary">{template.companyProfile.companyName}</div>
+            <div className="text-[11px] text-text-secondary">{template.companyProfile.businessType}</div>
+            <div className="text-[11px] text-slate-500">
+              โทร: {template.companyProfile.phone} | อีเมล: {template.companyProfile.email}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            {template.knowledgeItems.map((km) => (
+              <div key={km.id} className="p-2.5 rounded-lg border border-border bg-white text-xs space-y-1">
+                <div className="font-semibold text-text-primary">{km.title}</div>
+                <p className="text-[11px] text-text-secondary line-clamp-2">{km.content}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {template.connectors.length > 0 && (
           <div className="space-y-2">
             <div className="text-xs font-bold text-text-primary flex items-center gap-1.5">
               <Network className="w-3.5 h-3.5 text-blue-600" />
-              <span>1. ระบบเชื่อมต่อภายนอก (Industry API & Webhooks)</span>
+              <span>2. ระบบเชื่อมต่อภายนอก (Industry API & Webhooks)</span>
             </div>
             <div className="space-y-2">
               {template.connectors.map((conn) => (
@@ -122,7 +147,7 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
           <div className="space-y-2">
             <div className="text-xs font-bold text-text-primary flex items-center gap-1.5">
               <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
-              <span>2. ข้อความตอบกลับด่วน & กฎแชทบอท (Canned & Auto-Reply)</span>
+              <span>3. ข้อความตอบกลับด่วน & กฎแชทบอท (Canned & Auto-Reply)</span>
             </div>
             <div className="space-y-1.5">
               {template.cannedResponses.map((cr) => (
@@ -141,7 +166,7 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
         <div className="space-y-1.5">
           <div className="text-xs font-bold text-text-primary flex items-center gap-1.5">
             <Code className="w-3.5 h-3.5 text-purple-600" />
-            <span>3. ตัวแปรไดนามิกเฉพาะธุรกิจ (Template Variables)</span>
+            <span>4. ตัวแปรไดนามิกเฉพาะธุรกิจ (Template Variables)</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {template.customVariables.map((v) => (

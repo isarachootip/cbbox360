@@ -23,6 +23,7 @@ const storedStateSchema = z.object({
       cannedResponseIds: z.array(z.string()),
       ruleIds: z.array(z.string()),
       menuGrants: z.array(z.object({ menuId: z.string(), role: roleSchema })),
+      knowledgeItemIds: z.array(z.string()).optional(),
     })
     .optional(),
 });

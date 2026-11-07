@@ -18,6 +18,7 @@ export interface TemplateAddedResources {
   cannedResponseIds: string[];
   ruleIds: string[];
   menuGrants: MenuRoleGrant[];
+  knowledgeItemIds?: string[];
 }
 
 export const EMPTY_ADDED_RESOURCES: TemplateAddedResources = {
@@ -25,6 +26,7 @@ export const EMPTY_ADDED_RESOURCES: TemplateAddedResources = {
   cannedResponseIds: [],
   ruleIds: [],
   menuGrants: [],
+  knowledgeItemIds: [],
 };
 
 type PresetCanned = BusinessTemplatePreset['cannedResponses'][number];
@@ -138,5 +140,6 @@ export const mergeAddedResources = (
     cannedResponseIds: uniq([...a.cannedResponseIds, ...b.cannedResponseIds]),
     ruleIds: uniq([...a.ruleIds, ...b.ruleIds]),
     menuGrants: Array.from(grants.values()),
+    knowledgeItemIds: uniq([...(a.knowledgeItemIds ?? []), ...(b.knowledgeItemIds ?? [])]),
   };
 };

@@ -5,6 +5,7 @@ import {
   Network,
   Bot,
   MessageSquare,
+  BookOpen,
 } from 'lucide-react';
 import { BusinessTemplatePreset, TemplateApplyOptions } from '../../../types';
 import { useBusinessTemplate } from '../../../hooks/useBusinessTemplate';
@@ -13,10 +14,12 @@ import { TemplatePreviewModal } from '../TemplatePreviewModal';
 
 interface BusinessTemplatesTabProps {
   onSwitchToBotTab: () => void;
+  onSwitchToKnowledgeTab?: () => void;
 }
 
 export const BusinessTemplatesTab: React.FC<BusinessTemplatesTabProps> = ({
   onSwitchToBotTab,
+  onSwitchToKnowledgeTab,
 }) => {
   const navigate = useNavigate();
   const {
@@ -50,7 +53,7 @@ export const BusinessTemplatesTab: React.FC<BusinessTemplatesTabProps> = ({
             </span>
           </div>
           <p className="text-xs text-text-secondary">
-            เลือกประเภทธุรกิจเพื่อเพิ่ม API Connectors เฉพาะอุตสาหกรรม (เช่น HIS โรงพยาบาล, ระบบพัสดุ Logistics, ศูนย์บริการรถยนต์ DMS) พร้อมชุดข้อความตอบกลับด่วนและกฎแชทบอทโดยไม่ลบข้อมูลเดิม
+            เลือกประเภทธุรกิจเพื่อเพิ่ม API Connectors เฉพาะอุตสาหกรรม, คลังความรู้ AI (KM), ข้อความตอบกลับด่วน และกฎแชทบอทโดยไม่ลบข้อมูลเดิม
           </p>
         </div>
 
@@ -85,9 +88,19 @@ export const BusinessTemplatesTab: React.FC<BusinessTemplatesTabProps> = ({
 
       <div className="p-4 rounded-xl border border-border bg-slate-50/70 flex flex-wrap items-center justify-between gap-3">
         <span className="text-xs text-text-secondary">
-          หลังจากกดติดตั้งเทมเพลตแล้ว คุณสามารถเข้าไปปรับแต่ง API Token, ข้อความตอบกลับ และคีย์เวิร์ดบอทต่อได้ทันที:
+          หลังจากกดติดตั้งเทมเพลตแล้ว คุณสามารถเข้าไปปรับแต่งข้อมูลบริษัท/คลังความรู้ AI, API Token, ข้อความตอบกลับ และคีย์เวิร์ดบอทต่อได้ทันที:
         </span>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {onSwitchToKnowledgeTab && (
+            <button
+              type="button"
+              onClick={onSwitchToKnowledgeTab}
+              className="text-xs font-bold text-brand hover:underline flex items-center gap-1"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>ไปที่ข้อมูลองค์กร & คลังความรู้ AI (KM)</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => navigate('/connectors')}

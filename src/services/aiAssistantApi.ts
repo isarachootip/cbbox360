@@ -6,6 +6,7 @@ import {
   SuggestedReplyResult,
   AiSummaryResult,
 } from '../types';
+import { defaultCompanyProfile } from '../data/templateKnowledgePresets';
 
 export interface AiRequestPayload {
   conversationId: string;
@@ -91,7 +92,42 @@ export const requestSuggestedReply = async (
     [...payload.messages].reverse().find((m) => m.sender === 'customer')?.text || '';
   const lower = lastCustomerText.toLowerCase();
   const isEscalate = /ร้องเรียน|ผู้จัดการ|หัวหน้า|ฟ้อง|กฎหมาย|pdpa|ลบข้อมูล|ไม่พอใจ/.test(lower);
+  const isCompanyInquiry = /บริษัทชื่อ|ทำธุรกิจ|ธุรกิจอะไร|เบอร์โทร|อีเมล|email|ติดต่อ|ที่อยู่/.test(lower);
   const isQuote = /ใบเสนอราคา|เครื่องพิมพ์|ราคา|สั่งซื้อ/.test(lower);
+
+  if (isCompanyInquiry) {
+    let profile = defaultCompanyProfile;
+    try {
+      const saved = localStorage.getItem('cb360_bot_settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.companyProfile) profile = parsed.companyProfile;
+      }
+    } catch (_e) {
+      // Fallback to defaultCompanyProfile
+    }
+    return {
+      replies: [
+        {
+          label: 'แจ้งชื่อบริษัทและธุรกิจ',
+          text: `สวัสดี${agentParticle}คุณ${firstName} เราคือ ${profile.companyName} ดำเนินธุรกิจ${profile.businessType} (${profile.description}) ยินดีให้บริการ${agentParticle}`,
+        },
+        {
+          label: 'แจ้งเบอร์โทรและอีเมลติดต่อ',
+          text: `คุณ${firstName}สามารถติดต่อเราได้ที่เบอร์โทร ${profile.phone} หรืออีเมล ${profile.email} ในเวลาทำการ (${profile.businessHoursText}) ได้เลย${agentParticle}`,
+        },
+        {
+          label: 'แจ้งที่อยู่และช่องทางออนไลน์',
+          text: `สถานที่ตั้งของเราอยู่ที่ ${profile.address} หรือติดต่อผ่าน LINE Official: ${profile.lineId || '-'} และเว็บไซต์ ${profile.website || '-'} ได้ตลอด${agentParticle}`,
+        },
+      ],
+      used_canned: ['/ทักทายทั่วไป'],
+      missing_info: [],
+      needs_human_check: false,
+      escalate: isEscalate,
+      logId: `local-${Date.now()}`,
+    };
+  }
 
   if (isQuote) {
     return {
