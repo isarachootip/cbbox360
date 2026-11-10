@@ -85,11 +85,42 @@ export const callGeminiStructured = async ({
  * Generates contextual fallback when GEMINI_API_KEY is not configured in local dev/demo environment,
  * while strictly honoring the prompt schema rules.
  */
+export const findServerRelevantKm = (userText = '', knowledgeItems = []) => {
+  const clean = (userText || '').trim().toLowerCase();
+  if (!clean || !Array.isArray(knowledgeItems)) return null;
+
+  const active = knowledgeItems.filter((k) => k && k.isActive !== false);
+  let best = null;
+  let bestScore = 0;
+
+  for (const item of active) {
+    let score = 0;
+    if (item.title && clean.includes(item.title.toLowerCase())) score += 5;
+    for (const tag of item.tags || []) {
+      const t = String(tag).trim().toLowerCase();
+      if (t && clean.includes(t)) score += 4;
+    }
+    const tokens = String(item.title || '')
+      .toLowerCase()
+      .split(/[\s,/()&-]+/)
+      .filter((tok) => tok.length >= 3);
+    for (const tok of tokens) {
+      if (clean.includes(tok)) score += 2;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      best = item;
+    }
+  }
+  return bestScore > 0 ? best : null;
+};
+
 export const buildSmartLocalSuggestReply = ({
   customerContext = {},
   messages = [],
   agentParticle = 'ค่ะ',
   companyProfile = null,
+  knowledgeItems = [],
 }) => {
   const firstName = extractFirstName(customerContext.name || customerContext.customerName || 'ลูกค้า');
   const lastCustomerMsg = [...messages].reverse().find((m) => m.sender === 'customer')?.text || '';
@@ -100,26 +131,55 @@ export const buildSmartLocalSuggestReply = ({
   const isEscalate =
     /ร้องเรียน|ผู้จัดการ|หัวหน้า|ฟ้อง|กฎหมาย|pdpa|ลบข้อมูล|คุยกับคน|ไม่พอใจมาก/.test(lower);
   const isRefundOrDiscount = /คืนเงิน|ส่วนลด|ลดราคา|ชดเชย|เพิ่มวงเงิน|ยกเว้นค่าปรับ/.test(lower);
-  const isCompanyInquiry = /บริษัทชื่อ|ทำธุรกิจ|ธุรกิจอะไร|เบอร์โทร|อีเมล|email|ติดต่อ|ที่อยู่/.test(lower);
+  const isCompanyInquiry =
+    /บริษัทชื่อ|ชื่อบริษัท|ชื่ออะไร|ทำธุรกิจ|ธุรกิจอะไร|ขายอะไร|บริการอะไร|เบอร์โทร|อีเมล|email|ติดต่อ|ที่อยู่|เวลาทำการ/.test(
+      lower
+    );
   const isQuote = /ใบเสนอราคา|สั่งซื้อ|ราคา|เครื่องพิมพ์/.test(lower);
+
+  const matchedKm = findServerRelevantKm(lastCustomerMsg, knowledgeItems);
+  if (matchedKm) {
+    const compName = companyProfile?.companyName || 'บริษัท';
+    const compPhone = companyProfile?.phone || '02-123-4567';
+    return {
+      replies: [
+        {
+          label: `ตอบจาก KM: ${String(matchedKm.title).slice(0, 22)}`,
+          text: `สวัสดี${agentParticle}คุณ${firstName} สำหรับเรื่อง${matchedKm.title}: ${matchedKm.content} ${agentParticle}`,
+        },
+        {
+          label: 'แจ้งข้อมูลพร้อมช่องทางติดต่อ',
+          text: `${matchedKm.content} หากคุณ${firstName}มีข้อสงสัยเพิ่มเติม สามารถติดต่อ ${compName} ได้ที่เบอร์โทร ${compPhone} ได้เลย${agentParticle}`,
+        },
+        {
+          label: 'ดูแลพิเศษตามระดับสมาชิก',
+          text: `ในฐานะลูกค้าระดับ ${customerContext.tier || 'VIP'} เจ้าหน้าที่ยินดีช่วยประสานงานดูแลเรื่องนี้ให้โดยด่วนเลย${agentParticle}`,
+        },
+      ],
+      used_canned: [`KM: ${matchedKm.title}`],
+      missing_info: [],
+      needs_human_check: isEscalate || isRefundOrDiscount,
+      escalate: isEscalate,
+    };
+  }
 
   if (isCompanyInquiry && companyProfile) {
     return {
       replies: [
         {
-          label: 'แจ้งข้อมูลบริษัทและธุรกิจ',
+          label: 'แจ้งข้อมูลบริษัทและธุรกิจ (KM)',
           text: `สวัสดี${agentParticle}คุณ${firstName} เราคือ ${companyProfile.companyName} ดำเนินธุรกิจ${companyProfile.businessType} (${companyProfile.description}) ยินดีให้บริการ${agentParticle}`,
         },
         {
-          label: 'แจ้งเบอร์โทรและอีเมลติดต่อ',
+          label: 'แจ้งเบอร์โทรและอีเมลติดต่อ (KM)',
           text: `คุณ${firstName}สามารถติดต่อเราได้ที่เบอร์โทร ${companyProfile.phone} หรืออีเมล ${companyProfile.email} ในเวลาทำการ (${companyProfile.businessHoursText}) ได้เลย${agentParticle}`,
         },
         {
-          label: 'แจ้งที่อยู่และช่องทางออนไลน์',
+          label: 'แจ้งที่อยู่และช่องทางออนไลน์ (KM)',
           text: `สถานที่ตั้งของเราอยู่ที่ ${companyProfile.address} หรือติดต่อผ่าน LINE Official: ${companyProfile.lineId || '-'} และเว็บไซต์ ${companyProfile.website || '-'} ได้ตลอด${agentParticle}`,
         },
       ],
-      used_canned: ['/ทักทายทั่วไป'],
+      used_canned: ['KM: ข้อมูลองค์กร (Company Profile)'],
       missing_info: [],
       needs_human_check: false,
       escalate: isEscalate,

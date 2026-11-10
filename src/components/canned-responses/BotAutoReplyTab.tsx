@@ -362,6 +362,7 @@ export const BotAutoReplyTab: React.FC<BotAutoReplyTabProps> = ({
               <span className="text-[11px] text-text-secondary mr-1">ลองคลิกข้อความตัวอย่าง:</span>
               {[
                 'ขอเลขบัญชีโอนเงินครับ',
+                'บริษัทชื่ออะไร ทำธุรกิจอะไร ขอเบอร์โทร/อีเมลครับ',
                 'ส่งของหรือยังครับ',
                 'ตัดรอบส่งกี่โมง',
                 'โอนเงินเรียบร้อยแล้วค่ะ',
@@ -410,6 +411,8 @@ export const BotAutoReplyTab: React.FC<BotAutoReplyTabProps> = ({
                     <span>
                       {simResult.type === 'handoff'
                         ? 'ตรวจพบคำสั่งส่งต่อ (Handoff)'
+                        : simResult.type === 'km'
+                        ? 'ตอบด้วยคลังความรู้ AI (KM / Company Profile)'
                         : simResult.matched
                         ? `จับคู่กฎ: "${simResult.rule?.name || 'Rule'}"`
                         : 'ไม่ตรงกับกฎใดๆ'}

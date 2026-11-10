@@ -44,7 +44,7 @@ import { updateAiUsageLog } from '../services/aiAssistantApi';
 export const InboxPage: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { settings: botSettings } = useBot();
+  const { settings: botSettings, testMatch } = useBot();
   const {
     conversations,
     customers,
@@ -119,10 +119,23 @@ export const InboxPage: React.FC = () => {
         chatHistory: currentConv.messages,
         customer: currentCustomer,
         cannedResponses,
+        companyProfile: botSettings.companyProfile,
+        knowledgeItems: botSettings.knowledgeItems,
         apiKey,
       });
       if (aiRes.success && aiRes.text) {
         replyText = aiRes.text;
+      }
+    }
+
+    if (!replyText) {
+      const matched = testMatch(currentLast.text, {
+        customer_name: currentConv.customerName,
+        order_code: currentCustomer?.lastOrderCode || 'SO-10482',
+        tracking_no: 'TH2609-88412',
+      });
+      if (matched.matched) {
+        replyText = matched.replyText;
       }
     }
 
@@ -199,7 +212,6 @@ export const InboxPage: React.FC = () => {
       order_code: currentCustomer?.lastOrderCode || 'SO-10482',
       tracking_no: 'TH2609-88412',
       agent_name: selectedConv.assignedTo || 'วิภา ส.',
-      company_name: 'บจก. CusBox360',
       phone: currentCustomer?.fullPhone || '081-892-5678',
     });
 

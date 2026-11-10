@@ -1,6 +1,7 @@
 import { query } from '../../db.js';
 import { defaultBotSettings } from '../config/defaultBotSettings.js';
 import { generateGeminiReply } from './geminiService.js';
+import { findServerRelevantKm } from './aiAssistantService.js';
 import { isWithinBusinessHours } from '../utils/timeHelpers.js';
 
 let botSettings = { ...defaultBotSettings };
@@ -162,6 +163,31 @@ export const matchBotReply = async (
     } catch (aiErr) {
       console.warn('[AI Reply Error]:', aiErr.message);
     }
+  }
+
+  // 4.5 KM & Company Profile Grounded Fallback
+  const matchedKm = findServerRelevantKm(text, botSettings.knowledgeItems);
+  if (matchedKm) {
+    return {
+      replyText: matchedKm.content,
+      type: 'km',
+      ruleName: `KM: ${matchedKm.title}`,
+      isAi: true,
+    };
+  }
+  if (
+    botSettings.companyProfile &&
+    /บริษัทชื่อ|ชื่อบริษัท|ชื่ออะไร|ทำธุรกิจ|ธุรกิจอะไร|ขายอะไร|บริการอะไร|ติดต่อ|เบอร์โทร|อีเมล|email|ที่อยู่/.test(
+      cleanText
+    )
+  ) {
+    const p = botSettings.companyProfile;
+    return {
+      replyText: `สวัสดีค่ะคุณ${customerName} เราคือ ${p.companyName} ดำเนินธุรกิจ${p.businessType} (${p.description}) ติดต่อได้ที่โทร ${p.phone}, อีเมล ${p.email} หรือที่อยู่ ${p.address} เวลาทำการ ${p.businessHoursText} ค่ะ`,
+      type: 'km',
+      ruleName: 'KM: Company Profile',
+      isAi: true,
+    };
   }
 
   // 5. Fail-Safe Fallback: Never leave the conversation silent

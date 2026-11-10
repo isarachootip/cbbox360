@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { businessTemplates } from '../../data/businessTemplates';
 import { defaultCompanyProfile, defaultKnowledgeItems } from '../../data/templateKnowledgePresets';
 import {
+  findRelevantKnowledgeItems,
   formatKnowledgeForPrompt,
+  matchKnowledgeOrCompanyReply,
   mergeCompanyProfile,
   removeTemplateKnowledgeItems,
   selectNewKnowledgeItems,
@@ -87,5 +89,32 @@ describe('knowledgeMerge domain functions', () => {
     expect(formatted).toContain(hospitalPreset.companyProfile.email);
     expect(formatted).toContain(hospitalPreset.knowledgeItems[0].title);
     expect(formatted).not.toContain('ไม่ควรแสดงใน Prompt');
+  });
+
+  it('matches company profile inquiries (name, business, phone, email) and active KM items', () => {
+    const profileHit = matchKnowledgeOrCompanyReply(
+      'บริษัทชื่ออะไร ทำธุรกิจอะไร ขอเบอร์โทรและอีเมลติดต่อครับ',
+      hospitalPreset.companyProfile,
+      hospitalPreset.knowledgeItems
+    );
+    expect(profileHit.matched).toBe(true);
+    expect(profileHit.replyText).toContain(hospitalPreset.companyProfile.companyName);
+    expect(profileHit.replyText).toContain(hospitalPreset.companyProfile.phone);
+    expect(profileHit.replyText).toContain(hospitalPreset.companyProfile.email);
+
+    const kmHit = matchKnowledgeOrCompanyReply(
+      'ก่อนไปตรวจสุขภาพต้องงดน้ำอาหารกี่ชั่วโมงคะ',
+      hospitalPreset.companyProfile,
+      hospitalPreset.knowledgeItems
+    );
+    expect(kmHit.matched).toBe(true);
+    expect(kmHit.matchedTopic).toContain('KM:');
+    expect(kmHit.replyText).toContain('8-12 ชั่วโมง');
+
+    const relevant = findRelevantKnowledgeItems(
+      'อยากทราบเรื่องสิทธิ์ประกันสังคมและตรวจสุขภาพ',
+      hospitalPreset.knowledgeItems
+    );
+    expect(relevant.length).toBeGreaterThanOrEqual(2);
   });
 });

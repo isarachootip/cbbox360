@@ -33,8 +33,6 @@ const isPresetOrEmptyValue = (
 
 /**
  * Non-destructively merges a template's companyProfile into the current profile.
- * Admin-customized fields (companyName, phone, email, etc.) are preserved;
- * fields that are empty or match a template preset are updated to the new template.
  */
 export const mergeCompanyProfile = (
   current: CompanyProfile | undefined,
@@ -114,37 +112,76 @@ export const formatKnowledgeForPrompt = (
 };
 
 /**
+ * Scores and returns relevant active KnowledgeItem[] based on customer query text.
+ */
+export const findRelevantKnowledgeItems = (
+  userText: string,
+  items: KnowledgeItem[] = [],
+  limit = 3
+): KnowledgeItem[] => {
+  const clean = userText.trim().toLowerCase();
+  if (!clean) return [];
+
+  const active = items.filter((k) => k.isActive);
+  const scored = active
+    .map((item) => {
+      let score = 0;
+      if (clean.includes(item.title.toLowerCase())) score += 5;
+
+      for (const tag of item.tags ?? []) {
+        const cleanTag = tag.trim().toLowerCase();
+        if (cleanTag && clean.includes(cleanTag)) score += 4;
+      }
+
+      const titleTokens = item.title
+        .toLowerCase()
+        .split(/[\s,/()&-]+/)
+        .filter((t) => t.length >= 3);
+      for (const token of titleTokens) {
+        if (clean.includes(token)) score += 2;
+      }
+
+      return { item, score };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  return scored.slice(0, limit).map((s) => s.item);
+};
+
+/**
  * Matches customer inquiries about company name, business type, contact phone, email, or active KM items.
  */
 export const matchKnowledgeOrCompanyReply = (
   userText: string,
   profile?: CompanyProfile,
   items: KnowledgeItem[] = []
-): { matched: boolean; replyText: string; matchedTopic?: string } => {
+): { matched: boolean; replyText: string; matchedTopic?: string; matchedItem?: KnowledgeItem } => {
   const clean = userText.trim().toLowerCase();
   if (!clean) return { matched: false, replyText: '' };
 
-  if (
-    profile &&
-    /บริษัทชื่อ|ชื่ออะไร|ทำธุรกิจ|ธุรกิจอะไร|ติดต่อ|เบอร์โทร|อีเมล|email|ที่อยู่|ตั้งอยู่ที่ไหน/.test(clean)
-  ) {
+  const relevantKm = findRelevantKnowledgeItems(clean, items, 1);
+  if (relevantKm.length > 0) {
+    const top = relevantKm[0];
     return {
       matched: true,
-      matchedTopic: 'Company Profile (ข้อมูลองค์กร)',
-      replyText: `สวัสดีค่ะ เราคือ ${profile.companyName} ดำเนินธุรกิจ${profile.businessType} (${profile.description}) สามารถติดต่อได้ที่เบอร์โทร ${profile.phone}, อีเมล ${profile.email} หรือ LINE: ${profile.lineId || '-'} เวลาทำการ: ${profile.businessHoursText} ค่ะ`,
+      matchedTopic: `KM: ${top.title}`,
+      matchedItem: top,
+      replyText: top.content,
     };
   }
 
-  for (const item of items.filter((k) => k.isActive)) {
-    const titleHit = clean.includes(item.title.toLowerCase());
-    const tagHit = (item.tags ?? []).some((t) => clean.includes(t.toLowerCase()));
-    if (titleHit || tagHit) {
-      return {
-        matched: true,
-        matchedTopic: `KM: ${item.title}`,
-        replyText: item.content,
-      };
-    }
+  if (
+    profile &&
+    /บริษัทชื่อ|ชื่อบริษัท|ชื่ออะไร|ทำธุรกิจ|ธุรกิจอะไร|ขายอะไร|บริการอะไร|ติดต่อ|เบอร์โทร|เบอร์ติดต่อ|อีเมล|email|ที่อยู่|ตั้งอยู่ที่ไหน|แผนที่|เวลาทำการ|เปิดกี่โมง/.test(
+      clean
+    )
+  ) {
+    return {
+      matched: true,
+      matchedTopic: 'KM: ข้อมูลองค์กรและการติดต่อ (Company Profile)',
+      replyText: `สวัสดีค่ะ เราคือ ${profile.companyName} ดำเนินธุรกิจ${profile.businessType} (${profile.description}) สามารถติดต่อได้ที่เบอร์โทร ${profile.phone}, อีเมล ${profile.email} หรือ LINE: ${profile.lineId || '-'} ที่อยู่: ${profile.address} เวลาทำการ: ${profile.businessHoursText} ค่ะ`,
+    };
   }
 
   return { matched: false, replyText: '' };

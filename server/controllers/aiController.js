@@ -116,13 +116,17 @@ export const postSuggestReply = async (req, res) => {
     req.body
   );
   const particle = agentParticle || inferAgentParticle(agentName || conv?.assignedTo || '');
-  const companyName = botSettings.companyName || 'CusBox360';
+  const resolvedProfile = req.body?.companyProfile || botSettings.companyProfile;
+  const resolvedKm = Array.isArray(req.body?.knowledgeItems)
+    ? req.body.knowledgeItems
+    : botSettings.knowledgeItems;
+  const companyName = resolvedProfile?.companyName || botSettings.companyName || 'CusBox360';
 
   const { systemInstruction, userMessage } = buildAiPromptPayload({
     mode: 'suggest_reply',
     companyName,
-    companyProfile: botSettings.companyProfile,
-    knowledgeItems: botSettings.knowledgeItems,
+    companyProfile: resolvedProfile,
+    knowledgeItems: resolvedKm,
     agentParticle: particle,
     customerContext,
     messages,
@@ -159,7 +163,8 @@ export const postSuggestReply = async (req, res) => {
       customerContext,
       messages,
       agentParticle: particle,
-      companyProfile: botSettings.companyProfile,
+      companyProfile: resolvedProfile,
+      knowledgeItems: resolvedKm,
     });
     status = 'fallback_local';
   }
@@ -218,11 +223,16 @@ export const postAiSummary = async (req, res) => {
     }
   }
 
+  const resolvedSummaryProfile = req.body?.companyProfile || botSettings.companyProfile;
+  const resolvedSummaryKm = Array.isArray(req.body?.knowledgeItems)
+    ? req.body.knowledgeItems
+    : botSettings.knowledgeItems;
+
   const { systemInstruction, userMessage } = buildAiPromptPayload({
     mode: 'summary',
-    companyName: botSettings.companyName || 'CusBox360',
-    companyProfile: botSettings.companyProfile,
-    knowledgeItems: botSettings.knowledgeItems,
+    companyName: resolvedSummaryProfile?.companyName || botSettings.companyName || 'CusBox360',
+    companyProfile: resolvedSummaryProfile,
+    knowledgeItems: resolvedSummaryKm,
     agentParticle: 'ค่ะ',
     customerContext,
     messages,
