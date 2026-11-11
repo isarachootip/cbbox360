@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Phone, Mail, UserX } from 'lucide-react';
+import { ChevronRight, Phone, UserX } from 'lucide-react';
 import { Customer } from '../../types';
 import { TierBadge } from '../common/TierBadge';
 import { GradeBadge } from '../common/GradeBadge';
@@ -23,32 +23,33 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
     navigate(`/customers/${customer.id}`);
   };
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('th-TH', {
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat('th-TH', {
       style: 'currency',
       currency: 'THB',
       maximumFractionDigits: 0,
     }).format(val);
-  };
 
   if (customers.length === 0) {
     return (
-      <div className="bg-white border border-border rounded-xl p-12 text-center select-none shadow-xs">
+      <div className="bg-white border border-border rounded-card p-12 text-center select-none shadow-card">
         <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
           <UserX className="w-6 h-6" />
         </div>
         <h3 className="text-sm font-semibold text-text-primary mb-1">ไม่พบข้อมูลลูกค้า</h3>
-        <p className="text-xs text-text-secondary">ลองปรับเงื่อนไขการค้นหา หรือตัวกรอง Tier / เกรดเครดิต</p>
+        <p className="text-xs text-text-secondary">
+          ลองปรับเงื่อนไขการค้นหา หรือตัวกรอง Tier / เกรดเครดิต
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white border border-border rounded-xl shadow-xs overflow-hidden select-none">
+    <div className="bg-white border border-border rounded-card shadow-card overflow-hidden">
       <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="border-b border-border bg-slate-50/70 text-text-secondary font-semibold">
+        <table className="w-full text-left border-collapse text-[13.5px]">
+          <thead className="select-none">
+            <tr className="border-b border-border bg-bg-muted text-text-secondary text-xs uppercase tracking-[0.04em] font-semibold">
               <th className="py-3 px-4">ลูกค้า / องค์กร</th>
               <th className="py-3 px-4">ระดับ Tier</th>
               <th className="py-3 px-4">เกรดเครดิต</th>
@@ -60,7 +61,7 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
               <th className="py-3 px-4 text-right">จัดการ</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border/60">
+          <tbody className="divide-y divide-divider">
             {customers.map((c) => {
               const churnDot =
                 c.churnRisk === 'สูง'
@@ -79,29 +80,28 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
                 <tr
                   key={c.id}
                   onClick={() => handleRowClick(c)}
-                  className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                  className="hover:bg-bg-subtle transition-colors cursor-pointer group"
                 >
-                  {/* Customer Info */}
                   <td className="py-3 px-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-brand-tint text-brand font-bold flex items-center justify-center text-xs flex-shrink-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-brand-tint text-brand-deep font-bold flex items-center justify-center text-xs flex-shrink-0 select-none">
                         {c.initials}
                       </div>
                       <div className="min-w-0">
-                        <div className="font-semibold text-text-primary group-hover:text-brand transition-colors truncate flex items-center gap-1.5">
+                        <div className="font-semibold text-[14px] text-text-primary group-hover:text-brand transition-colors truncate flex items-center gap-1.5">
                           <span>{c.name}</span>
                           {c.customerType === 'CORPORATE' && (
-                            <span className="inline-flex items-center gap-1 text-[10px] text-blue-600 font-medium shrink-0">
+                            <span className="inline-flex items-center gap-1 text-[11px] text-blue-600 font-medium shrink-0">
                               <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                               <span>องค์กร</span>
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-text-secondary flex items-center gap-2 mt-0.5">
-                          <span className="font-mono text-slate-500">{c.id}</span>
-                          <span>•</span>
+                        <div className="text-xs text-text-secondary flex items-center gap-2 mt-0.5 font-mono tabular-nums">
+                          <span>{c.id}</span>
+                          <span>·</span>
                           <span className="flex items-center gap-1">
-                            <Phone className="w-2.5 h-2.5" />
+                            <Phone className="w-3 h-3" />
                             {c.phone}
                           </span>
                         </div>
@@ -109,61 +109,55 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
                     </div>
                   </td>
 
-                  {/* Tier */}
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-4 select-none">
                     <TierBadge tier={c.tier} size="sm" />
                   </td>
 
-                  {/* Credit Grade */}
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-4 select-none">
                     <GradeBadge grade={c.creditGrade} />
                   </td>
 
-                  {/* LTV */}
-                  <td className="py-3 px-4 text-right font-medium text-text-primary">
+                  <td className="py-3 px-4 text-right font-mono tabular-nums font-semibold text-text-primary text-xs">
                     {formatCurrency(c.lifetimeValue)}
                   </td>
 
-                  {/* 12M Spend */}
-                  <td className="py-3 px-4 text-right text-text-secondary font-mono">
+                  <td className="py-3 px-4 text-right text-text-secondary font-mono tabular-nums text-xs">
                     {formatCurrency(c.spend12Months)}
                   </td>
 
-                  {/* Orders */}
                   <td className="py-3 px-4 text-center">
-                    <span className="font-semibold text-text-primary">{c.orders12Months}</span>
+                    <span className="font-mono tabular-nums font-semibold text-text-primary text-xs">
+                      {c.orders12Months}
+                    </span>
                     <span className="text-[11px] text-text-secondary block">รายการ</span>
                   </td>
 
-                  {/* Segments */}
                   <td className="py-3 px-4">
-                    <div className="flex flex-wrap gap-1 max-w-[200px]">
+                    <div className="flex flex-wrap gap-1 max-w-[210px]">
                       {c.segments.slice(0, 2).map((seg, i) => (
                         <span
                           key={i}
-                          className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600 font-medium"
+                          className="px-2 py-0.5 rounded-md text-[11px] bg-bg-muted text-slate-700 border border-border/70 font-medium"
                         >
                           {seg}
                         </span>
                       ))}
                       {c.segments.length > 2 && (
-                        <span className="text-[10px] text-slate-400 font-medium self-center">
+                        <span className="text-[11px] text-slate-400 font-mono self-center">
                           +{c.segments.length - 2}
                         </span>
                       )}
                     </div>
                   </td>
 
-                  {/* Churn Risk: CB360 Dot + Colored Text Standard */}
-                  <td className="py-3 px-4 text-center">
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${churnText}`}>
+                  <td className="py-3 px-4 text-center select-none">
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${churnText}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${churnDot}`} />
                       <span>{c.churnRisk}</span>
                     </span>
                   </td>
 
-                  {/* Actions */}
-                  <td className="py-3 px-4 text-right">
+                  <td className="py-3 px-4 text-right select-none">
                     <button
                       type="button"
                       onClick={(e) => {

@@ -21,9 +21,9 @@ export const KpiTile: React.FC<KpiTileProps> = ({
 }) => {
   const variantStyles = {
     default: 'bg-white border-border text-text-primary',
-    highlight: 'bg-white border-border text-text-primary',
+    highlight: 'bg-white border-brand/25 text-text-primary',
     warning: 'bg-white border-border text-text-primary',
-    danger: 'bg-white border-border text-text-primary',
+    danger: 'bg-white border-rose-200/80 text-text-primary',
     success: 'bg-white border-border text-text-primary',
   };
 
@@ -38,22 +38,22 @@ export const KpiTile: React.FC<KpiTileProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`rounded-card border p-4 flex flex-col justify-between transition-all ${
+      className={`rounded-card border p-4 flex flex-col justify-between shadow-card transition-all ${
         variantStyles[variant]
-      } ${onClick ? 'cursor-pointer hover:shadow-sm' : ''} ${className}`}
+      } ${onClick ? 'cursor-pointer hover:border-brand/40 hover:shadow-md' : ''} ${className}`}
     >
-      <div className="flex items-center justify-between text-xs text-text-secondary font-medium">
+      <div className="flex items-center justify-between text-[13px] text-text-secondary font-medium">
         <span>{label}</span>
         {rightElement}
       </div>
       <div className="mt-2 flex items-baseline gap-2">
-        <span className={`text-2xl font-bold tracking-tight font-mono ${valueColors[variant]}`}>
+        <span
+          className={`text-2xl font-bold tracking-tight font-mono tabular-nums ${valueColors[variant]}`}
+        >
           {value}
         </span>
         {subValue && (
-          <span className="text-xs font-normal opacity-90 text-text-secondary">
-            {subValue}
-          </span>
+          <span className="text-xs font-normal text-text-secondary">{subValue}</span>
         )}
       </div>
     </div>

@@ -8,34 +8,34 @@ export default {
     extend: {
       colors: {
         bg: {
-          app: '#F2F6FB',
+          app: '#F6F8FC',
           surface: '#FFFFFF',
-          subtle: '#F4F8FD',
-          muted: '#F7FAFE',
+          subtle: '#F8FAFD',
+          muted: '#F3F6FB',
         },
         sidebar: {
-          bg: '#EAF2FC',
-          border: '#D5E3F4',
+          bg: '#F0F5FC',
+          border: '#DCE6F2',
           text: '#1E3A5F',
-          label: '#50698A',
+          label: '#5A7190',
         },
         brand: {
           DEFAULT: '#1F6FD1',
           hover: '#1558B0',
           deep: '#174E8C',
-          tint: '#E3EEFB',
-          selected: '#EAF2FC',
+          tint: '#E6F0FD',
+          selected: '#EDF4FD',
         },
         border: {
-          DEFAULT: '#DCE5F0',
+          DEFAULT: '#E2E8F0',
         },
         divider: {
-          DEFAULT: '#E6ECF4',
+          DEFAULT: '#EDF2F7',
         },
         text: {
-          primary: '#111827',
-          secondary: '#4B5563',
-          body2: '#1F2937',
+          primary: '#0F172A',
+          secondary: '#475569',
+          body2: '#1E293B',
         },
         warn: {
           bg: '#FDF6E9',
@@ -91,13 +91,13 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['"IBM Plex Sans Thai"', 'sans-serif'],
-        mono: ['"IBM Plex Mono"', 'monospace'],
+        sans: ['"Inter"', '"IBM Plex Sans Thai"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+        mono: ['"JetBrains Mono"', '"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
       boxShadow: {
-        'sidebar-active': '0 1px 2px rgba(20,60,110,0.14)',
-        'card': '0 1px 3px rgba(15,43,77,0.05)',
-        'modal': '0 10px 25px -5px rgba(15,43,77,0.1), 0 8px 10px -6px rgba(15,43,77,0.1)',
+        'sidebar-active': '0 1px 3px rgba(31, 111, 209, 0.12), 0 1px 2px rgba(15, 23, 42, 0.05)',
+        'card': '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 43, 77, 0.04)',
+        'modal': '0 12px 28px -6px rgba(15, 23, 42, 0.14), 0 8px 12px -6px rgba(15, 23, 42, 0.08)',
       },
       borderRadius: {
         'card': '12px',

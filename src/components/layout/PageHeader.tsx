@@ -20,28 +20,28 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const { toggleMobileSidebar } = useLayout();
 
   return (
-    <header className="h-[56px] sm:h-[60px] flex-shrink-0 bg-white border-b border-border px-3.5 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 select-none z-20">
+    <header className="h-[58px] sm:h-[62px] flex-shrink-0 bg-white border-b border-border px-4 sm:px-6 flex items-center justify-between gap-3 sm:gap-4 z-20">
       {/* Left side: Mobile Hamburger + Breadcrumb or Title */}
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
         <button
           type="button"
           onClick={toggleMobileSidebar}
           aria-label="เปิดเมนูการนำทาง"
-          className="lg:hidden p-1.5 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand/30"
+          className="lg:hidden p-1.5 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand/30 select-none"
         >
           <Menu className="w-5 h-5" />
         </button>
         {breadcrumbs ? (
-          <div className="text-[14px] font-semibold text-text-primary flex items-center gap-1.5 truncate">
+          <div className="text-[14px] font-medium text-text-primary flex items-center gap-1.5 truncate">
             {breadcrumbs}
           </div>
         ) : (
-          <div className="flex items-baseline gap-2.5">
-            <h1 className="text-[18px] font-bold text-text-primary tracking-tight">
+          <div className="flex items-baseline gap-2.5 min-w-0">
+            <h1 className="text-[18px] font-bold text-text-primary tracking-tight truncate">
               {title}
             </h1>
             {subtitle && (
-              <span className="text-xs text-text-secondary font-normal">
+              <span className="text-[13px] text-text-secondary font-normal truncate">
                 {subtitle}
               </span>
             )}
@@ -58,7 +58,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
       {/* Right side: Primary Action Button */}
       {actionButton && (
-        <div className="flex items-center gap-2.5 flex-shrink-0">
+        <div className="flex items-center gap-2.5 flex-shrink-0 select-none">
           {actionButton}
         </div>
       )}
