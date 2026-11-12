@@ -1,5 +1,6 @@
 import { UserAccount, UserRole } from '../../types';
 import { ServerUser } from '../../services/authApi';
+import { ManagedServerUser } from '../../services/userApi';
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   sysadmin: 'System Administrator (ดูแลระบบสูงสุด)',
@@ -14,7 +15,15 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 
 export const getRoleLabel = (role: UserRole): string => ROLE_LABELS[role] ?? role;
 
-/** Adapts the server's public user to the UI's UserAccount shape (no password is ever held client-side). */
+const formatLoginTimestamp = (iso: string | null): string => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+/** Adapts the server's public session user to the UI's UserAccount shape. */
 export const toUserAccount = (u: ServerUser): UserAccount => ({
   id: u.id,
   username: u.username,
@@ -28,5 +37,25 @@ export const toUserAccount = (u: ServerUser): UserAccount => ({
   initials: u.initials,
   avatarBg: u.avatarBg,
   createdAt: '',
+  mustChangePassword: u.mustChangePassword,
+  twoFactorEnabled: u.totpEnabled,
+});
+
+/** Adapts a /api/users record to the UI's UserAccount shape. */
+export const toManagedUserAccount = (u: ManagedServerUser): UserAccount => ({
+  id: u.id,
+  username: u.username,
+  password: '',
+  name: u.name,
+  email: u.email,
+  role: u.role,
+  roleLabel: getRoleLabel(u.role),
+  department: u.department,
+  status: u.status,
+  initials: u.initials,
+  avatarBg: u.avatarBg,
+  createdAt: u.createdAt,
+  lastLogin: formatLoginTimestamp(u.lastLoginAt),
+  mustChangePassword: u.mustChangePassword,
   twoFactorEnabled: u.totpEnabled,
 });

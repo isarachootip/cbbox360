@@ -9,7 +9,10 @@ interface TwoFactorSetupModalProps {
   isOpen: boolean;
   onClose: () => void;
   user: UserAccount;
-  onEnrolled: (secret: string) => void;
+  onEnrolled: (
+    secret: string,
+    code: string
+  ) => Promise<{ success: boolean; error?: string }> | void;
 }
 
 export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
@@ -60,12 +63,16 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
 
     try {
       const isValid = await verifyTotpCode(clean, secret, 2);
-      if (isValid) {
-        onEnrolled(secret);
-        onClose();
-      } else {
+      if (!isValid) {
         setErrorMsg('รหัส 6 หลักไม่ถูกต้อง กรุณาตรวจสอบรหัสในมือถืออีกครั้ง');
+        return;
       }
+      const res = await onEnrolled(secret, clean);
+      if (res && !res.success) {
+        setErrorMsg(res.error || 'ไม่สามารถบันทึกการตั้งค่า 2FA ได้');
+        return;
+      }
+      onClose();
     } catch {
       setErrorMsg('เกิดข้อผิดพลาดในการตรวจสอบ');
     } finally {

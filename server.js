@@ -7,7 +7,7 @@ import apiRoutes from './server/routes/index.js';
 import webhookRoutes from './server/routes/webhookRoutes.js';
 import { initBotSettingsFromDb } from './server/services/botEngineService.js';
 import { ensureDatabaseSchema } from './server/services/dbInitService.js';
-import { ensureAllSeedAccounts } from './server/services/userSeedService.js';
+import { ensureAllSeedAccounts, ensureOperatorAccounts } from './server/services/userSeedService.js';
 import { userRepository } from './server/repositories/userRepository.js';
 import { hashPassword } from './server/utils/cryptoUtils.js';
 
@@ -54,6 +54,7 @@ ensureDatabaseSchema()
       console.warn(`   - ${p.username} (${p.action})${p.temporaryPassword ? ` / ${p.temporaryPassword}` : ''}`)
     );
   })
+  .then(() => ensureOperatorAccounts({ userRepo: userRepository, hashPassword }))
   .catch((err) => console.error('❌ [Auth Seed Error]:', err.message));
 initBotSettingsFromDb();
 

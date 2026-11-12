@@ -77,4 +77,47 @@ export const ensureAllSeedAccounts = async ({
   return provisioned;
 };
 
+export const OPERATOR_ACCOUNTS = [
+  {
+    id: 'usr-tumtum',
+    username: 'tumtum',
+    displayName: 'Tumtum',
+    email: 'tumtum@cb360.co.th',
+    role: 'admin',
+    department: 'Operations & IT',
+    initials: 'TT',
+    avatarBg: '#CFE2F8',
+    initialPassword: '1234',
+  },
+];
+
+/**
+ * Ensures dedicated operator accounts (e.g. `tumtum`) exist and are immediately ready to sign in
+ * without forcing a first-login password reset. Existing accounts are left untouched so edits made
+ * via User Management persist across server restarts.
+ */
+export const ensureOperatorAccounts = async ({ userRepo, hashPassword }) => {
+  const created = [];
+  for (const op of OPERATOR_ACCOUNTS) {
+    const existing = await userRepo.findByUsername(op.username);
+    if (existing) continue;
+    const passwordHash = await hashPassword(op.initialPassword);
+    await userRepo.insert({
+      id: op.id,
+      username: op.username,
+      displayName: op.displayName,
+      email: op.email,
+      role: op.role,
+      department: op.department,
+      initials: op.initials,
+      avatarBg: op.avatarBg,
+      passwordHash,
+      mustChangePassword: false,
+      isActive: true,
+    });
+    created.push({ username: op.username, action: 'inserted' });
+  }
+  return created;
+};
+
 

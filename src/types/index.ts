@@ -290,6 +290,7 @@ export interface UserAccount {
   createdAt: string;
   lastLogin?: string;
   permissions?: string[];
+  mustChangePassword?: boolean;
   twoFactorEnabled?: boolean;
   twoFactorSecret?: string;
   twoFactorEnrolledAt?: string;

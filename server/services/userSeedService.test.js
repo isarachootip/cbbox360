@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
-import { ensureSeedUsers, ensureAllSeedAccounts, SEED_USERS } from './userSeedService.js';
+import {
+  ensureSeedUsers,
+  ensureAllSeedAccounts,
+  ensureOperatorAccounts,
+  SEED_USERS,
+} from './userSeedService.js';
 
 const makeRepo = (count) => ({ count: vi.fn(async () => count), insert: vi.fn(async () => {}) });
 const hashPassword = vi.fn(async (p) => `hash:${p}`);
@@ -103,6 +108,44 @@ describe('ensureAllSeedAccounts', () => {
     const provisioned = await ensureAllSeedAccounts({ userRepo: repo, hashPassword, defaultPassword: 'chosen-pass' });
     expect(repo.resetPassword).toHaveBeenCalledWith('usr-2', 'hash:chosen-pass');
     expect(provisioned).toContainEqual({ username: 'admin', action: 'reset' });
+  });
+});
+
+describe('ensureOperatorAccounts', () => {
+  it('provisions tumtum with password 1234 and mustChangePassword=false when missing', async () => {
+    const repo = {
+      findByUsername: vi.fn(async () => null),
+      insert: vi.fn(async () => {}),
+    };
+    const created = await ensureOperatorAccounts({ userRepo: repo, hashPassword });
+
+    expect(repo.insert).toHaveBeenCalledTimes(1);
+    expect(repo.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'usr-tumtum',
+        username: 'tumtum',
+        role: 'admin',
+        passwordHash: 'hash:1234',
+        mustChangePassword: false,
+      })
+    );
+    expect(created).toEqual([{ username: 'tumtum', action: 'inserted' }]);
+  });
+
+  it('leaves existing tumtum account untouched so admin edits persist', async () => {
+    const repo = {
+      findByUsername: vi.fn(async () => ({
+        id: 'usr-tumtum',
+        username: 'tumtum',
+        role: 'SF_1',
+        password_hash: 'hash:custom',
+        must_change_password: false,
+      })),
+      insert: vi.fn(async () => {}),
+    };
+    const created = await ensureOperatorAccounts({ userRepo: repo, hashPassword });
+    expect(repo.insert).not.toHaveBeenCalled();
+    expect(created).toEqual([]);
   });
 });
 

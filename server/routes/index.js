@@ -8,6 +8,7 @@ import connectorRoutes from './connectorRoutes.js';
 import auditLogRoutes from './auditLogRoutes.js';
 import aiRoutes from './aiRoutes.js';
 import authRoutes from './authRoutes.js';
+import userRoutes from './userRoutes.js';
 import industryProfileRoutes from './industryProfileRoutes.js';
 import { requireAuth, requireRole } from '../services/authContainer.js';
 import { bindActor } from '../middlewares/bindActor.js';
@@ -29,6 +30,7 @@ router.use('/auth', authRoutes);
 router.use('/webhooks', webhookRoutes);
 
 // Everything below requires a logged-in session
+router.use('/users', requireAuth, userRoutes);
 router.use('/conversations', requireAuth, conversationRoutes);
 router.use('/canned-responses', requireAuth, cannedResponseRoutes);
 router.use('/connectors', requireAuth, requireRole('sysadmin', 'admin'), connectorRoutes);
