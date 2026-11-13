@@ -30,6 +30,8 @@ import { initialConnectors } from '../data/connectors';
 import { useToast } from '../context/ToastContext';
 import { useCustomer } from '../context/CustomerContext';
 import { ConnectorConfig } from '../types';
+import { ThreeCxConfigPanel } from '../components/connectors/ThreeCxConfigPanel';
+import { buildScreenPopUrlTemplate } from '../domain/telephony/phoneMatcher';
 
 export const ConnectorsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -517,12 +519,18 @@ export const ConnectorsPage: React.FC = () => {
                 {/* Action Buttons */}
                 <div className="pt-2 border-t border-divider flex items-center justify-between gap-2">
                   <button
-                    onClick={() => handleCopyWebhook(conn.webhookUrl)}
-                    title="คัดลอก Webhook URL"
+                    onClick={() =>
+                      handleCopyWebhook(
+                        conn.id === 'conn-3cx'
+                          ? buildScreenPopUrlTemplate(window.location.origin)
+                          : conn.webhookUrl
+                      )
+                    }
+                    title={conn.id === 'conn-3cx' ? 'คัดลอก Screen-Pop URL' : 'คัดลอก Webhook URL'}
                     className="text-xs text-text-secondary hover:text-brand flex items-center gap-1 px-1.5 py-1 rounded hover:bg-bg-app transition-colors font-mono"
                   >
                     <Copy className="w-3 h-3" />
-                    <span>Webhook</span>
+                    <span>{conn.id === 'conn-3cx' ? 'Screen-Pop URL' : 'Webhook'}</span>
                   </button>
 
                   <div className="flex items-center gap-1.5">
@@ -894,6 +902,21 @@ export const ConnectorsPage: React.FC = () => {
                 </div>
               )}
             </div>
+          ) : editForm.id === 'conn-3cx' ? (
+            <ThreeCxConfigPanel
+              editForm={editForm}
+              onChange={setEditForm}
+              onToggleFeature={handleToggleFeature}
+              onCopyUrl={handleCopyWebhook}
+              onTestScreenPop={(samplePhone, sampleExt) => {
+                setIsConfigModalOpen(false);
+                const params = new URLSearchParams();
+                params.set('number', samplePhone);
+                if (sampleExt) params.set('ext', sampleExt);
+                params.set('callId', `3cx-${Math.floor(10000 + Math.random() * 90000)}`);
+                navigate(`/crm?${params.toString()}`);
+              }}
+            />
           ) : (
             /* GENERIC CONNECTOR CONFIG */
             <form onSubmit={handleSaveConfig} className="space-y-3.5 text-xs">

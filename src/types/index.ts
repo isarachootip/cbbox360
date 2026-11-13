@@ -1,4 +1,12 @@
 export type { CompanyProfile, KnowledgeCategory, KnowledgeItem } from './knowledge';
+export type {
+  CallDirection,
+  CallLogStatus,
+  PhoneMatchField,
+  CtiScreenPopQuery,
+  CustomerPhoneMatch,
+  CallLogRecord,
+} from './telephony';
 export type TierType = 'MEMBER' | 'SILVER' | 'GOLD' | 'PLATINUM';
 export type CreditGrade = 'A' | 'B' | 'C' | 'D';
 export type ChannelType = 'LINE' | 'Facebook' | '3CX' | 'Web form' | 'Sales rep' | 'Email';

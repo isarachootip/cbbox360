@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
-import { TierType, CreditGrade, Customer, CustomerType } from '../../types';
+import { TierType, CreditGrade, Customer, CustomerType, ContactPerson } from '../../types';
 import { User, Building2 } from 'lucide-react';
 
 interface NewCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialPhone?: string;
   onSubmit: (customerData: {
     name: string;
     phone: string;
@@ -17,13 +18,14 @@ interface NewCustomerModalProps {
     companyName?: string;
     taxId?: string;
     branchCode?: string;
-    contacts?: any[];
+    contacts?: ContactPerson[];
   }) => Customer;
 }
 
 export const NewCustomerModal: React.FC<NewCustomerModalProps> = ({
   isOpen,
   onClose,
+  initialPhone,
   onSubmit,
 }) => {
   const [customerType, setCustomerType] = useState<CustomerType>('INDIVIDUAL');
@@ -40,6 +42,16 @@ export const NewCustomerModal: React.FC<NewCustomerModalProps> = ({
     contactRole: 'ผู้จัดการฝ่ายจัดซื้อ',
     contactPhone: '',
   });
+
+  useEffect(() => {
+    if (isOpen && initialPhone) {
+      setFormData((prev) => ({
+        ...prev,
+        phone: initialPhone,
+        contactPhone: initialPhone,
+      }));
+    }
+  }, [isOpen, initialPhone]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

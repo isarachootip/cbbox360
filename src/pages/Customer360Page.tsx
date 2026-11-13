@@ -14,6 +14,7 @@ import { useBusinessTemplateState } from '../context/BusinessTemplateContext';
 import { useIndustryProfile } from '../hooks/useIndustryProfile';
 import { templateToIndustryKind } from '../domain/industry/industryVariables';
 import { AllergyAlertBanner } from '../components/customer-360/industry/AllergyAlertBanner';
+import { ActiveCallBanner } from '../components/telephony/ActiveCallBanner';
 
 export const Customer360Page: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -109,6 +110,7 @@ export const Customer360Page: React.FC = () => {
       />
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5">
+        <ActiveCallBanner customer={customer} className="max-w-[1640px] mx-auto mb-4" />
         <AllergyAlertBanner
           profile={industry.profile}
           redacted={industry.redacted}

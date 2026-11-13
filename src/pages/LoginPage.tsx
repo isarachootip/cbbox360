@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Lock,
   User,
@@ -12,9 +12,12 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { TwoFactorVerifyCard } from '../components/auth/TwoFactorVerifyCard';
+import { sanitizeReturnTo } from '../domain/telephony/screenPopSchema';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = sanitizeReturnTo(searchParams.get('returnTo'));
   const { login, pendingTwoFactorUsername, verifyTwoFactor, cancelTwoFactor } = useAuth();
   const { showToast } = useToast();
 
@@ -39,7 +42,7 @@ export const LoginPage: React.FC = () => {
 
     if (result.success) {
       showToast(`ยินดีต้อนรับเข้าสู่ระบบ CusBox360`, 'success');
-      navigate('/customers/C00123');
+      navigate(returnTo, { replace: true });
     } else if (!result.requireTwoFactor) {
       setErrorMessage(result.error || 'เข้าสู่ระบบไม่สำเร็จ');
     }
@@ -53,7 +56,7 @@ export const LoginPage: React.FC = () => {
           verify={verifyTwoFactor}
           onSuccess={() => {
             showToast('ยืนยันตัวตน 2FA สำเร็จ ยินดีต้อนรับเข้าสู่ระบบ', 'success');
-            navigate('/customers/C00123');
+            navigate(returnTo, { replace: true });
           }}
           onCancel={cancelTwoFactor}
         />

@@ -37,6 +37,7 @@ interface CustomerContextType {
   creditRequests: CreditLimitRequest[];
   segments: Segment[];
   timelineEvents: TimelineEvent[];
+  addTimelineEvent: (event: TimelineEvent) => void;
   updateDealStage: (dealId: string, newStage: Deal['stage'], lostReason?: string) => void;
   addDeal: (deal: Omit<Deal, 'id' | 'createdDate'>) => void;
   addTicket: (ticket: Omit<Ticket, 'id' | 'createdAt' | 'activityLogs'>) => void;
@@ -103,6 +104,10 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [segments, setSegments] = useState<Segment[]>(mockSegments);
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>(mockTimelineEvents);
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const addTimelineEvent = (event: TimelineEvent) => {
+    setTimelineEvents(prev => [event, ...prev]);
+  };
 
   const selectedCustomer = customers.find(c => c.id.toLowerCase() === selectedCustomerId.toLowerCase()) || customers[0];
 
@@ -794,6 +799,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         creditRequests,
         segments,
         timelineEvents,
+        addTimelineEvent,
         updateDealStage,
         addDeal,
         addTicket,

@@ -130,7 +130,7 @@ export const initialConnectors: ConnectorConfig[] = [
     lastSync: 'เพิ่งซิงก์เมื่อสักครู่',
     messagesCountToday: 89,
     description: 'เชื่อมต่อระบบโทรศัพท์ Cloud PBX 3CX Telephony ให้หน้าจอ Customer 360 Pop-up ทันทีเมื่อมีสายเข้า',
-    webhookUrl: 'https://api.cb360.co.th/v1/webhooks/3cx/call_events',
+    webhookUrl: 'https://cb360.online/crm?number=%CallerNumber%&ext=%Agent%&callId=%CallID%',
     appId: 'https://pbx.cb360.co.th:5001',
     appSecret: '••••••••••••••••••••••••••••••••',
     features: [
