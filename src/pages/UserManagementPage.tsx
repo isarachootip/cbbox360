@@ -25,10 +25,14 @@ export const UserManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'users' | 'matrix' | 'logs'>('users');
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ทั้งหมด');
+  const [skillFilter, setSkillFilter] = useState('ทั้งหมด');
   const [statusFilter, setStatusFilter] = useState('ทั้งหมด');
 
   const filteredUsers = users.filter((u) => {
     if (roleFilter !== 'ทั้งหมด' && u.role !== roleFilter) return false;
+    if (skillFilter !== 'ทั้งหมด' && !(u.skills ?? []).includes(skillFilter as 'telephone' | 'line_chat_shop')) {
+      return false;
+    }
     if (statusFilter !== 'ทั้งหมด' && u.status !== statusFilter) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -36,7 +40,8 @@ export const UserManagementPage: React.FC = () => {
       u.username.toLowerCase().includes(q) ||
       u.name.toLowerCase().includes(q) ||
       u.email.toLowerCase().includes(q) ||
-      u.department.toLowerCase().includes(q)
+      u.department.toLowerCase().includes(q) ||
+      (u.extension ?? '').toLowerCase().includes(q)
     );
   });
 
@@ -113,6 +118,8 @@ export const UserManagementPage: React.FC = () => {
             onSearchChange={setSearchQuery}
             roleFilter={roleFilter}
             onRoleFilterChange={setRoleFilter}
+            skillFilter={skillFilter}
+            onSkillFilterChange={setSkillFilter}
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
             onSwitchUser={(uname) => switchUser(uname) && showToast(`สลับบัญชีผู้ใช้งานเป็น "${uname}" สำเร็จ`, 'success')}

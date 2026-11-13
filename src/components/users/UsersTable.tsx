@@ -1,6 +1,7 @@
 import React from 'react';
 import { KeyRound, Edit2, Trash2, ShieldCheck, UserCheck } from 'lucide-react';
 import { RoleBadge } from '../common/RoleBadge';
+import { AgentSkillBadges } from './AgentSkillBadges';
 import { UsersFilterBar } from './UsersFilterBar';
 import { UserAccount } from '../../types';
 import { AuthMode } from '../../config/authMode';
@@ -15,6 +16,8 @@ interface UsersTableProps {
   onSearchChange: (q: string) => void;
   roleFilter: string;
   onRoleFilterChange: (r: string) => void;
+  skillFilter: string;
+  onSkillFilterChange: (sk: string) => void;
   statusFilter: string;
   onStatusFilterChange: (s: string) => void;
   onSwitchUser: (username: string) => void;
@@ -36,6 +39,8 @@ export const UsersTable: React.FC<UsersTableProps> = ({
   onSearchChange,
   roleFilter,
   onRoleFilterChange,
+  skillFilter,
+  onSkillFilterChange,
   statusFilter,
   onStatusFilterChange,
   onSwitchUser,
@@ -52,6 +57,8 @@ export const UsersTable: React.FC<UsersTableProps> = ({
       onSearchChange={onSearchChange}
       roleFilter={roleFilter}
       onRoleFilterChange={onRoleFilterChange}
+      skillFilter={skillFilter}
+      onSkillFilterChange={onSkillFilterChange}
       statusFilter={statusFilter}
       onStatusFilterChange={onStatusFilterChange}
     />
@@ -65,6 +72,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
               <th className="px-4 py-3 font-medium">ชื่อผู้ใช้ (Username)</th>
               <th className="px-4 py-3 font-medium">รหัสผ่าน (Password)</th>
               <th className="px-4 py-3 font-medium">บทบาท (Role)</th>
+              <th className="px-4 py-3 font-medium">ทักษะ / คู่สาย (Skills)</th>
               <th className="px-4 py-3 font-medium">แผนก / ฝ่ายงาน</th>
               <th className="px-4 py-3 font-medium text-center">2FA (MS Authen)</th>
               <th className="px-4 py-3 font-medium text-center">สถานะ</th>
@@ -114,6 +122,9 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                     )}
                   </td>
                   <td className="px-4 py-3"><RoleBadge role={u.role} /></td>
+                  <td className="px-4 py-3">
+                    <AgentSkillBadges skills={u.skills} extension={u.extension} />
+                  </td>
                   <td className="px-4 py-3 text-text-body2">{u.department || '—'}</td>
                   <td className="px-4 py-3 text-center">
                     <button

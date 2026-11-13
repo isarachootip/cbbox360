@@ -282,6 +282,7 @@ export interface CreditLimitRequest {
 }
 
 export type UserRole = 'sysadmin' | 'admin' | 'SF_1' | 'SF_2' | 'SF_3' | 'supervisor' | 'doctor' | 'nurse';
+export type AgentSkill = 'telephone' | 'line_chat_shop';
 
 export interface UserAccount {
   id: string;
@@ -292,6 +293,8 @@ export interface UserAccount {
   role: UserRole;
   roleLabel: string;
   department: string;
+  skills?: AgentSkill[];
+  extension?: string;
   status: 'active' | 'inactive';
   initials: string;
   avatarBg?: string;

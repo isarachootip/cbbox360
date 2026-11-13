@@ -3,6 +3,7 @@
  * Every seeded account must change its password on first login.
  */
 import { generateTemporaryPassword } from '../utils/cryptoUtils.js';
+import { OPERATOR_SEED_DEFINITIONS } from '../../shared/agentSkills.js';
 
 export const SEED_USERS = [
   { id: 'usr-1', username: 'sysadmin', displayName: 'สมศักดิ์ บริหารระบบ', email: 'sysadmin@cb360.co.th', role: 'sysadmin', department: 'IT & Security Infrastructure', initials: 'SA', avatarBg: '#E9E7F5' },
@@ -77,22 +78,10 @@ export const ensureAllSeedAccounts = async ({
   return provisioned;
 };
 
-export const OPERATOR_ACCOUNTS = [
-  {
-    id: 'usr-tumtum',
-    username: 'tumtum',
-    displayName: 'Tumtum',
-    email: 'tumtum@cb360.co.th',
-    role: 'admin',
-    department: 'Operations & IT',
-    initials: 'TT',
-    avatarBg: '#CFE2F8',
-    initialPassword: '1234',
-  },
-];
+export const OPERATOR_ACCOUNTS = OPERATOR_SEED_DEFINITIONS;
 
 /**
- * Ensures dedicated operator accounts (e.g. `tumtum`) exist and are immediately ready to sign in
+ * Ensures dedicated operator accounts (e.g. `tumtum` and agent team) exist and are immediately ready to sign in
  * without forcing a first-login password reset. Existing accounts are left untouched so edits made
  * via User Management persist across server restarts.
  */
@@ -109,6 +98,8 @@ export const ensureOperatorAccounts = async ({ userRepo, hashPassword }) => {
       email: op.email,
       role: op.role,
       department: op.department,
+      skills: op.skills ?? [],
+      extension: op.extension ?? '',
       initials: op.initials,
       avatarBg: op.avatarBg,
       passwordHash,

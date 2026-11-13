@@ -68,4 +68,10 @@ describe('userApi', () => {
       code: 'NETWORK_ERROR',
     });
   });
+
+  it('validates agent skills and 3CX extension fields when returned by server', async () => {
+    const telAgent = { ...sampleUser, username: 'tel_agent1', skills: ['telephone' as const], extension: '101' };
+    vi.stubGlobal('fetch', mockFetch(200, { success: true, users: [telAgent] }));
+    expect(await userApi.list()).toEqual({ status: 'ok', users: [telAgent] });
+  });
 });

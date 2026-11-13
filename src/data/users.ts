@@ -1,4 +1,5 @@
 import { UserAccount, UserProfile } from '../types';
+import { agentOperatorAccounts } from './agentOperators';
 
 export const initialUserAccounts: UserAccount[] = [
   {
@@ -129,22 +130,7 @@ export const initialUserAccounts: UserAccount[] = [
     lastLogin: 'วันนี้ 09:15',
     permissions: ['cdp.read', 'activity.inbox', 'activity.cases', 'medical.nursing'],
   },
-  {
-    id: 'usr-tumtum',
-    username: 'tumtum',
-    password: '1234',
-    name: 'Tumtum',
-    email: 'tumtum@cb360.co.th',
-    role: 'admin',
-    roleLabel: 'Administrator (ผู้ดูแลระบบ)',
-    department: 'Operations & IT',
-    status: 'active',
-    initials: 'TT',
-    avatarBg: '#CFE2F8',
-    createdAt: '2026-11-12',
-    lastLogin: '—',
-    permissions: ['users.crud', 'cdp.full', 'activity.full', 'credit.read', 'credit.write'],
-  },
+  ...agentOperatorAccounts,
 ];
 
 export const mockUsers: Record<string, UserProfile> = {

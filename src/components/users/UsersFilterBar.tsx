@@ -6,6 +6,8 @@ interface UsersFilterBarProps {
   onSearchChange: (q: string) => void;
   roleFilter: string;
   onRoleFilterChange: (r: string) => void;
+  skillFilter: string;
+  onSkillFilterChange: (sk: string) => void;
   statusFilter: string;
   onStatusFilterChange: (s: string) => void;
 }
@@ -15,6 +17,8 @@ export const UsersFilterBar: React.FC<UsersFilterBarProps> = ({
   onSearchChange,
   roleFilter,
   onRoleFilterChange,
+  skillFilter,
+  onSkillFilterChange,
   statusFilter,
   onStatusFilterChange,
 }) => (
@@ -23,16 +27,29 @@ export const UsersFilterBar: React.FC<UsersFilterBarProps> = ({
       <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
       <input
         type="text"
-        placeholder="ค้นหาชื่อผู้ใช้, ชื่อ-นามสกุล, อีเมล หรือแผนก..."
+        placeholder="ค้นหาชื่อผู้ใช้, ชื่อ-นามสกุล, อีเมล, แผนก หรือเลขคู่สาย (Ext)..."
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         className="w-full pl-9 pr-3 py-1.5 text-xs bg-bg-app border border-border rounded-lg focus:outline-none focus:border-brand focus:bg-white"
       />
     </div>
 
-    <div className="flex items-center gap-2.5">
+    <div className="flex flex-wrap items-center gap-2.5">
       <div className="flex items-center gap-1.5 text-xs text-text-secondary">
         <Filter className="w-3.5 h-3.5" />
+        <span>Skill:</span>
+        <select
+          value={skillFilter}
+          onChange={(e) => onSkillFilterChange(e.target.value)}
+          className="text-xs font-semibold px-2.5 py-1 bg-bg-subtle border border-border rounded-lg text-text-primary focus:outline-none focus:border-brand cursor-pointer"
+        >
+          <option value="ทั้งหมด">ทั้งหมด</option>
+          <option value="telephone">Telephone (3CX)</option>
+          <option value="line_chat_shop">LINE Chat & Shop</option>
+        </select>
+      </div>
+
+      <div className="flex items-center gap-1.5 text-xs text-text-secondary">
         <span>Role:</span>
         <select
           value={roleFilter}

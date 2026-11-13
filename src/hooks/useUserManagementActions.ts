@@ -57,6 +57,8 @@ export const useUserManagementActions = (
       email: data.email,
       role: data.role,
       department: data.department,
+      skills: data.skills,
+      extension: data.extension,
       status: data.status,
       avatarBg: data.avatarBg,
     });

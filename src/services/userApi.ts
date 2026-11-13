@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { UserRole } from '../types';
+import { AgentSkill, UserRole } from '../types';
 
 /** Typed client for /api/users with Zod response validation. */
 
@@ -10,6 +10,8 @@ export const managedUserSchema = z.object({
   email: z.string(),
   role: z.enum(['sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor', 'doctor', 'nurse']),
   department: z.string(),
+  skills: z.array(z.enum(['telephone', 'line_chat_shop'])).optional(),
+  extension: z.string().optional(),
   initials: z.string(),
   avatarBg: z.string(),
   status: z.enum(['active', 'inactive']),
@@ -47,6 +49,8 @@ export interface CreateUserPayload {
   email?: string;
   role: UserRole;
   department?: string;
+  skills?: AgentSkill[];
+  extension?: string;
   status?: 'active' | 'inactive';
   avatarBg?: string;
   mustChangePassword?: boolean;
@@ -58,6 +62,8 @@ export interface UpdateUserPayload {
   email?: string;
   role?: UserRole;
   department?: string;
+  skills?: AgentSkill[];
+  extension?: string;
   status?: 'active' | 'inactive';
   avatarBg?: string;
 }

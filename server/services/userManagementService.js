@@ -4,6 +4,7 @@
  */
 import crypto from 'crypto';
 import { hashSessionToken } from '../utils/cryptoUtils.js';
+import { normalizeAgentSkills } from '../../shared/agentSkills.js';
 
 const err = (code) => ({ status: 'error', code });
 
@@ -14,6 +15,8 @@ export const toManagedUser = (row) => ({
   email: row.email ?? '',
   role: row.role,
   department: row.department ?? '',
+  skills: normalizeAgentSkills(row.skills),
+  extension: row.extension ?? '',
   initials: row.initials ?? String(row.display_name || '').slice(0, 2),
   avatarBg: row.avatar_bg ?? '#CFE2F8',
   status: row.is_active ? 'active' : 'inactive',
@@ -57,6 +60,8 @@ export const createUserManagementService = ({
       displayName,
       role: input.role,
       department: input.department?.trim() ?? '',
+      skills: normalizeAgentSkills(input.skills),
+      extension: input.extension?.trim() ?? '',
       initials,
       avatarBg: input.avatarBg || '#CFE2F8',
       passwordHash,
@@ -93,6 +98,8 @@ export const createUserManagementService = ({
       displayName: nextName,
       role: nextRole,
       department: input.department !== undefined ? String(input.department).trim() : (target.department ?? ''),
+      skills: input.skills !== undefined ? normalizeAgentSkills(input.skills) : normalizeAgentSkills(target.skills),
+      extension: input.extension !== undefined ? String(input.extension).trim() : (target.extension ?? ''),
       initials: nextName.slice(0, 2) || target.initials,
       avatarBg: input.avatarBg ?? target.avatar_bg ?? '#CFE2F8',
       isActive: nextActive,

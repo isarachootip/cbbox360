@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal } from '../common/Modal';
-import { UserAccount, UserRole } from '../../types';
+import { AgentSkillsFieldset } from './AgentSkillsFieldset';
+import { AgentSkill, UserAccount, UserRole } from '../../types';
 
 export interface UserFormValues {
   username: string;
@@ -9,6 +10,8 @@ export interface UserFormValues {
   email: string;
   role: UserRole;
   department: string;
+  skills: AgentSkill[];
+  extension: string;
   status: 'active' | 'inactive';
   avatarBg: string;
   mustChangePassword: boolean;
@@ -177,6 +180,12 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand"
           />
         </div>
+
+        <AgentSkillsFieldset
+          skills={values.skills}
+          extension={values.extension}
+          onChange={(skills, extension) => onChange({ ...values, skills, extension })}
+        />
       </form>
     </Modal>
   );

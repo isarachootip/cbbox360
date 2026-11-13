@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserAccount } from '../types';
+import { AgentSkill, UserAccount } from '../types';
 import { initialUserAccounts } from '../data/users';
 import { getRoleLabel } from '../domain/auth/roles';
 
@@ -14,6 +14,8 @@ export interface CreateUserInput {
   email: string;
   role: UserAccount['role'];
   department: string;
+  skills?: AgentSkill[];
+  extension?: string;
   status: 'active' | 'inactive';
   avatarBg?: string;
   mustChangePassword?: boolean;
@@ -61,6 +63,8 @@ export const useDemoUsersStore = (
       ...data,
       id: `usr-${Date.now()}`,
       username: data.username.trim(),
+      skills: data.skills ?? [],
+      extension: data.extension?.trim() ?? '',
       initials: data.name.trim().slice(0, 2),
       roleLabel: getRoleLabel(data.role),
       createdAt: new Date().toISOString().split('T')[0],

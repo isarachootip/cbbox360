@@ -112,31 +112,50 @@ describe('ensureAllSeedAccounts', () => {
 });
 
 describe('ensureOperatorAccounts', () => {
-  it('provisions tumtum with password 1234 and mustChangePassword=false when missing', async () => {
+  it('provisions tumtum plus 3 telephone agents and 2 line_chat_shop agents when missing', async () => {
     const repo = {
       findByUsername: vi.fn(async () => null),
       insert: vi.fn(async () => {}),
     };
     const created = await ensureOperatorAccounts({ userRepo: repo, hashPassword });
 
-    expect(repo.insert).toHaveBeenCalledTimes(1);
-    expect(repo.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'usr-tumtum',
-        username: 'tumtum',
-        role: 'admin',
-        passwordHash: 'hash:1234',
-        mustChangePassword: false,
-      })
+    expect(repo.insert).toHaveBeenCalledTimes(6);
+    const insertedByUsername = Object.fromEntries(
+      repo.insert.mock.calls.map(([arg]) => [arg.username, arg])
     );
-    expect(created).toEqual([{ username: 'tumtum', action: 'inserted' }]);
+
+    expect(insertedByUsername.tumtum).toMatchObject({
+      id: 'usr-tumtum',
+      role: 'admin',
+      passwordHash: 'hash:1234',
+      mustChangePassword: false,
+    });
+    expect(insertedByUsername.tel_agent1).toMatchObject({
+      role: 'SF_2',
+      skills: ['telephone'],
+      extension: '101',
+      mustChangePassword: false,
+    });
+    expect(insertedByUsername.tel_agent2.extension).toBe('102');
+    expect(insertedByUsername.tel_agent3.extension).toBe('103');
+    expect(insertedByUsername.chat_agent1).toMatchObject({
+      role: 'SF_1',
+      skills: ['line_chat_shop'],
+      mustChangePassword: false,
+    });
+    expect(insertedByUsername.chat_agent2).toMatchObject({
+      role: 'SF_1',
+      skills: ['line_chat_shop'],
+      mustChangePassword: false,
+    });
+    expect(created).toHaveLength(6);
   });
 
-  it('leaves existing tumtum account untouched so admin edits persist', async () => {
+  it('leaves existing operator accounts untouched so admin edits persist', async () => {
     const repo = {
-      findByUsername: vi.fn(async () => ({
-        id: 'usr-tumtum',
-        username: 'tumtum',
+      findByUsername: vi.fn(async (username) => ({
+        id: `usr-${username}`,
+        username,
         role: 'SF_1',
         password_hash: 'hash:custom',
         must_change_password: false,

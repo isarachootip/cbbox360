@@ -69,6 +69,8 @@ export const ensureDatabaseSchema = async () => {
         display_name TEXT NOT NULL,
         role TEXT NOT NULL CHECK (role IN ('sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor', 'doctor', 'nurse')),
         department TEXT,
+        skills JSONB NOT NULL DEFAULT '[]'::jsonb,
+        extension TEXT NOT NULL DEFAULT '',
         initials TEXT,
         avatar_bg TEXT DEFAULT '#CFE2F8',
         password_hash TEXT NOT NULL,
@@ -124,6 +126,8 @@ export const ensureDatabaseSchema = async () => {
       ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
       ALTER TABLE users ADD CONSTRAINT users_role_check
         CHECK (role IN ('sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor', 'doctor', 'nurse'));
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS skills JSONB NOT NULL DEFAULT '[]'::jsonb;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS extension TEXT NOT NULL DEFAULT '';
 
       CREATE TABLE IF NOT EXISTS customer_industry_profiles (
         customer_id TEXT NOT NULL,

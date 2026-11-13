@@ -2,6 +2,7 @@
  * userController.js — HTTP boundary for /api/users with Zod validation and audit logging.
  */
 import { z } from 'zod';
+import { agentSkillsArraySchema } from '../../shared/agentSkills.js';
 
 const roleSchema = z.enum(['sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor', 'doctor', 'nurse']);
 const statusSchema = z.enum(['active', 'inactive']);
@@ -13,6 +14,8 @@ const createSchema = z.object({
   email: z.string().trim().max(160).optional().default(''),
   role: roleSchema,
   department: z.string().trim().max(160).optional().default(''),
+  skills: agentSkillsArraySchema.optional().default([]),
+  extension: z.string().trim().max(32).optional().default(''),
   status: statusSchema.optional().default('active'),
   avatarBg: z.string().trim().max(32).optional(),
   mustChangePassword: z.boolean().optional().default(false),
@@ -24,6 +27,8 @@ const updateSchema = z.object({
   email: z.string().trim().max(160).optional(),
   role: roleSchema.optional(),
   department: z.string().trim().max(160).optional(),
+  skills: agentSkillsArraySchema.optional(),
+  extension: z.string().trim().max(32).optional(),
   status: statusSchema.optional(),
   avatarBg: z.string().trim().max(32).optional(),
 });

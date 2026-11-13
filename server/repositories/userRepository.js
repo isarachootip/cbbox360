@@ -4,7 +4,7 @@
  */
 import { query } from '../../db.js';
 
-const COLUMNS = `id, username, email, display_name, role, department, initials, avatar_bg,
+const COLUMNS = `id, username, email, display_name, role, department, skills, extension, initials, avatar_bg,
   password_hash, must_change_password, is_active, totp_secret_encrypted, totp_enabled,
   failed_attempts, locked_until, last_login_at, created_at`;
 
@@ -17,6 +17,8 @@ const toRow = (u) => ({
   display_name: u.displayName,
   role: u.role,
   department: u.department ?? '',
+  skills: Array.isArray(u.skills) ? u.skills : [],
+  extension: u.extension ?? '',
   initials: u.initials,
   avatar_bg: u.avatarBg ?? '#CFE2F8',
   password_hash: u.passwordHash,
@@ -117,6 +119,8 @@ export const userRepository = {
         display_name: fields.displayName,
         role: fields.role,
         department: fields.department,
+        skills: fields.skills ?? [],
+        extension: fields.extension ?? '',
         initials: fields.initials,
         avatar_bg: fields.avatarBg,
         is_active: fields.isActive,
@@ -125,10 +129,11 @@ export const userRepository = {
     const r = await tryDb(
       `UPDATE users
           SET username = $2, email = $3, display_name = $4, role = $5,
-              department = $6, initials = $7, avatar_bg = $8, is_active = $9, updated_at = NOW()
+              department = $6, initials = $7, avatar_bg = $8, is_active = $9,
+              skills = $10::jsonb, extension = $11, updated_at = NOW()
         WHERE id = $1
         RETURNING ${COLUMNS}`,
-      [id, fields.username, fields.email, fields.displayName, fields.role, fields.department, fields.initials, fields.avatarBg, fields.isActive]
+      [id, fields.username, fields.email, fields.displayName, fields.role, fields.department, fields.initials, fields.avatarBg, fields.isActive, JSON.stringify(fields.skills ?? []), fields.extension ?? '']
     );
     return r?.rows[0] ?? (mem ? { ...mem } : null);
   },
@@ -168,12 +173,12 @@ export const userRepository = {
     const row = toRow(u);
     if (!inMemoryUsers.has(u.id)) inMemoryUsers.set(u.id, row);
     const r = await tryDb(
-      `INSERT INTO users (id, username, email, display_name, role, department, initials, avatar_bg,
+      `INSERT INTO users (id, username, email, display_name, role, department, skills, extension, initials, avatar_bg,
          password_hash, must_change_password, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13)
        ON CONFLICT (id) DO NOTHING
        RETURNING ${COLUMNS}`,
-      [u.id, u.username, u.email ?? '', u.displayName, u.role, u.department ?? '', u.initials, u.avatarBg ?? '#CFE2F8', u.passwordHash, Boolean(u.mustChangePassword), u.isActive !== false]
+      [u.id, u.username, u.email ?? '', u.displayName, u.role, u.department ?? '', JSON.stringify(u.skills ?? []), u.extension ?? '', u.initials, u.avatarBg ?? '#CFE2F8', u.passwordHash, Boolean(u.mustChangePassword), u.isActive !== false]
     );
     return r?.rows[0] ?? { ...row };
   },

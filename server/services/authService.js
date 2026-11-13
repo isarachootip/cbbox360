@@ -5,6 +5,7 @@
  */
 import { generateSessionToken, hashSessionToken } from '../utils/cryptoUtils.js';
 import { verifyTotpCodeServer } from '../utils/totpServer.js';
+import { normalizeAgentSkills } from '../../shared/agentSkills.js';
 
 export const MAX_FAILED_ATTEMPTS = 5;
 export const LOCK_MINUTES = 15;
@@ -27,6 +28,8 @@ export const toPublicUser = (u) => ({
   email: u.email ?? '',
   role: u.role,
   department: u.department ?? '',
+  skills: normalizeAgentSkills(u.skills),
+  extension: u.extension ?? '',
   initials: u.initials ?? u.display_name.slice(0, 2),
   avatarBg: u.avatar_bg ?? '#CFE2F8',
   mustChangePassword: Boolean(u.must_change_password),

@@ -21,6 +21,8 @@ const makeHarness = (initialRows = []) => {
         display_name: u.displayName,
         role: u.role,
         department: u.department,
+        skills: u.skills ?? [],
+        extension: u.extension ?? '',
         initials: u.initials,
         avatar_bg: u.avatarBg,
         password_hash: u.passwordHash,
@@ -43,6 +45,8 @@ const makeHarness = (initialRows = []) => {
         display_name: f.displayName,
         role: f.role,
         department: f.department,
+        skills: f.skills ?? row.skills ?? [],
+        extension: f.extension ?? row.extension ?? '',
         initials: f.initials,
         avatar_bg: f.avatarBg,
         is_active: f.isActive,
@@ -164,5 +168,31 @@ describe('userManagementService', () => {
     const good = await svc.configureUserTotp(sysadminActor, 'usr-2', { enabled: true, secret: 'JBSWY3DPEHPK3PXP', code: '123456' });
     expect(good.status).toBe('ok');
     expect(userRepo.setTotp).toHaveBeenCalledWith('usr-2', { enabled: true, secretEncrypted: 'enc:JBSWY3DPEHPK3PXP' });
+  });
+
+  it('persists agent skills and 3CX extension on create and update', async () => {
+    const { svc } = makeHarness(baseUsers);
+    const created = await svc.createUser(adminActor, {
+      username: 'tel_agent_x',
+      password: '1234',
+      name: 'สมศรี สายตรง',
+      email: 'somsri@cb360.co.th',
+      role: 'SF_2',
+      department: 'Contact Center',
+      skills: ['telephone'],
+      extension: '109',
+      status: 'active',
+    });
+    expect(created.status).toBe('ok');
+    expect(created.user.skills).toEqual(['telephone']);
+    expect(created.user.extension).toBe('109');
+
+    const updated = await svc.updateUser(adminActor, created.user.id, {
+      skills: ['telephone', 'line_chat_shop'],
+      extension: '110',
+    });
+    expect(updated.status).toBe('ok');
+    expect(updated.user.skills).toEqual(['telephone', 'line_chat_shop']);
+    expect(updated.user.extension).toBe('110');
   });
 });
