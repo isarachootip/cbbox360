@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, ArrowRight, FileSpreadsheet } from 'lucide-react';
+import { UserPlus, ArrowRight, FileSpreadsheet, RefreshCw } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { KpiTile } from '../components/common/KpiTile';
 import { TwoFactorSetupModal } from '../components/auth/TwoFactorSetupModal';
@@ -17,7 +17,7 @@ import { useUserManagementModals } from '../hooks/useUserManagementModals';
 
 export const UserManagementPage: React.FC = () => {
   const navigate = useNavigate();
-  const { authMode, users, currentUser, isAdmin, isSysAdmin, toggleTwoFactor, switchUser } = useAuth();
+  const { authMode, users, currentUser, isAdmin, isSysAdmin, toggleTwoFactor, switchUser, syncDefaultUsers } = useAuth();
   const { showToast } = useToast();
   const { logAction } = useAuditLog();
   const modals = useUserManagementModals();
@@ -27,6 +27,21 @@ export const UserManagementPage: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState('ทั้งหมด');
   const [skillFilter, setSkillFilter] = useState('ทั้งหมด');
   const [statusFilter, setStatusFilter] = useState('ทั้งหมด');
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSyncDefaultUsers = async () => {
+    setIsSyncing(true);
+    const res = await syncDefaultUsers();
+    setIsSyncing(false);
+    if (!res.success) return showToast(res.error || 'ซิงก์บัญชีมาตรฐานไม่สำเร็จ', 'error');
+    const created = res.createdUsernames ?? [];
+    showToast(
+      created.length > 0
+        ? `สร้างบัญชี Agent มาตรฐานเรียบร้อย (${created.join(', ')})`
+        : 'บัญชี Agent มาตรฐานทั้ง 5 คนมีอยู่ในระบบครบถ้วนพร้อมใช้งานแล้ว',
+      created.length > 0 ? 'success' : 'info'
+    );
+  };
 
   const filteredUsers = users.filter((u) => {
     if (roleFilter !== 'ทั้งหมด' && u.role !== roleFilter) return false;
@@ -71,10 +86,21 @@ export const UserManagementPage: React.FC = () => {
               <span>Export รายชื่อ</span>
             </button>
             {isAdmin && (
-              <button type="button" onClick={modals.openCreate} className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold shadow-sm">
-                <UserPlus className="w-4 h-4" />
-                <span>+ เพิ่มผู้ใช้ใหม่ (Create User)</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  disabled={isSyncing}
+                  onClick={handleSyncDefaultUsers}
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-brand/30 bg-brand-tint hover:bg-brand/15 disabled:opacity-60 text-brand rounded-lg text-xs font-semibold shadow-sm"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <span>{isSyncing ? 'กำลังซิงก์...' : 'ซิงก์บัญชี Agent มาตรฐาน'}</span>
+                </button>
+                <button type="button" onClick={modals.openCreate} className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold shadow-sm">
+                  <UserPlus className="w-4 h-4" />
+                  <span>+ เพิ่มผู้ใช้ใหม่ (Create User)</span>
+                </button>
+              </>
             )}
           </div>
         }

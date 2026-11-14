@@ -3,7 +3,7 @@ import { UserAccount } from '../types';
 import { isServerAuth } from '../config/authMode';
 import { userApi, USER_ERROR_MESSAGES } from '../services/userApi';
 import { toManagedUserAccount } from '../domain/auth/roles';
-import { ActionResult, CreateUserInput, useDemoUsersStore } from './useDemoUsersStore';
+import { ActionResult, CreateUserInput, SyncUsersResult, useDemoUsersStore } from './useDemoUsersStore';
 
 const CAN_VIEW_USERS_ROLES = new Set(['sysadmin', 'admin', 'supervisor']);
 
@@ -116,6 +116,14 @@ export const useUserManagementActions = (
     return { success: true };
   };
 
+  const syncDefaultUsers = async (): Promise<SyncUsersResult> => {
+    if (!isServerAuth) return demo.demoSyncDefaultUsers();
+    const res = await userApi.syncOperators();
+    if (res.status !== 'ok') return { success: false, error: USER_ERROR_MESSAGES[res.code] };
+    setServerUsers(res.users.map(toManagedUserAccount));
+    return { success: true, createdUsernames: res.createdUsernames };
+  };
+
   return {
     users: isServerAuth ? serverUsers : demo.demoUsers,
     demoUsers: demo.demoUsers,
@@ -127,5 +135,6 @@ export const useUserManagementActions = (
     resetPassword,
     toggleUserStatus,
     toggleTwoFactor,
+    syncDefaultUsers,
   };
 };

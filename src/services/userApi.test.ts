@@ -74,4 +74,17 @@ describe('userApi', () => {
     vi.stubGlobal('fetch', mockFetch(200, { success: true, users: [telAgent] }));
     expect(await userApi.list()).toEqual({ status: 'ok', users: [telAgent] });
   });
+
+  it('syncOperators posts to /api/users/sync-operators and validates createdUsernames and users', async () => {
+    const telAgent = { ...sampleUser, username: 'tel_agent1', skills: ['telephone' as const], extension: '101' };
+    vi.stubGlobal(
+      'fetch',
+      mockFetch(200, { success: true, createdUsernames: ['tel_agent1'], users: [sampleUser, telAgent] })
+    );
+    expect(await userApi.syncOperators()).toEqual({
+      status: 'ok',
+      createdUsernames: ['tel_agent1'],
+      users: [sampleUser, telAgent],
+    });
+  });
 });

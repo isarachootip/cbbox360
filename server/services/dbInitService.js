@@ -1,6 +1,22 @@
 import { query } from '../../db.js';
 
 /**
+ * Independently ensures agent skills & 3CX extension columns exist on users table.
+ */
+export const ensureUserAgentColumns = async () => {
+  try {
+    await query(`
+      ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS skills JSONB NOT NULL DEFAULT '[]'::jsonb;
+      ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS extension TEXT NOT NULL DEFAULT '';
+    `);
+    return true;
+  } catch (err) {
+    console.warn('⚠️ [DB Agent Columns Alter Notice]:', err.message);
+    return false;
+  }
+};
+
+/**
  * Ensures required database schema extensions exist on startup
  */
 export const ensureDatabaseSchema = async () => {
@@ -139,9 +155,11 @@ export const ensureDatabaseSchema = async () => {
       );
     `);
     console.log('✅ [DB Schema] Verified medical roles and customer_industry_profiles');
+    await ensureUserAgentColumns();
     return true;
   } catch (err) {
     console.warn('⚠️ [DB Schema Init Notice - Phase 2B]:', err.message);
+    await ensureUserAgentColumns();
     return false;
   }
 };

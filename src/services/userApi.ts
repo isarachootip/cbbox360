@@ -41,6 +41,9 @@ export type UserApiError = { status: 'error'; code: UserApiErrorCode };
 export type UserListResult = { status: 'ok'; users: ManagedServerUser[] } | UserApiError;
 export type SingleUserResult = { status: 'ok'; user: ManagedServerUser } | UserApiError;
 export type EmptyUserResult = { status: 'ok' } | UserApiError;
+export type SyncOperatorsResult =
+  | { status: 'ok'; createdUsernames: string[]; users: ManagedServerUser[] }
+  | UserApiError;
 
 export interface CreateUserPayload {
   username: string;
@@ -145,6 +148,18 @@ export const userApi = {
     const res = await request(`/${encodeURIComponent(id)}`, { method: 'DELETE' });
     if (!res) return { status: 'error', code: 'NETWORK_ERROR' };
     return res.status === 200 ? { status: 'ok' } : toError(res.body);
+  },
+
+  async syncOperators(): Promise<SyncOperatorsResult> {
+    const res = await request('/sync-operators', { method: 'POST', body: JSON.stringify({}) });
+    if (!res) return { status: 'error', code: 'NETWORK_ERROR' };
+    if (res.status !== 200) return toError(res.body);
+    const parsed = z
+      .object({ createdUsernames: z.array(z.string()), users: z.array(managedUserSchema) })
+      .safeParse(res.body);
+    return parsed.success
+      ? { status: 'ok', createdUsernames: parsed.data.createdUsernames, users: parsed.data.users }
+      : { status: 'error', code: 'BAD_RESPONSE' };
   },
 };
 

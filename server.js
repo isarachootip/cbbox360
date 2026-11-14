@@ -55,6 +55,11 @@ ensureDatabaseSchema()
     );
   })
   .then(() => ensureOperatorAccounts({ userRepo: userRepository, hashPassword }))
+  .then((createdOps) => {
+    if (createdOps.length > 0) {
+      console.log(`👤 [Auth] Provisioned operator/agent accounts: ${createdOps.map((c) => c.username).join(', ')}`);
+    }
+  })
   .catch((err) => console.error('❌ [Auth Seed Error]:', err.message));
 initBotSettingsFromDb();
 

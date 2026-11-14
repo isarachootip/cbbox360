@@ -6,7 +6,7 @@ import { AuthMode, AUTH_MODE, isServerAuth } from '../config/authMode';
 import { authApi, AUTH_ERROR_MESSAGES } from '../services/authApi';
 import { toUserAccount } from '../domain/auth/roles';
 import { verifyTotpCode } from '../utils/totp';
-import { ActionResult, CreateUserInput } from '../hooks/useDemoUsersStore';
+import { ActionResult, CreateUserInput, SyncUsersResult } from '../hooks/useDemoUsersStore';
 import { useUserManagementActions } from '../hooks/useUserManagementActions';
 
 export interface LoginOutcome {
@@ -22,6 +22,7 @@ interface AuthContextType {
   currentUser: UserAccount | null;
   users: UserAccount[];
   refreshUsers: () => Promise<void>;
+  syncDefaultUsers: () => Promise<SyncUsersResult>;
   login: (username: string, password: string) => Promise<LoginOutcome>;
   pendingTwoFactorUsername: string | null;
   verifyTwoFactor: (code: string) => Promise<boolean>;
@@ -175,7 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         authMode: AUTH_MODE, isAuthLoading, mustChangePassword, currentUser,
-        users: userMgmt.users, refreshUsers: userMgmt.refreshUsers,
+        users: userMgmt.users, refreshUsers: userMgmt.refreshUsers, syncDefaultUsers: userMgmt.syncDefaultUsers,
         login, pendingTwoFactorUsername: pendingServerTwoFactor ?? pendingTwoFactorUser?.username ?? null,
         verifyTwoFactor, cancelTwoFactor, changePassword, logout, switchUser,
         createUser: userMgmt.createUser, updateUser: userMgmt.updateUser, deleteUser: userMgmt.deleteUser,

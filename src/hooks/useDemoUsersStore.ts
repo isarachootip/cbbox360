@@ -6,6 +6,7 @@ import { getRoleLabel } from '../domain/auth/roles';
 const USERS_STORAGE_KEY = 'cb360_users_data';
 
 export type ActionResult = { success: boolean; error?: string };
+export type SyncUsersResult = { success: boolean; createdUsernames?: string[]; error?: string };
 
 export interface CreateUserInput {
   username: string;
@@ -147,6 +148,15 @@ export const useDemoUsersStore = (
     return { success: true };
   };
 
+  const demoSyncDefaultUsers = (): SyncUsersResult => {
+    const knownNames = new Set(demoUsers.map((u) => u.username.toLowerCase()));
+    const missing = initialUserAccounts.filter((s) => !knownNames.has(s.username.toLowerCase()));
+    if (missing.length > 0) {
+      setDemoUsers((prev) => [...prev, ...missing]);
+    }
+    return { success: true, createdUsernames: missing.map((m) => m.username) };
+  };
+
   return {
     demoUsers,
     setDemoUsers,
@@ -156,5 +166,6 @@ export const useDemoUsersStore = (
     demoResetPassword,
     demoToggleStatus,
     demoToggleTwoFactor,
+    demoSyncDefaultUsers,
   };
 };
