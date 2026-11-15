@@ -42,15 +42,15 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({
   };
 
   return (
-    <div className="w-[324px] flex-shrink-0 bg-white border-l border-border h-full overflow-y-auto custom-scrollbar flex flex-col p-4 text-[13px]">
+    <div className="w-[324px] flex-shrink-0 bg-white border-l border-border h-full overflow-y-auto custom-scrollbar flex flex-col p-4 text-ui">
       <div className="flex items-center justify-between pb-3 border-b border-divider select-none">
-        <span className="text-[11px] font-semibold text-text-secondary tracking-[0.06em] uppercase">
+        <span className="text-2xs font-semibold text-text-muted tracking-[0.05em] uppercase">
           CDP Context
         </span>
         <button
           type="button"
           onClick={() => navigate(`/customers/${customer.id}`)}
-          className="text-brand hover:text-brand-hover text-xs font-semibold flex items-center gap-1"
+          className="text-brand hover:text-brand-hover text-xs font-medium flex items-center gap-1 cursor-pointer"
         >
           <span>Customer 360</span>
           <ExternalLink className="w-3 h-3" />
@@ -69,47 +69,47 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({
       )}
 
       <div className="py-3.5 flex items-center gap-3">
-        <div className="w-11 h-11 rounded-full bg-brand-tint text-brand-deep font-bold flex items-center justify-center text-sm select-none">
+        <div className="w-11 h-11 rounded-full bg-brand-tint text-brand-deep font-semibold flex items-center justify-center text-sm select-none">
           {customer.initials}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-bold text-[15px] text-text-primary truncate">{customer.name}</div>
+          <div className="font-semibold text-base text-text-primary truncate">{customer.name}</div>
           <div className="flex items-center gap-1.5 mt-1">
-            <span className="font-mono text-[11px] text-brand-deep font-semibold">{customer.id}</span>
+            <span className="font-mono text-2xs text-brand-deep font-medium">{customer.id}</span>
             <TierBadge tier={customer.tier} size="sm" />
             <GradeBadge grade={customer.creditGrade} size="sm" />
           </div>
         </div>
       </div>
 
-      <div className="space-y-2 py-3 border-y border-divider text-[13px]">
+      <div className="space-y-2 py-3 border-y border-divider text-ui">
         <div className="flex items-center justify-between">
           <span className="text-text-secondary">มือถือ</span>
-          <span className="font-mono tabular-nums text-text-primary font-medium">{customer.phone}</span>
+          <span className="tabular-nums text-text-primary font-medium">{customer.phone}</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-text-secondary">ยอด 12 เดือน</span>
-          <span className="font-mono tabular-nums font-semibold text-text-primary">
+          <span className="tabular-nums font-semibold text-text-primary">
             ฿{customer.spend12Months.toLocaleString()}
           </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-text-secondary">ซื้อล่าสุด</span>
-          <span className="text-text-primary font-mono tabular-nums text-xs">
-            {customer.lastOrderCode} · {customer.lastOrderDaysAgo} วันก่อน
+          <span className="text-text-primary tabular-nums text-xs">
+            <span className="font-mono">{customer.lastOrderCode}</span> · {customer.lastOrderDaysAgo} วันก่อน
           </span>
         </div>
       </div>
 
       <div className="py-3 border-b border-divider">
-        <div className="text-[11px] font-semibold text-text-secondary tracking-[0.06em] uppercase mb-2">
+        <div className="text-2xs font-semibold text-text-muted tracking-[0.05em] uppercase mb-2">
           Segments
         </div>
         <div className="flex flex-wrap gap-1.5">
           {customer.segments.map((seg, idx) => (
             <span
               key={idx}
-              className="text-xs bg-bg-muted text-sidebar-text border border-border px-2.5 py-0.5 rounded-full font-medium"
+              className="text-xs bg-bg-muted text-sidebar-text border border-border px-2.5 py-0.5 rounded-full font-normal"
             >
               {seg}
             </span>
@@ -118,8 +118,8 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({
       </div>
 
       <div className="py-3 border-b border-divider space-y-2">
-        <div className="text-[11px] font-semibold text-text-secondary tracking-[0.06em] uppercase">
-          Activity เปิดอยู่
+        <div className="text-xs font-medium text-text-secondary">
+          Activity ที่กำลังเปิดอยู่
         </div>
         {activeDeal && (
           <div
@@ -128,7 +128,7 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({
           >
             <div>
               <div className="text-text-secondary text-xs">Deal · {activeDeal.title}</div>
-              <div className="font-mono tabular-nums font-bold text-text-primary mt-0.5">
+              <div className="tabular-nums font-semibold text-text-primary mt-0.5">
                 ฿{activeDeal.value.toLocaleString()}
               </div>
             </div>
@@ -141,10 +141,12 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({
             className="p-2.5 rounded-lg bg-bg-subtle border border-border hover:border-brand/40 cursor-pointer transition-all flex items-center justify-between text-xs"
           >
             <div>
-              <div className="font-mono text-text-secondary text-xs">Ticket {activeTicket.id}</div>
-              <div className="inline-flex items-center gap-1.5 font-semibold text-amber-600 mt-0.5">
+              <div className="text-text-secondary text-xs">
+                Ticket <span className="font-mono font-medium">{activeTicket.id}</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 font-medium text-amber-600 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                <span>SLA เหลือ {activeTicket.slaFormatted}</span>
+                <span className="tabular-nums">SLA เหลือ {activeTicket.slaFormatted}</span>
               </div>
             </div>
             <ArrowRight className="w-3.5 h-3.5 text-text-secondary" />

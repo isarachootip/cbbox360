@@ -42,18 +42,18 @@ export const KpiTile: React.FC<KpiTileProps> = ({
         variantStyles[variant]
       } ${onClick ? 'cursor-pointer hover:border-brand/40 hover:shadow-md' : ''} ${className}`}
     >
-      <div className="flex items-center justify-between text-[13px] text-text-secondary font-medium">
+      <div className="flex items-center justify-between text-xs text-text-secondary font-medium">
         <span>{label}</span>
         {rightElement}
       </div>
-      <div className="mt-2 flex items-baseline gap-2">
+      <div className="mt-2 flex items-baseline gap-2 flex-wrap">
         <span
-          className={`text-2xl font-bold tracking-tight font-mono tabular-nums ${valueColors[variant]}`}
+          className={`text-2xl font-semibold tabular-nums ${valueColors[variant]}`}
         >
           {value}
         </span>
         {subValue && (
-          <span className="text-xs font-normal text-text-secondary">{subValue}</span>
+          <span className="text-xs font-normal text-text-muted">{subValue}</span>
         )}
       </div>
     </div>

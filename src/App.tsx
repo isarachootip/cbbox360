@@ -9,6 +9,7 @@ import { TelephonyProvider } from './context/TelephonyContext';
 import { CannedResponseProvider } from './context/CannedResponseContext';
 import { BotProvider } from './context/BotContext';
 import { LayoutProvider } from './context/LayoutContext';
+import { TypographyProvider } from './context/TypographyContext';
 import { BusinessTemplateProvider } from './context/BusinessTemplateContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { ForceChangePasswordCard } from './components/auth/ForceChangePasswordCard';
@@ -64,7 +65,8 @@ export const App: React.FC = () => {
                   <BusinessTemplateProvider>
                   <BrowserRouter>
                     <LayoutProvider>
-                    <Routes>
+                      <TypographyProvider>
+                        <Routes>
                       {/* Public Route */}
                       <Route path="/login" element={<LoginPage />} />
 
@@ -98,9 +100,10 @@ export const App: React.FC = () => {
                         {/* Catch all */}
                         <Route path="*" element={<Navigate to="/customers/C00123" replace />} />
                       </Route>
-                    </Routes>
-                  </LayoutProvider>
-                </BrowserRouter>
+                        </Routes>
+                      </TypographyProvider>
+                    </LayoutProvider>
+                  </BrowserRouter>
                   </BusinessTemplateProvider>
               </BotProvider>
             </CannedResponseProvider>

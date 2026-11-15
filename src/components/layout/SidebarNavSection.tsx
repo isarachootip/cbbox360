@@ -94,7 +94,7 @@ export const SidebarNavSection: React.FC<SidebarNavSectionProps> = ({
   return (
     <div>
       {!isCollapsed ? (
-        <div className="px-2.5 mb-1.5 text-[11px] font-semibold text-sidebar-label tracking-[0.08em] uppercase">
+        <div className="px-2.5 mb-1.5 text-2xs font-semibold text-sidebar-label tracking-[0.06em] uppercase">
           {title}
         </div>
       ) : (
@@ -125,11 +125,11 @@ export const SidebarNavSection: React.FC<SidebarNavSectionProps> = ({
               className={`relative flex items-center transition-all rounded-lg ${
                 isCollapsed
                   ? 'justify-center w-10 h-10 mx-auto'
-                  : `justify-between px-2.5 py-2 ${compactText ? 'text-[13px]' : 'text-[13.5px]'}`
+                  : `justify-between px-2.5 py-2 ${compactText ? 'text-xs' : 'text-ui'}`
               } ${
                 active
                   ? 'bg-white text-brand-hover font-semibold shadow-sidebar-active ring-1 ring-brand/15'
-                  : 'text-sidebar-text hover:bg-white/70 font-medium'
+                  : 'text-sidebar-text hover:bg-white/70 font-normal'
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
@@ -142,13 +142,13 @@ export const SidebarNavSection: React.FC<SidebarNavSectionProps> = ({
               </div>
 
               {!isCollapsed && item.badge && (
-                <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-[#B4480A] text-white rounded-full leading-none">
+                <span className="px-1.5 py-0.5 text-[10px] tabular-nums font-semibold bg-[#B4480A] text-white rounded-full leading-none">
                   {item.badge}
                 </span>
               )}
 
               {isCollapsed && item.badge && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 text-[9px] font-mono font-bold bg-[#B4480A] text-white rounded-full flex items-center justify-center ring-2 ring-sidebar-bg">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 text-[9px] tabular-nums font-semibold bg-[#B4480A] text-white rounded-full flex items-center justify-center ring-2 ring-sidebar-bg">
                   {item.badge}
                 </span>
               )}

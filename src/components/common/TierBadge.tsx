@@ -28,16 +28,16 @@ export const TierBadge: React.FC<TierBadgeProps> = ({
   };
 
   const sizeClasses = {
-    sm: 'text-[11px] font-semibold',
-    md: 'text-[12px] font-bold tracking-wide',
-    lg: 'text-[13px] font-bold tracking-wider',
+    sm: 'text-2xs font-semibold tracking-[0.02em]',
+    md: 'text-xs font-semibold tracking-[0.03em]',
+    lg: 'text-ui font-semibold tracking-[0.04em]',
   };
 
   const config = styles[tier] || styles.MEMBER;
 
   return (
     <span
-      className={`inline-flex items-center justify-center uppercase font-mono ${config.text} ${sizeClasses[size]}`}
+      className={`inline-flex items-center justify-center uppercase ${config.text} ${sizeClasses[size]}`}
     >
       {tier}
     </span>

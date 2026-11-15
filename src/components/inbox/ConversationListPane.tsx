@@ -63,7 +63,7 @@ export const ConversationListPane: React.FC<ConversationListPaneProps> = ({
             >
               <Menu className="w-5 h-5" />
             </button>
-            <h2 className="text-[17px] font-bold text-text-primary tracking-tight">Inbox</h2>
+            <h2 className="text-lg font-semibold text-text-primary">Inbox</h2>
           </div>
 
           <select
@@ -72,7 +72,7 @@ export const ConversationListPane: React.FC<ConversationListPaneProps> = ({
               const next = STATUS_OPTIONS.find((s) => s === e.target.value);
               if (next) onStatusFilterChange(next);
             }}
-            className="text-xs font-semibold px-2.5 py-1.5 bg-bg-subtle border border-border rounded-lg text-text-primary focus:outline-none focus:border-brand cursor-pointer"
+            className="text-xs font-medium px-2.5 py-1.5 bg-bg-subtle border border-border rounded-lg text-text-primary focus:outline-none focus:border-brand cursor-pointer"
           >
             <option value="Open">● Open</option>
             <option value="Pending">● Pending</option>
@@ -89,12 +89,12 @@ export const ConversationListPane: React.FC<ConversationListPaneProps> = ({
             placeholder="ค้นหาชื่อลูกค้า หรือข้อความ..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-[13px] bg-bg-app border border-border rounded-lg focus:outline-none focus:border-brand focus:bg-white transition-all"
+            className="w-full pl-9 pr-3 py-1.5 text-ui bg-bg-app border border-border rounded-lg focus:outline-none focus:border-brand focus:bg-white transition-all"
           />
         </div>
 
         {/* Segmented Filter Tabs */}
-        <div className="grid grid-cols-3 gap-1 p-1 bg-bg-muted rounded-lg text-xs font-semibold text-center">
+        <div className="grid grid-cols-3 gap-1 p-1 bg-bg-muted rounded-lg text-xs font-medium text-center">
           {(
             [
               { id: 'Mine', label: 'Mine', count: mineCount },
@@ -108,14 +108,14 @@ export const ConversationListPane: React.FC<ConversationListPaneProps> = ({
                 type="button"
                 key={tab.id}
                 onClick={() => onTabFilterChange(tab.id)}
-                className={`py-1.5 rounded-md transition-all flex items-center justify-center gap-1 ${
+                className={`py-1.5 rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer ${
                   active
-                    ? 'bg-white text-brand shadow-xs'
+                    ? 'bg-white text-brand font-semibold shadow-xs'
                     : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
                 <span>{tab.label}</span>
-                <span className="font-mono text-[11px] font-bold tabular-nums opacity-85">
+                <span className="text-2xs font-semibold tabular-nums opacity-85">
                   {tab.count}
                 </span>
               </button>
@@ -127,12 +127,13 @@ export const ConversationListPane: React.FC<ConversationListPaneProps> = ({
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-divider">
         {conversations.length === 0 ? (
-          <div className="p-8 text-center text-[13px] text-text-secondary">
+          <div className="p-8 text-center text-ui text-text-secondary">
             ไม่พบรายการสนทนาในหมวดนี้
           </div>
         ) : (
           conversations.map((conv) => {
             const isSelected = conv.id === selectedConvId;
+            const hasUnread = Boolean(conv.unreadCount && conv.unreadCount > 0);
             return (
               <div
                 key={conv.id}
@@ -145,7 +146,7 @@ export const ConversationListPane: React.FC<ConversationListPaneProps> = ({
               >
                 {/* Avatar + Channel Badge */}
                 <div className="relative flex-shrink-0 pt-0.5 select-none">
-                  <div className="w-10 h-10 rounded-full bg-brand-tint text-brand-deep font-bold flex items-center justify-center text-xs">
+                  <div className="w-10 h-10 rounded-full bg-brand-tint text-brand-deep font-semibold flex items-center justify-center text-xs">
                     {conv.customerName.slice(0, 2)}
                   </div>
                   <span
@@ -160,15 +161,19 @@ export const ConversationListPane: React.FC<ConversationListPaneProps> = ({
                 {/* Conversation Meta */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="font-semibold text-[14px] text-text-primary truncate">
+                    <span
+                      className={`text-sm text-text-primary truncate ${
+                        hasUnread || isSelected ? 'font-semibold' : 'font-medium'
+                      }`}
+                    >
                       {conv.customerName}
                     </span>
-                    <span className="text-[11px] text-text-secondary font-mono tabular-nums flex-shrink-0">
+                    <span className="text-2xs text-text-muted tabular-nums flex-shrink-0">
                       {conv.time}
                     </span>
                   </div>
 
-                  <p className="text-[13px] text-text-secondary truncate mt-0.5 leading-snug">
+                  <p className="text-ui text-text-secondary truncate mt-0.5">
                     {conv.lastMessagePreview}
                   </p>
 
@@ -176,13 +181,13 @@ export const ConversationListPane: React.FC<ConversationListPaneProps> = ({
                     <div className="flex items-center gap-1.5">
                       <TierBadge tier={conv.customerTier} size="sm" />
                       {conv.label && (
-                        <span className="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">
+                        <span className="text-2xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-normal">
                           {conv.label}
                         </span>
                       )}
                     </div>
-                    {conv.unreadCount && conv.unreadCount > 0 ? (
-                      <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-brand text-white font-mono font-bold text-[10px] tabular-nums flex items-center justify-center">
+                    {hasUnread ? (
+                      <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-brand text-white font-semibold text-[10px] tabular-nums flex items-center justify-center">
                         {conv.unreadCount}
                       </span>
                     ) : null}

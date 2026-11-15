@@ -47,18 +47,18 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
   return (
     <div className="bg-white border border-border rounded-card shadow-card overflow-hidden">
       <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full text-left border-collapse text-[13.5px]">
+        <table className="w-full text-left border-collapse text-ui">
           <thead className="select-none">
-            <tr className="border-b border-border bg-bg-muted text-text-secondary text-xs uppercase tracking-[0.04em] font-semibold">
-              <th className="py-3 px-4">ลูกค้า / องค์กร</th>
-              <th className="py-3 px-4">ระดับ Tier</th>
-              <th className="py-3 px-4">เกรดเครดิต</th>
-              <th className="py-3 px-4 text-right">ยอดซื้อสะสม (LTV)</th>
-              <th className="py-3 px-4 text-right">ยอดซื้อ 12 เดือน</th>
-              <th className="py-3 px-4 text-center">คำสั่งซื้อ</th>
-              <th className="py-3 px-4">กลุ่มลูกค้า (Segments)</th>
-              <th className="py-3 px-4 text-center">ความเสี่ยงเลิกใช้</th>
-              <th className="py-3 px-4 text-right">จัดการ</th>
+            <tr className="border-b border-border bg-bg-muted text-text-secondary text-xs font-medium">
+              <th className="py-3 px-4 font-medium">ลูกค้า / องค์กร</th>
+              <th className="py-3 px-4 font-medium">ระดับ Tier</th>
+              <th className="py-3 px-4 font-medium">เกรดเครดิต</th>
+              <th className="py-3 px-4 font-medium text-right">ยอดซื้อสะสม (LTV)</th>
+              <th className="py-3 px-4 font-medium text-right">ยอดซื้อ 12 เดือน</th>
+              <th className="py-3 px-4 font-medium text-center">คำสั่งซื้อ</th>
+              <th className="py-3 px-4 font-medium">กลุ่มลูกค้า (Segments)</th>
+              <th className="py-3 px-4 font-medium text-center">ความเสี่ยงเลิกใช้</th>
+              <th className="py-3 px-4 font-medium text-right">จัดการ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-divider">
@@ -84,21 +84,21 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
                 >
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-brand-tint text-brand-deep font-bold flex items-center justify-center text-xs flex-shrink-0 select-none">
+                      <div className="w-9 h-9 rounded-full bg-brand-tint text-brand-deep font-semibold flex items-center justify-center text-xs flex-shrink-0 select-none">
                         {c.initials}
                       </div>
                       <div className="min-w-0">
-                        <div className="font-semibold text-[14px] text-text-primary group-hover:text-brand transition-colors truncate flex items-center gap-1.5">
+                        <div className="font-medium text-sm text-text-primary group-hover:text-brand transition-colors truncate flex items-center gap-1.5">
                           <span>{c.name}</span>
                           {c.customerType === 'CORPORATE' && (
-                            <span className="inline-flex items-center gap-1 text-[11px] text-blue-600 font-medium shrink-0">
+                            <span className="inline-flex items-center gap-1 text-2xs text-blue-600 font-medium shrink-0">
                               <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                               <span>องค์กร</span>
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-text-secondary flex items-center gap-2 mt-0.5 font-mono tabular-nums">
-                          <span>{c.id}</span>
+                        <div className="text-xs text-text-muted flex items-center gap-2 mt-0.5 tabular-nums">
+                          <span className="font-mono">{c.id}</span>
                           <span>·</span>
                           <span className="flex items-center gap-1">
                             <Phone className="w-3 h-3" />
@@ -117,19 +117,19 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
                     <GradeBadge grade={c.creditGrade} />
                   </td>
 
-                  <td className="py-3 px-4 text-right font-mono tabular-nums font-semibold text-text-primary text-xs">
+                  <td className="py-3 px-4 text-right tabular-nums font-semibold text-text-primary text-ui">
                     {formatCurrency(c.lifetimeValue)}
                   </td>
 
-                  <td className="py-3 px-4 text-right text-text-secondary font-mono tabular-nums text-xs">
+                  <td className="py-3 px-4 text-right text-text-secondary tabular-nums text-ui">
                     {formatCurrency(c.spend12Months)}
                   </td>
 
                   <td className="py-3 px-4 text-center">
-                    <span className="font-mono tabular-nums font-semibold text-text-primary text-xs">
+                    <span className="tabular-nums font-medium text-text-primary text-ui">
                       {c.orders12Months}
                     </span>
-                    <span className="text-[11px] text-text-secondary block">รายการ</span>
+                    <span className="text-2xs text-text-muted block">รายการ</span>
                   </td>
 
                   <td className="py-3 px-4">
@@ -137,13 +137,13 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
                       {c.segments.slice(0, 2).map((seg, i) => (
                         <span
                           key={i}
-                          className="px-2 py-0.5 rounded-md text-[11px] bg-bg-muted text-slate-700 border border-border/70 font-medium"
+                          className="px-2 py-0.5 rounded-md text-2xs bg-bg-muted text-slate-700 border border-border/70 font-normal"
                         >
                           {seg}
                         </span>
                       ))}
                       {c.segments.length > 2 && (
-                        <span className="text-[11px] text-slate-400 font-mono self-center">
+                        <span className="text-2xs text-text-muted tabular-nums self-center">
                           +{c.segments.length - 2}
                         </span>
                       )}
@@ -151,7 +151,7 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
                   </td>
 
                   <td className="py-3 px-4 text-center select-none">
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${churnText}`}>
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${churnText}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${churnDot}`} />
                       <span>{c.churnRisk}</span>
                     </span>

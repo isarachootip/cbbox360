@@ -38,7 +38,7 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
       <div className="pb-3.5 border-b border-divider">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <span className="font-mono font-bold text-[15px] text-brand tabular-nums">
+            <span className="font-mono font-semibold text-sm text-brand tabular-nums">
               {ticket.id}
             </span>
             <StatusBadge status={ticket.status} />
@@ -46,7 +46,7 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
 
           <div className="flex items-center gap-2">
             <span
-              className={`text-xs font-mono tabular-nums font-semibold ${
+              className={`text-xs tabular-nums font-medium ${
                 ticket.slaStatus === 'danger' ? 'text-rose-600' : 'text-text-secondary'
               }`}
             >
@@ -66,25 +66,25 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
           </div>
         </div>
 
-        <h3 className="text-[16px] font-bold text-text-primary mt-2 leading-snug">
+        <h3 className="text-lg font-semibold text-text-primary mt-2 leading-snug">
           {ticket.title}
         </h3>
 
-        <div className="text-xs text-text-secondary mt-1">
-          ช่องทาง <span className="font-mono font-medium text-text-body2">{ticket.channel}</span> ·{' '}
+        <div className="text-xs text-text-secondary mt-1 tabular-nums">
+          ช่องทาง <span className="font-medium text-text-body2">{ticket.channel}</span> ·{' '}
           {ticket.createdAt || '26 ก.ย. 10:42'} · ผู้รับผิดชอบ{' '}
           <span className="font-medium text-text-body2">{ticket.assignee}</span>
         </div>
       </div>
 
       {/* Metadata Grid */}
-      <div className="grid grid-cols-2 gap-3 p-3.5 bg-bg-subtle rounded-xl border border-border text-[13px]">
+      <div className="grid grid-cols-2 gap-3 p-3.5 bg-bg-subtle rounded-xl border border-border text-ui">
         <div>
           <span className="text-xs text-text-secondary block">ลูกค้า</span>
           <button
             type="button"
             onClick={() => onOpenCustomer(ticket.customerId)}
-            className="font-semibold text-brand hover:underline cursor-pointer flex items-center gap-1 mt-0.5 text-left"
+            className="font-medium text-brand hover:underline cursor-pointer flex items-center gap-1 mt-0.5 text-left"
           >
             <span>{ticket.customerName}</span>
             <ExternalLink className="w-3 h-3 flex-shrink-0" />
@@ -93,14 +93,14 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
 
         <div>
           <span className="text-xs text-text-secondary block">ประเภท / หมวด</span>
-          <span className="font-semibold text-text-primary mt-0.5 block">
+          <span className="font-medium text-text-primary mt-0.5 block">
             {ticket.category}
           </span>
         </div>
 
         <div className="col-span-2 pt-2.5 border-t border-divider">
           <span className="text-xs text-text-secondary block">ข้อตกลง SLA ({ticket.customerTier})</span>
-          <span className="font-medium text-text-primary mt-0.5 block text-xs">
+          <span className="font-normal text-text-primary mt-0.5 block text-xs tabular-nums">
             {ticket.slaTargetNote || 'Platinum: ตอบแรก 1 ชม. · ปิด 1 วันทำการ'}
           </span>
         </div>
@@ -108,8 +108,9 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
         {ticket.orderRef && (
           <div className="col-span-2 pt-2.5 border-t border-divider flex items-center justify-between">
             <span className="text-xs text-text-secondary">อ้างอิง Order</span>
-            <span className="font-mono tabular-nums font-bold text-text-primary text-xs">
-              {ticket.orderRef} · ฿{ticket.orderAmount?.toLocaleString()}
+            <span className="tabular-nums text-text-primary text-xs">
+              <span className="font-mono font-medium">{ticket.orderRef}</span> ·{' '}
+              <span className="font-semibold">฿{ticket.orderAmount?.toLocaleString()}</span>
             </span>
           </div>
         )}
@@ -117,21 +118,21 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
 
       {/* Activity Timeline */}
       <div className="flex-1 space-y-3">
-        <div className="text-xs font-bold text-text-secondary uppercase tracking-[0.06em]">
+        <div className="text-2xs font-semibold text-text-muted uppercase tracking-[0.05em]">
           Activity Log
         </div>
 
-        <div className="relative pl-5 space-y-3.5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-divider text-[13px]">
+        <div className="relative pl-5 space-y-3.5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-divider text-ui">
           {ticket.activityLogs.map((log, idx) => (
             <div key={idx} className="relative">
               <div className="absolute -left-[21px] top-1.5 w-2.5 h-2.5 rounded-full bg-brand border-2 border-white shadow-2xs" />
               <div className="flex items-baseline gap-2">
-                <span className="font-semibold text-text-primary">{log.author}</span>
-                <span className="text-[11px] font-mono tabular-nums text-text-secondary">
+                <span className="font-medium text-text-primary">{log.author}</span>
+                <span className="text-2xs tabular-nums text-text-muted">
                   {log.time}
                 </span>
               </div>
-              <p className="text-text-body2 mt-0.5 leading-[1.6]">{log.text}</p>
+              <p className="text-text-body2 mt-0.5 leading-relaxed">{log.text}</p>
             </div>
           ))}
         </div>
@@ -139,7 +140,7 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
 
       {/* Log Note Form */}
       <form onSubmit={handleSubmit} className="space-y-2 pt-3 border-t border-divider">
-        <div className="text-xs font-semibold text-text-secondary select-none">
+        <div className="text-xs font-medium text-text-secondary select-none">
           บันทึกความคืบหน้า (Internal Log Note)
         </div>
         <textarea
@@ -147,7 +148,7 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
           value={logNoteInput}
           onChange={(e) => setLogNoteInput(e.target.value)}
           placeholder="พิมพ์บันทึกการประสานงาน... ใช้ @ เพื่อแท็กทีมงาน"
-          className="w-full px-3 py-2 text-[13.5px] leading-[1.6] border border-border rounded-xl focus:outline-none focus:border-brand resize-none bg-bg-subtle focus:bg-white"
+          className="w-full px-3 py-2 text-sm leading-relaxed border border-border rounded-xl focus:outline-none focus:border-brand resize-none bg-bg-subtle focus:bg-white"
         />
         {logNoteInput.trim() && (
           <div className="flex justify-end select-none">

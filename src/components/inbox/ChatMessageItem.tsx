@@ -35,31 +35,31 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
     return (
       <div className="w-full bg-white border border-border rounded-xl p-4 space-y-2.5 shadow-card">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-[14px] font-semibold text-slate-800">
+          <div className="flex items-center gap-2 text-sm font-semibold text-text-primary">
             <CheckSquare className="w-4 h-4 text-indigo-600 flex-shrink-0" />
             <span>{task.title}</span>
           </div>
-          <span className="font-mono text-[11px] text-text-secondary tabular-nums">#{task.id}</span>
+          <span className="font-mono text-2xs text-text-muted tabular-nums">#{task.id}</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 py-2.5 px-3 rounded-lg bg-bg-subtle border border-divider text-xs">
           <div>
-            <span className="text-text-secondary block text-[11px]">ผู้รับมอบหมาย</span>
-            <span className="font-semibold text-text-primary flex items-center gap-1 mt-0.5">
+            <span className="text-text-muted block text-2xs">ผู้รับมอบหมาย</span>
+            <span className="font-medium text-text-primary flex items-center gap-1 mt-0.5">
               <User className="w-3 h-3 text-text-secondary" />
               <span>{task.assignee}</span>
             </span>
           </div>
           <div>
-            <span className="text-text-secondary block text-[11px]">กำหนดเสร็จ (Due Date)</span>
-            <span className="font-mono text-text-primary tabular-nums flex items-center gap-1 mt-0.5">
+            <span className="text-text-muted block text-2xs">กำหนดเสร็จ (Due Date)</span>
+            <span className="text-text-primary tabular-nums font-medium flex items-center gap-1 mt-0.5">
               <Clock className="w-3 h-3 text-text-secondary" />
               <span>{task.dueDate}</span>
             </span>
           </div>
           <div>
-            <span className="text-text-secondary block text-[11px]">ระดับความสำคัญ</span>
-            <span className={`inline-flex items-center gap-1.5 font-semibold mt-0.5 ${prConfig.text}`}>
+            <span className="text-text-muted block text-2xs">ระดับความสำคัญ</span>
+            <span className={`inline-flex items-center gap-1.5 font-medium mt-0.5 ${prConfig.text}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${prConfig.dot}`} />
               <span>{task.priority}</span>
             </span>
@@ -68,7 +68,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
 
         {onUpdateTaskStatus && (
           <div className="flex items-center justify-between pt-1.5 border-t border-divider select-none">
-            <span className="text-[11px] text-text-secondary">อัปเดตสถานะงานได้ทันที</span>
+            <span className="text-2xs text-text-muted">อัปเดตสถานะงานได้ทันที</span>
             <div className="flex items-center gap-2">
               {task.status !== 'Completed' ? (
                 <>
@@ -107,16 +107,16 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   if (msg.isPrivateNote) {
     return (
       <div className="w-full bg-warn-bg border border-dashed border-warn-border rounded-xl p-3.5 text-warn-text shadow-2xs">
-        <div className="flex items-center justify-between text-[11px] font-bold tracking-wide select-none">
+        <div className="flex items-center justify-between text-2xs font-semibold select-none">
           <span className="flex items-center gap-1.5 text-amber-800">
             <Lock className="w-3 h-3" />
             <span>PRIVATE NOTE · ลูกค้าไม่เห็น</span>
           </span>
-          <span className="font-mono tabular-nums text-amber-700">
+          <span className="tabular-nums font-normal text-amber-700">
             {msg.time} · {msg.authorName}
           </span>
         </div>
-        <p className="text-[13.5px] text-[#5C3900] mt-1.5 font-medium leading-[1.65] whitespace-pre-wrap">
+        <p className="text-base text-[#5C3900] mt-1.5 font-normal whitespace-pre-wrap">
           {msg.text}
         </p>
       </div>
@@ -131,7 +131,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   return (
     <div className={`flex flex-col ${isCustomer ? 'items-start' : 'items-end'}`}>
       <div
-        className={`max-w-[75%] sm:max-w-[70%] px-4 py-3 rounded-2xl text-[14px] leading-[1.65] shadow-card whitespace-pre-wrap ${
+        className={`max-w-[75%] sm:max-w-[70%] px-4 py-3 rounded-2xl text-base shadow-card whitespace-pre-wrap ${
           isCustomer
             ? 'bg-white border border-border text-text-primary rounded-tl-sm'
             : isFailed
@@ -155,7 +155,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
             <button
               type="button"
               onClick={() => onRetry(msg.id, msg.text)}
-              className="ml-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-200 transition-colors flex items-center gap-1 cursor-pointer"
+              className="ml-1 px-2 py-0.5 rounded text-2xs font-semibold bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-200 transition-colors flex items-center gap-1 cursor-pointer"
             >
               <RotateCw className="w-2.5 h-2.5" />
               <span>Retry</span>
@@ -165,24 +165,24 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       )}
 
       {!isCustomer && isSending && (
-        <div className="text-[11px] text-text-secondary mt-1 font-mono animate-pulse select-none">
+        <div className="text-2xs text-text-muted mt-1 animate-pulse select-none">
           กำลังส่ง...
         </div>
       )}
 
-      <span className="text-[11px] text-text-secondary mt-1 px-1 font-mono tabular-nums flex items-center gap-1 select-none">
+      <span className="text-2xs text-text-muted mt-1 px-1 tabular-nums flex items-center gap-1 select-none">
         <span>{msg.time}</span>
         {msg.authorName && (
           <span
-            className={`font-sans ${
+            className={
               msg.botSource === 'bot_gemini' ||
               msg.authorName.includes('AI') ||
               msg.authorName.includes('Gemini')
-                ? 'text-purple-600 font-semibold'
+                ? 'text-purple-600 font-medium'
                 : msg.authorName.includes('Bot')
-                ? 'text-brand font-semibold'
+                ? 'text-brand font-medium'
                 : ''
-            }`}
+            }
           >
             · {msg.authorName}
           </span>

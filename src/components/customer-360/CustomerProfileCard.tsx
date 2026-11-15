@@ -14,26 +14,26 @@ export const CustomerProfileCard: React.FC<CustomerProfileCardProps> = ({ custom
     <div className="bg-white rounded-card border border-border p-5 flex flex-col gap-4 shadow-card">
       {/* Top Identity */}
       <div className="flex items-start gap-3.5">
-        <div className="w-14 h-14 rounded-full bg-brand-tint text-brand-deep font-bold text-lg flex items-center justify-center flex-shrink-0 select-none">
+        <div className="w-14 h-14 rounded-full bg-brand-tint text-brand-deep font-semibold text-lg flex items-center justify-center flex-shrink-0 select-none">
           {customer.initials}
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-[17px] font-bold text-text-primary leading-snug truncate">
+          <h2 className="text-lg font-semibold text-text-primary leading-snug truncate">
             {customer.name}
           </h2>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span className="font-mono text-xs font-semibold text-brand-deep bg-brand-tint/70 px-2 py-0.5 rounded-md">
+            <span className="font-mono text-xs font-medium text-brand-deep bg-brand-tint/70 px-2 py-0.5 rounded-md">
               {customer.id}
             </span>
             <TierBadge tier={customer.tier} size="sm" />
             <GradeBadge grade={customer.creditGrade} size="sm" />
             {customer.customerType === 'CORPORATE' ? (
-              <span className="inline-flex items-center gap-1 text-blue-600 font-semibold text-xs">
+              <span className="inline-flex items-center gap-1 text-blue-600 font-medium text-xs">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                 <span>องค์กร (B2B)</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-slate-600 font-medium text-xs">
+              <span className="inline-flex items-center gap-1 text-slate-600 font-normal text-xs">
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                 <span>บุคคล (B2C)</span>
               </span>
@@ -47,7 +47,7 @@ export const CustomerProfileCard: React.FC<CustomerProfileCardProps> = ({ custom
         {customer.segments.map((seg, idx) => (
           <span
             key={idx}
-            className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-bg-muted text-sidebar-text border border-border"
+            className="px-2.5 py-0.5 rounded-full text-xs font-normal bg-bg-muted text-sidebar-text border border-border"
           >
             {seg}
           </span>
@@ -57,27 +57,27 @@ export const CustomerProfileCard: React.FC<CustomerProfileCardProps> = ({ custom
       {/* 2x2 Stat Tiles */}
       <div className="grid grid-cols-2 gap-2.5 pt-0.5">
         <div className="bg-bg-subtle rounded-xl p-3 border border-border/80">
-          <div className="text-xs text-text-secondary font-medium">Lifetime Value</div>
-          <div className="text-[15px] font-bold font-mono tabular-nums text-text-primary mt-0.5">
+          <div className="text-xs text-text-secondary font-normal">Lifetime Value</div>
+          <div className="text-base font-semibold tabular-nums text-text-primary mt-0.5">
             ฿{customer.lifetimeValue.toLocaleString()}
           </div>
         </div>
         <div className="bg-bg-subtle rounded-xl p-3 border border-border/80">
-          <div className="text-xs text-text-secondary font-medium">ยอด 12 เดือน</div>
-          <div className="text-[15px] font-bold font-mono tabular-nums text-text-primary mt-0.5">
+          <div className="text-xs text-text-secondary font-normal">ยอด 12 เดือน</div>
+          <div className="text-base font-semibold tabular-nums text-text-primary mt-0.5">
             ฿{customer.spend12Months.toLocaleString()}
           </div>
         </div>
         <div className="bg-bg-subtle rounded-xl p-3 border border-border/80">
-          <div className="text-xs text-text-secondary font-medium">Order 12 เดือน</div>
-          <div className="text-[15px] font-bold font-mono tabular-nums text-text-primary mt-0.5">
+          <div className="text-xs text-text-secondary font-normal">Order 12 เดือน</div>
+          <div className="text-base font-semibold tabular-nums text-text-primary mt-0.5">
             {customer.orders12Months}
           </div>
         </div>
         <div className="bg-bg-subtle rounded-xl p-3 border border-border/80">
-          <div className="text-xs text-text-secondary font-medium">ซื้อล่าสุด</div>
-          <div className="text-[14px] font-bold text-text-primary mt-0.5">
-            <span className="font-mono tabular-nums">{customer.lastOrderDaysAgo}</span> วันก่อน
+          <div className="text-xs text-text-secondary font-normal">ซื้อล่าสุด</div>
+          <div className="text-sm font-semibold text-text-primary mt-0.5">
+            <span className="tabular-nums">{customer.lastOrderDaysAgo}</span> วันก่อน
           </div>
         </div>
       </div>
@@ -85,27 +85,27 @@ export const CustomerProfileCard: React.FC<CustomerProfileCardProps> = ({ custom
       {/* Tier Retention Progress */}
       <div className="p-3.5 bg-tier-platinum-bg/40 border border-tier-platinum-accent/30 rounded-xl space-y-2">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-semibold text-text-primary">
+          <span className="font-medium text-text-primary">
             คงระดับ {customer.tier} ถึง {customer.tierValidUntil}
           </span>
-          <span className="font-mono tabular-nums font-bold text-brand-deep">
+          <span className="tabular-nums font-semibold text-brand-deep">
             {customer.tierProgressPercent}%
           </span>
         </div>
         <ProgressBar value={customer.tierProgressPercent} max={100} color="brand" height="sm" />
         <div className="text-xs text-text-secondary">
-          เกณฑ์คงระดับ <span className="font-mono tabular-nums">฿{customer.tierTargetSpend.toLocaleString()}</span>
+          เกณฑ์คงระดับ <span className="tabular-nums font-medium text-text-primary">฿{customer.tierTargetSpend.toLocaleString()}</span>
         </div>
       </div>
 
       {/* Contact Information */}
-      <div className="border-t border-divider pt-3.5 space-y-2.5 text-[13px]">
+      <div className="border-t border-divider pt-3.5 space-y-2.5 text-ui">
         <div className="flex items-center justify-between gap-2">
           <span className="text-text-secondary flex items-center gap-1.5">
             <Phone className="w-3.5 h-3.5 text-text-secondary" />
             <span>มือถือ</span>
           </span>
-          <span className="font-mono tabular-nums text-text-primary font-medium">
+          <span className="tabular-nums text-text-primary font-medium">
             {customer.phone}
           </span>
         </div>

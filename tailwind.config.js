@@ -35,6 +35,7 @@ export default {
         text: {
           primary: '#0F172A',
           secondary: '#475569',
+          muted: '#64748B',
           body2: '#1E293B',
         },
         warn: {
@@ -91,8 +92,35 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['"Inter"', '"IBM Plex Sans Thai"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
-        mono: ['"JetBrains Mono"', '"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        sans: [
+          '"IBM Plex Sans"',
+          '"IBM Plex Sans Thai"',
+          '"Leelawadee UI"',
+          '"Thonburi"',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          'sans-serif',
+        ],
+        mono: [
+          '"IBM Plex Mono"',
+          '"IBM Plex Sans Thai"',
+          'ui-monospace',
+          '"Cascadia Mono"',
+          '"Consolas"',
+          '"Leelawadee UI"',
+          'monospace',
+        ],
+      },
+      fontSize: {
+        '2xs': ['calc(12px * var(--cb-font-scale, 1.05))', { lineHeight: '1.5' }],
+        xs: ['calc(12.5px * var(--cb-font-scale, 1.05))', { lineHeight: '1.55' }],
+        ui: ['calc(13.5px * var(--cb-font-scale, 1.05))', { lineHeight: '1.6' }],
+        sm: ['calc(14px * var(--cb-font-scale, 1.05))', { lineHeight: '1.62' }],
+        base: ['calc(14.5px * var(--cb-font-scale, 1.05))', { lineHeight: '1.65' }],
+        lg: ['calc(16.5px * var(--cb-font-scale, 1.05))', { lineHeight: '1.45' }],
+        xl: ['calc(18.5px * var(--cb-font-scale, 1.05))', { lineHeight: '1.38' }],
+        '2xl': ['calc(24px * var(--cb-font-scale, 1.05))', { lineHeight: '1.25' }],
       },
       boxShadow: {
         'sidebar-active': '0 1px 3px rgba(31, 111, 209, 0.12), 0 1px 2px rgba(15, 23, 42, 0.05)',

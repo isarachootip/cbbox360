@@ -21,14 +21,14 @@ export const GradeBadge: React.FC<GradeBadgeProps> = ({
 
   const config = styles[grade] || styles.A;
 
-  const sizeClass = size === 'sm' ? 'text-[11px]' : 'text-[12px]';
+  const sizeClass = size === 'sm' ? 'text-2xs' : 'text-xs';
 
   return (
     <span
-      className={`inline-flex items-center gap-1 font-semibold ${config.text} ${sizeClass}`}
+      className={`inline-flex items-center gap-1 font-medium ${config.text} ${sizeClass}`}
     >
-      {prefix && <span className="font-normal text-[11px] opacity-80">{prefix}</span>}
-      <span className="font-bold font-mono">{grade}</span>
+      {prefix && <span className="font-normal text-2xs opacity-80">{prefix}</span>}
+      <span className="font-semibold tabular-nums">{grade}</span>
     </span>
   );
 };

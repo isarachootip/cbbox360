@@ -46,10 +46,10 @@ export const InboxChatHeader: React.FC<InboxChatHeaderProps> = ({
 
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-[15px] text-text-primary truncate">
+            <span className="font-semibold text-base text-text-primary truncate">
               {conversation.customerName}
             </span>
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 flex-shrink-0">
+            <span className="inline-flex items-center gap-1 text-2xs font-medium text-emerald-700 flex-shrink-0">
               {conversation.channel} · {conversation.channelAccount}
             </span>
             {conversation.channel === 'LINE' &&
@@ -57,7 +57,7 @@ export const InboxChatHeader: React.FC<InboxChatHeaderProps> = ({
                 <button
                   type="button"
                   onClick={onOpenLineIdModal}
-                  className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 hover:text-emerald-800 transition-colors cursor-pointer select-none"
+                  className="inline-flex items-center gap-1 text-2xs font-medium text-emerald-700 hover:text-emerald-800 transition-colors cursor-pointer select-none"
                   title={`LINE User ID: ${conversation.lineUserId} (คลิกเพื่อแก้ไข)`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -68,7 +68,7 @@ export const InboxChatHeader: React.FC<InboxChatHeaderProps> = ({
                 <button
                   type="button"
                   onClick={onOpenLineIdModal}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 hover:text-amber-700 transition-colors cursor-pointer select-none"
+                  className="inline-flex items-center gap-1 text-2xs font-medium text-amber-600 hover:text-amber-700 transition-colors cursor-pointer select-none"
                   title="ห้องนี้ยังไม่มี LINE User ID คลิกเพื่อผูก ID ทดสอบส่งข้อความ"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -79,7 +79,7 @@ export const InboxChatHeader: React.FC<InboxChatHeaderProps> = ({
 
           <div className="text-xs text-text-secondary mt-0.5 truncate">
             มอบหมาย: <span className="font-medium text-text-body2">{conversation.assignedTo}</span> · ทีม {conversation.team} ·{' '}
-            <span className="font-mono text-[11px]">#{conversation.id}</span>
+            <span className="font-mono text-2xs text-text-muted">#{conversation.id}</span>
           </div>
         </div>
       </div>

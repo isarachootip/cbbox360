@@ -65,8 +65,8 @@ export const UsersTable: React.FC<UsersTableProps> = ({
 
     <div className="bg-white rounded-card border border-border overflow-hidden shadow-card">
       <div className="overflow-x-auto">
-        <table className="w-full text-xs text-left">
-          <thead className="bg-bg-muted text-text-secondary border-b border-border">
+        <table className="w-full text-ui text-left">
+          <thead className="bg-bg-muted text-text-secondary text-xs border-b border-border">
             <tr>
               <th className="px-4 py-3 font-medium">ผู้ใช้งาน (User)</th>
               <th className="px-4 py-3 font-medium">ชื่อผู้ใช้ (Username)</th>
@@ -91,31 +91,31 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
                       <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 text-brand-deep shadow-xs"
+                        className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs flex-shrink-0 text-brand-deep shadow-xs"
                         style={{ backgroundColor: u.avatarBg || '#CFE2F8' }}
                       >
                         {u.initials}
                       </div>
                       <div>
-                        <div className="font-bold text-text-primary flex items-center gap-1.5">
+                        <div className="font-medium text-sm text-text-primary flex items-center gap-1.5">
                           <span>{u.name}</span>
-                          {isCurrent && <span className="text-[11px] text-brand font-semibold">(You)</span>}
+                          {isCurrent && <span className="text-2xs text-brand font-medium">(You)</span>}
                         </div>
-                        <div className="text-[11px] text-text-secondary">{u.email || '—'}</div>
+                        <div className="text-xs text-text-muted">{u.email || '—'}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-mono font-bold text-text-primary">{u.username}</td>
+                  <td className="px-4 py-3 font-mono text-xs font-medium text-text-primary">{u.username}</td>
                   <td className="px-4 py-3">
                     {authMode === 'demo' ? (
-                      <span className="font-mono text-text-secondary bg-bg-app px-2 py-0.5 rounded border border-border">{u.password}</span>
+                      <span className="font-mono text-xs text-text-secondary bg-bg-app px-2 py-0.5 rounded border border-border">{u.password}</span>
                     ) : u.mustChangePassword ? (
-                      <span className="inline-flex items-center gap-1.5 font-semibold text-amber-600">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-600">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
                         <span>รอเปลี่ยนรหัสครั้งแรก</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-600">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                         <span>พร้อมใช้งาน</span>
                       </span>
@@ -148,7 +148,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                       <span>{u.status === 'active' ? 'Active' : 'Inactive'}</span>
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-[11px] font-mono text-text-secondary">{u.lastLogin || '—'}</td>
+                  <td className="px-4 py-3 text-xs tabular-nums text-text-muted">{u.lastLogin || '—'}</td>
                   {canManage && (
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">

@@ -32,16 +32,16 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           <Menu className="w-5 h-5" />
         </button>
         {breadcrumbs ? (
-          <div className="text-[14px] font-medium text-text-primary flex items-center gap-1.5 truncate">
+          <div className="text-sm font-medium text-text-primary flex items-center gap-1.5 truncate">
             {breadcrumbs}
           </div>
         ) : (
           <div className="flex items-baseline gap-2.5 min-w-0">
-            <h1 className="text-[18px] font-bold text-text-primary tracking-tight truncate">
+            <h1 className="text-xl font-semibold text-text-primary truncate">
               {title}
             </h1>
             {subtitle && (
-              <span className="text-[13px] text-text-secondary font-normal truncate">
+              <span className="text-xs text-text-secondary font-normal truncate">
                 {subtitle}
               </span>
             )}

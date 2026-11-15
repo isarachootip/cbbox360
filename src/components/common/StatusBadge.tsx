@@ -68,7 +68,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   const displayText = label || status;
 
   return (
-    <span className={`inline-flex items-center gap-1.5 font-semibold ${config.text} ${textSize} ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 font-medium ${config.text} ${textSize} ${className}`}>
       <span className={`rounded-full shrink-0 ${config.dot} ${dotSize}`} />
       <span>{displayText}</span>
     </span>
