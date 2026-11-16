@@ -50,7 +50,7 @@ export const CustomerFilters: React.FC<CustomerFiltersProps> = ({
         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
         <input
           type="text"
-          placeholder="ค้นหาชื่อ, รหัสลูกค้า, เบอร์โทรศัพท์, อีเมล..."
+          placeholder="ค้นหา ชื่อ นามสกุล, ชื่อเล่น, ผู้ติดต่อ, รหัสลูกค้า, เบอร์โทรศัพท์..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full pl-9 pr-3.5 py-1.5 text-xs bg-bg-app border border-border rounded-lg focus:outline-none focus:border-brand focus:bg-white transition-all text-text-primary placeholder:text-text-placeholder"

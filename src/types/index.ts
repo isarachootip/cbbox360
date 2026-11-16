@@ -13,9 +13,16 @@ export type ChannelType = 'LINE' | 'Facebook' | '3CX' | 'Web form' | 'Sales rep'
 
 export type CustomerType = 'INDIVIDUAL' | 'CORPORATE';
 
-export interface ContactPerson {
+export interface PersonNameParts {
+  prefix?: string; // e.g. "คุณ", "นาย", "นาง", "นางสาว", "นพ.", "ช่าง"
+  firstName?: string; // e.g. "สมชาย"
+  lastName?: string; // e.g. "ใจดี"
+  nickname?: string; // e.g. "ชาย"
+}
+
+export interface ContactPerson extends PersonNameParts {
   id: string;
-  name: string;
+  name: string; // Computed full display name, e.g. "คุณกิตติศักดิ์ พงษ์ศิริ"
   roleOrTitle: string; // e.g. "ผู้จัดการฝ่ายจัดซื้อ", "เจ้าหน้าที่บัญชีและการเงิน"
   phone: string;
   email?: string;
@@ -49,7 +56,7 @@ export interface CustomerAddress {
   deliveryNotes?: string; // ข้อจำกัดจัดส่ง เช่น "เข้าได้เฉพาะรถ 4 ล้อ, เปิดรับ 08:30 - 16:30 น."
 }
 
-export interface Customer {
+export interface Customer extends PersonNameParts {
   id: string; // e.g. "C00123"
   name: string; // e.g. "สมชาย ใจดี" หรือ "บจก. นำชัยการพิมพ์"
   customerType?: CustomerType; // 'INDIVIDUAL' | 'CORPORATE'
@@ -96,6 +103,32 @@ export interface Customer {
     description: string;
     actionLabel: string;
   };
+}
+
+export interface CreateCustomerInput extends PersonNameParts {
+  name: string;
+  phone: string;
+  email: string;
+  tier: TierType;
+  creditGrade: CreditGrade;
+  creditLimit?: number;
+  customerType?: CustomerType;
+  companyName?: string;
+  taxId?: string;
+  branchCode?: string;
+  contacts?: ContactPerson[];
+  addresses?: CustomerAddress[];
+}
+
+export interface UpdateCustomerInput extends PersonNameParts {
+  customerType?: CustomerType;
+  companyName?: string;
+  taxId?: string;
+  branchCode?: string;
+  phone?: string;
+  fullPhone?: string;
+  email?: string;
+  birthday?: string;
 }
 
 export type TimelineEventType = 'Order' | 'แชท' | 'โทร' | 'Ticket' | 'Deal' | 'Tier' | 'Task';

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
-import { Modal } from '../components/common/Modal';
 import { CustomerProfileCard } from '../components/customer-360/CustomerProfileCard';
+import { EditCustomerModal } from '../components/customer-360/EditCustomerModal';
+import { CreditTaskConfirmModal } from '../components/customer-360/CreditTaskConfirmModal';
 import { CustomerTimelineView } from '../components/customer-360/CustomerTimelineView';
 import { CustomerRightSummaryColumn } from '../components/customer-360/CustomerRightSummaryColumn';
 import { CustomerSearchBox } from '../components/customer-360/CustomerSearchBox';
@@ -29,6 +30,7 @@ export const Customer360Page: React.FC = () => {
     tickets,
     addTicket,
     addCustomer,
+    updateCustomer,
   } = useCustomer();
 
   const customer =
@@ -42,6 +44,7 @@ export const Customer360Page: React.FC = () => {
   );
 
   const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
+  const [isEditCustomerModalOpen, setIsEditCustomerModalOpen] = useState(false);
   const [isCreditTaskModalOpen, setIsCreditTaskModalOpen] = useState(false);
 
   const handleCreateCreditTask = () => {
@@ -117,7 +120,10 @@ export const Customer360Page: React.FC = () => {
           className="max-w-[1640px] mx-auto mb-4"
         />
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] xl:grid-cols-[332px_1fr_320px] gap-4 max-w-[1640px] mx-auto">
-          <CustomerProfileCard customer={customer} />
+          <CustomerProfileCard
+            customer={customer}
+            onEditProfile={() => setIsEditCustomerModalOpen(true)}
+          />
           <CustomerTimelineView
             customer={customer}
             timelineEvents={timelineEvents}
@@ -145,40 +151,24 @@ export const Customer360Page: React.FC = () => {
         }}
       />
 
-      <Modal
+      <EditCustomerModal
+        isOpen={isEditCustomerModalOpen}
+        customer={customer}
+        onClose={() => setIsEditCustomerModalOpen(false)}
+        onSubmit={(updates) => {
+          const updated = updateCustomer(customer.id, updates);
+          if (updated) {
+            showToast(`บันทึกข้อมูลลูกค้า "${updated.name}" เรียบร้อยแล้ว`, 'success');
+          }
+        }}
+      />
+
+      <CreditTaskConfirmModal
         isOpen={isCreditTaskModalOpen}
+        customer={customer}
         onClose={() => setIsCreditTaskModalOpen(false)}
-        title="สร้าง Task พิจารณาเพิ่มวงเงินให้ทีมสินเชื่อ"
-        footer={
-          <>
-            <button
-              type="button"
-              onClick={() => setIsCreditTaskModalOpen(false)}
-              className="px-4 py-2 border border-border rounded-lg text-xs font-medium hover:bg-white"
-            >
-              ยกเลิก
-            </button>
-            <button
-              type="button"
-              onClick={handleCreateCreditTask}
-              className="px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold shadow-xs"
-            >
-              ยืนยันสร้าง Task
-            </button>
-          </>
-        }
-      >
-        <div className="space-y-3 text-[13px]">
-          <p className="text-text-secondary">
-            ส่งคำขอสร้าง Ticket ในโมดูล Credit Sales & Service เพื่อให้ผู้รับผิดชอบตรวจสอบและปรับวงเงิน
-          </p>
-          <div className="bg-bg-subtle p-3.5 rounded-xl border border-border space-y-1.5 font-mono text-xs tabular-nums">
-            <div>ลูกค้า: <strong>{customer.name}</strong> ({customer.id})</div>
-            <div>วงเงินปัจจุบัน: <strong>฿{customer.creditLimit.toLocaleString()}</strong></div>
-            <div>วงเงินที่เสนอใหม่: <strong className="text-emerald-700">฿400,000</strong></div>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={handleCreateCreditTask}
+      />
     </div>
   );
 };

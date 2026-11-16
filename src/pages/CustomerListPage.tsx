@@ -6,7 +6,8 @@ import { CustomerTable } from '../components/customer-list/CustomerTable';
 import { NewCustomerModal } from '../components/customer-list/NewCustomerModal';
 import { useCustomer } from '../context/CustomerContext';
 import { useToast } from '../context/ToastContext';
-import { TierType, CreditGrade } from '../types';
+import { CreateCustomerInput } from '../types';
+import { matchesCustomerSearch } from '../domain/customer/customerSearch';
 
 export const CustomerListPage: React.FC = () => {
   const { customers, setSelectedCustomerId, addCustomer } = useCustomer();
@@ -19,14 +20,7 @@ export const CustomerListPage: React.FC = () => {
 
   const filteredCustomers = useMemo(() => {
     return customers.filter((c) => {
-      const q = searchQuery.trim().toLowerCase();
-      const matchesSearch =
-        !q ||
-        c.name.toLowerCase().includes(q) ||
-        c.id.toLowerCase().includes(q) ||
-        c.phone.includes(searchQuery) ||
-        c.email.toLowerCase().includes(q);
-
+      const matchesSearch = matchesCustomerSearch(c, searchQuery);
       const matchesTier = selectedTier === 'all' || c.tier === selectedTier;
       const matchesGrade = selectedGrade === 'all' || c.creditGrade === selectedGrade;
 
@@ -40,14 +34,7 @@ export const CustomerListPage: React.FC = () => {
     setSelectedGrade('all');
   };
 
-  const handleCreateCustomer = (data: {
-    name: string;
-    phone: string;
-    email: string;
-    tier: TierType;
-    creditGrade: CreditGrade;
-    creditLimit?: number;
-  }) => {
+  const handleCreateCustomer = (data: CreateCustomerInput) => {
     const created = addCustomer(data);
     showToast(`เพิ่มลูกค้า "${created.name}" เรียบร้อยแล้ว (${created.id})`, 'success');
     return created;

@@ -84,8 +84,16 @@ export function useInboxWorkspace() {
   };
 
   const applyCannedResponse = (response: CannedResponse) => {
+    const primaryContact = currentCustomer?.contacts?.find((c) => c.isPrimary);
+    const resolvedFirstName =
+      currentCustomer?.firstName ||
+      primaryContact?.firstName ||
+      selectedConv.customerName.split(/\s+/)[0] ||
+      selectedConv.customerName;
     const text = replaceVariables(response.content, {
       customer_name: selectedConv.customerName,
+      first_name: resolvedFirstName,
+      nickname: currentCustomer?.nickname || primaryContact?.nickname || resolvedFirstName,
       order_code: currentCustomer?.lastOrderCode || 'SO-10482',
       tracking_no: 'TH2609-88412',
       agent_name: selectedConv.assignedTo || 'วิภา ส.',

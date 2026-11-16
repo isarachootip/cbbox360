@@ -13,7 +13,14 @@ import {
   CustomerType,
   ContactPerson,
   CustomerAddress,
+  CreateCustomerInput,
+  UpdateCustomerInput,
 } from '../types';
+import {
+  applyCustomerUpdate,
+  buildNewCustomerRecord,
+  normalizeContactInput,
+} from '../domain/customer/customerMutations';
 import { mockCustomers } from '../data/customers';
 import { mockDeals } from '../data/deals';
 import { mockTickets } from '../data/tickets';
@@ -69,20 +76,8 @@ interface CustomerContextType {
   updateSegmentRules: (segmentId: string, rules: Segment['rules']) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  addCustomer: (customerData: {
-    name: string;
-    phone: string;
-    email: string;
-    tier: TierType;
-    creditGrade: CreditGrade;
-    creditLimit?: number;
-    customerType?: CustomerType;
-    companyName?: string;
-    taxId?: string;
-    branchCode?: string;
-    contacts?: ContactPerson[];
-    addresses?: CustomerAddress[];
-  }) => Customer;
+  addCustomer: (customerData: CreateCustomerInput) => Customer;
+  updateCustomer: (customerId: string, updates: UpdateCustomerInput) => Customer | undefined;
   addContact: (customerId: string, contact: Omit<ContactPerson, 'id'>) => void;
   updateContact: (customerId: string, contact: ContactPerson) => void;
   deleteContact: (customerId: string, contactId: string) => void;
@@ -590,7 +585,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const addContact = (customerId: string, contactData: Omit<ContactPerson, 'id'>) => {
     const newContact: ContactPerson = {
-      ...contactData,
+      ...normalizeContactInput(contactData),
       id: `cnt-${Date.now()}`,
     };
     setCustomers(prev =>
@@ -608,15 +603,19 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const updateContact = (customerId: string, updatedContact: ContactPerson) => {
+    const normalizedContact: ContactPerson = {
+      ...normalizeContactInput(updatedContact),
+      id: updatedContact.id,
+    };
     setCustomers(prev =>
       prev.map(c => {
         if (c.id === customerId) {
           const existing = c.contacts || [];
           const updatedContacts = existing.map(cnt => {
-            if (cnt.id === updatedContact.id) {
-              return updatedContact;
+            if (cnt.id === normalizedContact.id) {
+              return normalizedContact;
             }
-            if (updatedContact.isPrimary && cnt.isPrimary) {
+            if (normalizedContact.isPrimary && cnt.isPrimary) {
               return { ...cnt, isPrimary: false };
             }
             return cnt;
@@ -716,74 +715,44 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     );
   };
 
-  const addCustomer = (customerData: {
-    name: string;
-    phone: string;
-    email: string;
-    tier: TierType;
-    creditGrade: CreditGrade;
-    creditLimit?: number;
-    customerType?: CustomerType;
-    companyName?: string;
-    taxId?: string;
-    branchCode?: string;
-    contacts?: ContactPerson[];
-    addresses?: CustomerAddress[];
-  }): Customer => {
+  const addCustomer = (customerData: CreateCustomerInput): Customer => {
     const nextNum = customers.length + 124;
     const newId = `C${nextNum.toString().padStart(5, '0')}`;
-    const initials = customerData.name.trim().slice(0, 2);
-
-    const newCustomer: Customer = {
-      id: newId,
-      name: customerData.name,
-      customerType: customerData.customerType || 'INDIVIDUAL',
-      companyName: customerData.companyName,
-      taxId: customerData.taxId,
-      branchCode: customerData.branchCode,
-      contacts: customerData.contacts || [],
-      addresses: customerData.addresses || [],
-      initials,
-      tier: customerData.tier,
-      creditGrade: customerData.creditGrade,
-      segments: ['New Member'],
-      lifetimeValue: 0,
-      spend12Months: 0,
-      orders12Months: 0,
-      lastOrderDaysAgo: 0,
-      lastOrderCode: '-',
-      lastOrderAmount: 0,
-      tierValidUntil: '31 ธ.ค. 2026',
-      tierProgressPercent: 0,
-      tierTargetSpend: 50000,
-      phone: customerData.phone,
-      fullPhone: customerData.phone,
-      email: customerData.email,
-      channels: {
-        line: true,
-        facebook: false,
-        email: true,
-        sms: false,
-      },
-      birthday: '-',
-      customerSince: 'เมื่อสักครู่',
-      consent: {
-        marketingLine: true,
-        marketingEmail: true,
-        marketingSms: false,
-      },
-      creditLimit: customerData.creditLimit || 50000,
-      creditUsed: 0,
-      creditOverdue: 0,
-      churnRisk: 'ต่ำ',
-      nextBestAction: {
-        description: 'ต้อนรับลูกค้าใหม่และส่งข้อความแนะนำบริการผ่าน LINE',
-        actionLabel: 'ส่งข้อความต้อนรับ',
-      },
-    };
-
+    const newCustomer = buildNewCustomerRecord(newId, customerData);
     setCustomers(prev => [newCustomer, ...prev]);
     return newCustomer;
+  };
+
+  const updateCustomer = (
+    customerId: string,
+    updates: UpdateCustomerInput
+  ): Customer | undefined => {
+    const target = customers.find(c => c.id === customerId);
+    if (!target) return undefined;
+
+    const updated = applyCustomerUpdate(target, updates);
+    setCustomers(prev => prev.map(c => (c.id === customerId ? updated : c)));
+
+    if (updated.name !== target.name) {
+      setDeals(prev =>
+        prev.map(d => (d.customerId === customerId ? { ...d, customerName: updated.name } : d))
+      );
+      setTickets(prev =>
+        prev.map(t => (t.customerId === customerId ? { ...t, customerName: updated.name } : t))
+      );
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.customerId === customerId ? { ...conv, customerName: updated.name } : conv
+        )
+      );
+      setCreditRequests(prev =>
+        prev.map(req =>
+          req.customerId === customerId ? { ...req, customerName: updated.name } : req
+        )
+      );
+    }
+
+    return updated;
   };
 
   return (
@@ -819,6 +788,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         searchQuery,
         setSearchQuery,
         addCustomer,
+        updateCustomer,
         addContact,
         updateContact,
         deleteContact,

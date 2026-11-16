@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, X, Phone, Mail, Calendar, Clock, ShieldCheck } from 'lucide-react';
+import { Check, X, Phone, Mail, Calendar, Clock, ShieldCheck, Edit2 } from 'lucide-react';
 import { Customer } from '../../types';
 import { TierBadge } from '../common/TierBadge';
 import { GradeBadge } from '../common/GradeBadge';
@@ -7,9 +7,13 @@ import { ProgressBar } from '../common/ProgressBar';
 
 interface CustomerProfileCardProps {
   customer: Customer;
+  onEditProfile?: () => void;
 }
 
-export const CustomerProfileCard: React.FC<CustomerProfileCardProps> = ({ customer }) => {
+export const CustomerProfileCard: React.FC<CustomerProfileCardProps> = ({
+  customer,
+  onEditProfile,
+}) => {
   return (
     <div className="bg-white rounded-card border border-border p-5 flex flex-col gap-4 shadow-card">
       {/* Top Identity */}
@@ -18,9 +22,26 @@ export const CustomerProfileCard: React.FC<CustomerProfileCardProps> = ({ custom
           {customer.initials}
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-semibold text-text-primary leading-snug truncate">
-            {customer.name}
-          </h2>
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="text-lg font-semibold text-text-primary leading-snug truncate">
+              <span>{customer.name}</span>
+              {customer.customerType !== 'CORPORATE' && customer.nickname && (
+                <span className="ml-1.5 text-sm font-normal text-text-secondary">
+                  ({customer.nickname})
+                </span>
+              )}
+            </h2>
+            {onEditProfile && (
+              <button
+                type="button"
+                onClick={onEditProfile}
+                title="แก้ไขข้อมูลลูกค้า"
+                className="p-1.5 rounded-lg text-text-secondary hover:text-brand hover:bg-bg-subtle transition-colors shrink-0 cursor-pointer"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <span className="font-mono text-xs font-medium text-brand-deep bg-brand-tint/70 px-2 py-0.5 rounded-md">
               {customer.id}

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { PhoneIncoming, UserPlus, Link2, Search } from 'lucide-react';
 import type { CtiScreenPopQuery, Customer } from '../../types';
 import { TierBadge } from '../common/TierBadge';
+import { matchesCustomerSearch } from '../../domain/customer/customerSearch';
 
 interface UnknownCallerCardProps {
   query: CtiScreenPopQuery;
@@ -21,16 +22,8 @@ export const UnknownCallerCard: React.FC<UnknownCallerCardProps> = ({
   const [contactLabel, setContactLabel] = useState('ผู้ติดต่อสายเรียกเข้า (3CX)');
 
   const filteredCustomers = useMemo(() => {
-    const kw = searchKeyword.trim().toLowerCase();
-    if (!kw) return customers.slice(0, 5);
-    return customers
-      .filter(
-        (c) =>
-          c.name.toLowerCase().includes(kw) ||
-          c.id.toLowerCase().includes(kw) ||
-          (c.companyName && c.companyName.toLowerCase().includes(kw))
-      )
-      .slice(0, 5);
+    if (!searchKeyword.trim()) return customers.slice(0, 5);
+    return customers.filter((c) => matchesCustomerSearch(c, searchKeyword)).slice(0, 5);
   }, [customers, searchKeyword]);
 
   return (

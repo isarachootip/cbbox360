@@ -4,10 +4,16 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00123',
     name: 'สมชาย ใจดี',
+    firstName: 'สมชาย',
+    lastName: 'ใจดี',
+    nickname: 'ชาย',
     customerType: 'INDIVIDUAL',
     contacts: [
       {
         id: 'cnt-1',
+        firstName: 'สมชาย',
+        lastName: 'ใจดี',
+        nickname: 'ชาย',
         name: 'สมชาย ใจดี',
         roleOrTitle: 'เจ้าของ / ผู้สั่งซื้อ',
         phone: '081-892-5678',
@@ -85,6 +91,10 @@ export const mockCustomers: Customer[] = [
     contacts: [
       {
         id: 'cnt-101',
+        prefix: 'คุณ',
+        firstName: 'กิตติศักดิ์',
+        lastName: 'พงษ์ศิริ',
+        nickname: 'กิต',
         name: 'คุณกิตติศักดิ์ พงษ์ศิริ',
         roleOrTitle: 'ผู้จัดการฝ่ายจัดซื้อ',
         phone: '082-345-1122',
@@ -95,6 +105,10 @@ export const mockCustomers: Customer[] = [
       },
       {
         id: 'cnt-102',
+        prefix: 'คุณ',
+        firstName: 'กรรณิการ์',
+        lastName: 'ทิพย์เนตร',
+        nickname: 'กานต์',
         name: 'คุณกรรณิการ์ ทิพย์เนตร',
         roleOrTitle: 'หัวหน้าแผนกบัญชีและการเงิน',
         phone: '02-890-1234 ต่อ 102',
@@ -104,6 +118,9 @@ export const mockCustomers: Customer[] = [
       },
       {
         id: 'cnt-103',
+        prefix: 'ช่าง',
+        firstName: 'วิรัช',
+        lastName: 'การดี',
         name: 'ช่างวิรัช การดี',
         roleOrTitle: 'หัวหน้าช่างพิมพ์ / ผู้ตรวจรับสินค้า',
         phone: '089-771-4567',
@@ -193,6 +210,10 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00125',
     name: 'Pim Chanida',
+    firstName: 'Pim',
+    lastName: 'Chanida',
+    nickname: 'Pim',
+    customerType: 'INDIVIDUAL',
     initials: 'PC',
     tier: 'SILVER',
     creditGrade: 'B',
@@ -234,6 +255,9 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00126',
     name: 'อนันต์ ศรีสุข',
+    firstName: 'อนันต์',
+    lastName: 'ศรีสุข',
+    customerType: 'INDIVIDUAL',
     initials: 'อส',
     tier: 'GOLD',
     creditGrade: 'A',
@@ -275,6 +299,9 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00127',
     name: 'กนกวรรณ พ.',
+    firstName: 'กนกวรรณ',
+    lastName: 'พ.',
+    customerType: 'INDIVIDUAL',
     initials: 'กพ',
     tier: 'SILVER',
     creditGrade: 'B',
@@ -316,6 +343,9 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00128',
     name: 'Tanawat K.',
+    firstName: 'Tanawat',
+    lastName: 'K.',
+    customerType: 'INDIVIDUAL',
     initials: 'TK',
     tier: 'MEMBER',
     creditGrade: 'C',
@@ -357,6 +387,8 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00129',
     name: 'บจก. เจริญวัสดุ',
+    customerType: 'CORPORATE',
+    companyName: 'บริษัท เจริญวัสดุ จำกัด',
     initials: 'จว',
     tier: 'PLATINUM',
     creditGrade: 'A',
@@ -398,6 +430,8 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00130',
     name: 'บจก. ศรีอักษร',
+    customerType: 'CORPORATE',
+    companyName: 'บริษัท ศรีอักษร จำกัด',
     initials: 'ศอ',
     tier: 'SILVER',
     creditGrade: 'D',
@@ -439,6 +473,8 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00131',
     name: 'ร้านถ่ายเอกสารหน้า ม.',
+    customerType: 'CORPORATE',
+    companyName: 'ร้านถ่ายเอกสารหน้า ม.',
     initials: 'ผม',
     tier: 'MEMBER',
     creditGrade: 'C',
@@ -480,6 +516,8 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00132',
     name: 'ร้านเครื่องเขียนสยาม',
+    customerType: 'CORPORATE',
+    companyName: 'ร้านเครื่องเขียนสยาม',
     initials: 'รส',
     tier: 'GOLD',
     creditGrade: 'C',
@@ -521,6 +559,8 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00133',
     name: 'โรงเรียนอนุบาลดวงดาว',
+    customerType: 'CORPORATE',
+    companyName: 'โรงเรียนอนุบาลดวงดาว',
     initials: 'อด',
     tier: 'SILVER',
     creditGrade: 'B',
@@ -562,6 +602,8 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00134',
     name: 'รพ.สัตว์ใจดี',
+    customerType: 'CORPORATE',
+    companyName: 'รพ.สัตว์ใจดี',
     initials: 'รจ',
     tier: 'GOLD',
     creditGrade: 'A',
@@ -603,6 +645,8 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00135',
     name: 'คลินิกหมอฟันยิ้มสวย',
+    customerType: 'CORPORATE',
+    companyName: 'คลินิกหมอฟันยิ้มสวย',
     initials: 'คย',
     tier: 'MEMBER',
     creditGrade: 'B',
@@ -644,6 +688,9 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00136',
     name: 'ปกรณ์ ทองดี',
+    firstName: 'ปกรณ์',
+    lastName: 'ทองดี',
+    customerType: 'INDIVIDUAL',
     initials: 'ปท',
     tier: 'GOLD',
     creditGrade: 'A',
@@ -685,6 +732,9 @@ export const mockCustomers: Customer[] = [
   {
     id: 'C00137',
     name: 'ศิริพร แสงทอง',
+    firstName: 'ศิริพร',
+    lastName: 'แสงทอง',
+    customerType: 'INDIVIDUAL',
     initials: 'ศส',
     tier: 'PLATINUM',
     creditGrade: 'A',

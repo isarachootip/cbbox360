@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Customer } from '../../types';
 import { TierBadge } from '../common/TierBadge';
+import { matchesCustomerSearch } from '../../domain/customer/customerSearch';
 
 interface CustomerSearchBoxProps {
   customers: Customer[];
@@ -15,19 +16,14 @@ export const CustomerSearchBox: React.FC<CustomerSearchBoxProps> = ({
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
 
-  const results = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(query.toLowerCase()) ||
-      c.id.toLowerCase().includes(query.toLowerCase()) ||
-      c.phone.includes(query)
-  );
+  const results = customers.filter((c) => matchesCustomerSearch(c, query));
 
   return (
     <div className="relative w-full max-w-md">
       <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
       <input
         type="text"
-        placeholder="ค้นหา ชื่อ · เบอร์โทร · Customer ID"
+        placeholder="ค้นหา ชื่อ นามสกุล · ชื่อเล่น · เบอร์โทร · Customer ID"
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -55,7 +51,14 @@ export const CustomerSearchBox: React.FC<CustomerSearchBoxProps> = ({
                     {c.initials}
                   </div>
                   <div>
-                    <div className="font-semibold text-[13px] text-text-primary">{c.name}</div>
+                    <div className="font-semibold text-[13px] text-text-primary">
+                      {c.name}
+                      {c.customerType !== 'CORPORATE' && c.nickname && (
+                        <span className="ml-1 font-normal text-xs text-text-secondary">
+                          ({c.nickname})
+                        </span>
+                      )}
+                    </div>
                     <div className="text-[11px] text-text-secondary font-mono tabular-nums">
                       {c.id} · {c.phone}
                     </div>
