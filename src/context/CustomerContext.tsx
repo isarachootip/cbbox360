@@ -1,37 +1,25 @@
-import React, { createContext, useContext, useState } from 'react';
-import {
-  Customer,
-  Deal,
-  Ticket,
-  Conversation,
-  CreditLimitRequest,
-  Segment,
-  TimelineEvent,
-  TaskDetails,
-  TierType,
-  CreditGrade,
-  CustomerType,
+import React, { createContext, useContext } from 'react';
+import type {
   ContactPerson,
-  CustomerAddress,
+  Conversation,
   CreateCustomerInput,
+  CreditLimitRequest,
+  Customer,
+  CustomerAddress,
+  Deal,
+  Segment,
+  TaskDetails,
+  Ticket,
+  TimelineEvent,
   UpdateCustomerInput,
 } from '../types';
+import { useCustomerDirectoryState } from '../hooks/useCustomerDirectoryState';
+import { useDealsAndTicketsState } from '../hooks/useDealsAndTicketsState';
+import { useInboxConversationsState } from '../hooks/useInboxConversationsState';
 import {
-  applyCustomerUpdate,
-  buildNewCustomerRecord,
-  normalizeContactInput,
-} from '../domain/customer/customerMutations';
-import { mockCustomers } from '../data/customers';
-import { mockDeals } from '../data/deals';
-import { mockTickets } from '../data/tickets';
-import { mockConversations } from '../data/conversations';
-import { mockCreditLimitRequests } from '../data/credit';
-import { mockSegments } from '../data/segments';
-import { mockTimelineEvents } from '../data/timeline';
-import {
-  setPrimaryContact as setPrimaryContactHelper,
-  setDefaultAddress as setDefaultAddressHelper,
-} from '../utils/customerHelpers';
+  TaskComposerPayload,
+  useConversationTasksAndCreditState,
+} from '../hooks/useConversationTasksAndCreditState';
 
 interface CustomerContextType {
   customers: Customer[];
@@ -59,16 +47,7 @@ interface CustomerContextType {
   toggleBotStatus: (convId: string, isBotActive: boolean) => Promise<void>;
   updateConversationLineUserId: (convId: string, lineUserId: string) => Promise<boolean>;
   retrySendMessage: (convId: string, messageId: string, text: string) => Promise<void>;
-  addTaskToConversation: (
-    convId: string,
-    taskData: {
-      title: string;
-      assignee: string;
-      dueDate: string;
-      priority: 'ปกติ' | 'ด่วน' | 'ด่วนที่สุด';
-      note?: string;
-    }
-  ) => void;
+  addTaskToConversation: (convId: string, taskData: TaskComposerPayload) => void;
   updateTaskStatus: (convId: string, messageId: string, status: TaskDetails['status']) => void;
   approveCreditLimit: (requestId: string) => void;
   rejectCreditLimit: (requestId: string) => void;
@@ -90,712 +69,66 @@ interface CustomerContextType {
 const CustomerContext = createContext<CustomerContextType | undefined>(undefined);
 
 export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('C00123');
-  const [deals, setDeals] = useState<Deal[]>(mockDeals);
-  const [tickets, setTickets] = useState<Ticket[]>(mockTickets);
-  const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
-  const [creditRequests, setCreditRequests] = useState<CreditLimitRequest[]>(mockCreditLimitRequests);
-  const [segments, setSegments] = useState<Segment[]>(mockSegments);
-  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>(mockTimelineEvents);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const dealsAndTickets = useDealsAndTicketsState();
+  const inbox = useInboxConversationsState();
 
-  const addTimelineEvent = (event: TimelineEvent) => {
-    setTimelineEvents(prev => [event, ...prev]);
-  };
-
-  const selectedCustomer = customers.find(c => c.id.toLowerCase() === selectedCustomerId.toLowerCase()) || customers[0];
-
-  const updateDealStage = (dealId: string, newStage: Deal['stage'], lostReason?: string) => {
-    setDeals(prev =>
-      prev.map(d => {
-        if (d.id === dealId) {
-          let prob = 10;
-          if (newStage === 'Lead') prob = 10;
-          else if (newStage === 'Qualified') prob = 25;
-          else if (newStage === 'Proposal') prob = 50;
-          else if (newStage === 'Negotiation') prob = 75;
-          else if (newStage === 'Closed Won') prob = 100;
-          else if (newStage === 'Closed Lost') prob = 0;
-
-          return {
-            ...d,
-            stage: newStage,
-            probability: prob,
-            lostReason: lostReason || (newStage === 'Closed Lost' ? d.lostReason || 'ราคา' : undefined),
-            daysInStage: 0,
-          };
-        }
-        return d;
-      })
+  const handleCustomerRenamed = (customerId: string, newName: string) => {
+    dealsAndTickets.cascadeCustomerNameToDealsAndTickets(customerId, newName);
+    inbox.setConversations((prev) =>
+      prev.map((conv) => (conv.customerId === customerId ? { ...conv, customerName: newName } : conv))
     );
+    tasksAndCredit.cascadeCustomerNameToCredit(customerId, newName);
   };
 
-  const addDeal = (dealData: Omit<Deal, 'id' | 'createdDate'>) => {
-    const newDeal: Deal = {
-      ...dealData,
-      id: `D-${Math.floor(100 + Math.random() * 900)}`,
-      createdDate: 'วันนี้',
-    };
-    setDeals(prev => [newDeal, ...prev]);
-  };
-
-  const addTicket = (ticketData: Omit<Ticket, 'id' | 'createdAt' | 'activityLogs'>) => {
-    const newTicket: Ticket = {
-      ...ticketData,
-      id: `TK-${Math.floor(2320 + Math.random() * 100)}`,
-      createdAt: 'วันนี้',
-      activityLogs: [
-        {
-          time: 'เพิ่งสร้าง',
-          author: 'ระบบ',
-          text: `สร้าง Ticket ใหม่: ${ticketData.title}`,
-          type: 'system',
-        },
-      ],
-    };
-    setTickets(prev => [newTicket, ...prev]);
-  };
-
-  const updateTicketStatus = (ticketId: string, status: Ticket['status']) => {
-    setTickets(prev =>
-      prev.map(t => (t.id === ticketId ? { ...t, status } : t))
-    );
-  };
-
-  const addTicketLog = (ticketId: string, text: string, author: string = 'วิภา ส.') => {
-    const now = new Date();
-    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    setTickets(prev =>
-      prev.map(t => {
-        if (t.id === ticketId) {
-          return {
-            ...t,
-            activityLogs: [
-              ...t.activityLogs,
-              {
-                time: timeStr,
-                author,
-                text,
-                type: 'agent',
-              },
-            ],
-          };
-        }
-        return t;
-      })
-    );
-  };
-
-  const updateConversationStatus = (convId: string, status: Conversation['status']) => {
-    setConversations(prev =>
-      prev.map(c => (c.id === convId ? { ...c, status } : c))
-    );
-  };
-
-  // Live sync with Backend Server (LINE Webhook messages)
-  React.useEffect(() => {
-    const fetchLiveConversations = async () => {
-      try {
-        const res = await fetch('/api/conversations');
-        if (res.ok) {
-          const json = await res.json();
-          if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
-            setConversations(json.data);
-          }
-        }
-      } catch (err) {
-        // Fallback to local mock data
-      }
-    };
-
-    fetchLiveConversations();
-    const interval = setInterval(fetchLiveConversations, 2500);
-    return () => clearInterval(interval);
-  }, []);
-
-  const addMessageToConversation = async (convId: string, text: string, isPrivate: boolean = false) => {
-    const now = new Date();
-    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    const tempMsgId = `m-${Date.now()}`;
-
-    // Optimistic local update
-    setConversations(prev =>
-      prev.map(c => {
-        if (c.id === convId) {
-          return {
-            ...c,
-            lastMessagePreview: isPrivate ? c.lastMessagePreview : text,
-            time: timeStr,
-            isBotActive: isPrivate ? c.isBotActive : false,
-            messages: [
-              ...c.messages,
-              {
-                id: tempMsgId,
-                sender: isPrivate ? 'note' : 'agent',
-                authorName: 'วิภา ส.',
-                text,
-                time: timeStr,
-                isPrivateNote: isPrivate,
-                deliveryStatus: 'delivered',
-              },
-            ],
-          };
-        }
-        return c;
-      })
-    );
-
-    // Send to backend API (which also sends real LINE Push message to customer)
-    try {
-      const res = await fetch(`/api/conversations/${convId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, isPrivate, authorName: 'วิภา ส.' }),
-      });
-
-      if (res.ok) {
-        const json = await res.json();
-        const lineSuccess = json?.lineDelivery?.success !== false;
-        setConversations(prev =>
-          prev.map(c => {
-            if (c.id === convId) {
-              return {
-                ...c,
-                isBotActive: isPrivate ? c.isBotActive : false,
-                messages: c.messages.map(m =>
-                  m.id === tempMsgId
-                    ? {
-                        ...m,
-                        id: json?.message?.id || m.id,
-                        deliveryStatus: lineSuccess ? 'delivered' : 'failed',
-                        failureReason: lineSuccess ? undefined : json?.lineDelivery?.error || 'LINE Push delivery failed',
-                      }
-                    : m
-                ),
-              };
-            }
-            return c;
-          })
-        );
-        return { success: true, lineDelivery: json?.lineDelivery };
-      } else {
-        const errJson = await res.json().catch(() => ({}));
-        const errMsg = errJson?.error || `HTTP ${res.status}`;
-        setConversations(prev =>
-          prev.map(c => {
-            if (c.id === convId) {
-              return {
-                ...c,
-                messages: c.messages.map(m =>
-                  m.id === tempMsgId ? { ...m, deliveryStatus: 'failed', failureReason: errMsg } : m
-                ),
-              };
-            }
-            return c;
-          })
-        );
-        return { success: false, lineDelivery: { success: false, error: errMsg } };
-      }
-    } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : 'เชื่อมต่อเซิร์ฟเวอร์ขัดข้อง';
-      setConversations(prev =>
-        prev.map(c => {
-          if (c.id === convId) {
-            return {
-              ...c,
-              messages: c.messages.map(m =>
-                m.id === tempMsgId ? { ...m, deliveryStatus: 'failed', failureReason: errMsg } : m
-              ),
-            };
-          }
-          return c;
-        })
-      );
-      return { success: false, lineDelivery: { success: false, error: errMsg } };
-    }
-  };
-
-  const toggleBotStatus = async (convId: string, isBotActive: boolean) => {
-    setConversations(prev =>
-      prev.map(c => (c.id === convId ? { ...c, isBotActive } : c))
-    );
-
-    try {
-      await fetch(`/api/conversations/${convId}/bot-status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isBotActive }),
-      });
-    } catch (err) {
-      console.error('Failed to toggle bot status on server', err);
-    }
-  };
-
-  const updateConversationLineUserId = async (convId: string, lineUserId: string): Promise<boolean> => {
-    try {
-      const res = await fetch(`/api/conversations/${convId}/line-user`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lineUserId: lineUserId.trim() }),
-      });
-
-      if (res.ok) {
-        setConversations(prev =>
-          prev.map(c => (c.id === convId ? { ...c, lineUserId: lineUserId.trim() } : c))
-        );
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error('Failed to update line user id on server', err);
-      return false;
-    }
-  };
-
-  const retrySendMessage = async (convId: string, messageId: string, text: string) => {
-    setConversations(prev =>
-      prev.map(c => {
-        if (c.id === convId) {
-          return {
-            ...c,
-            messages: c.messages.map(m =>
-              m.id === messageId ? { ...m, deliveryStatus: 'sending', failureReason: undefined } : m
-            ),
-          };
-        }
-        return c;
-      })
-    );
-
-    try {
-      const res = await fetch(`/api/conversations/${convId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, isPrivate: false, authorName: 'วิภา ส.' }),
-      });
-
-      if (res.ok) {
-        const json = await res.json();
-        const lineSuccess = json?.lineDelivery?.success !== false;
-        setConversations(prev =>
-          prev.map(c => {
-            if (c.id === convId) {
-              return {
-                ...c,
-                isBotActive: false,
-                messages: c.messages.map(m =>
-                  m.id === messageId
-                    ? {
-                        ...m,
-                        deliveryStatus: lineSuccess ? 'delivered' : 'failed',
-                        failureReason: lineSuccess ? undefined : json?.lineDelivery?.error || 'LINE Push delivery failed',
-                      }
-                    : m
-                ),
-              };
-            }
-            return c;
-          })
-        );
-      } else {
-        setConversations(prev =>
-          prev.map(c => {
-            if (c.id === convId) {
-              return {
-                ...c,
-                messages: c.messages.map(m =>
-                  m.id === messageId ? { ...m, deliveryStatus: 'failed', failureReason: `HTTP ${res.status}` } : m
-                ),
-              };
-            }
-            return c;
-          })
-        );
-      }
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : 'เชื่อมต่อล้มเหลว';
-      setConversations(prev =>
-        prev.map(c => {
-          if (c.id === convId) {
-            return {
-              ...c,
-              messages: c.messages.map(m =>
-                m.id === messageId ? { ...m, deliveryStatus: 'failed', failureReason: errorMsg } : m
-              ),
-            };
-          }
-          return c;
-        })
-      );
-    }
-  };
-
-  const addTaskToConversation = async (
-    convId: string,
-    taskData: {
-      title: string;
-      assignee: string;
-      dueDate: string;
-      priority: 'ปกติ' | 'ด่วน' | 'ด่วนที่สุด';
-      note?: string;
-    }
-  ) => {
-    const now = new Date();
-    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    const taskId = `TSK-${Date.now().toString().slice(-4)}`;
-
-    const taskDetails: TaskDetails = {
-      id: taskId,
-      title: taskData.title,
-      assignee: taskData.assignee,
-      dueDate: taskData.dueDate,
-      priority: taskData.priority,
-      status: 'Pending',
-      createdAt: timeStr,
-      note: taskData.note,
-    };
-
-    const taskText = `📋 สร้าง Task: ${taskData.title} (มอบหมาย: ${taskData.assignee})`;
-
-    setConversations(prev =>
-      prev.map(c => {
-        if (c.id === convId) {
-          return {
-            ...c,
-            lastMessagePreview: `[Task] ${taskData.title}`,
-            time: timeStr,
-            messages: [
-              ...c.messages,
-              {
-                id: `m-${Date.now()}`,
-                sender: 'system',
-                authorName: 'วิภา ส.',
-                text: taskText,
-                time: timeStr,
-                isPrivateNote: true,
-                task: taskDetails,
-              },
-            ],
-          };
-        }
-        return c;
-      })
-    );
-
-    // Also add to Timeline for the customer
-    const targetConv = conversations.find(c => c.id === convId);
-    if (targetConv) {
-      const newTimelineEvent: TimelineEvent = {
-        id: `tl-task-${Date.now()}`,
-        customerId: targetConv.customerId,
-        type: 'Task',
-        iconCode: 'TS',
-        title: `มอบหมาย Task: ${taskData.title}`,
-        time: `วันนี้ ${timeStr}`,
-        detail: `มอบหมายให้ ${taskData.assignee} · กำหนดเสร็จ ${taskData.dueDate} · ความสำคัญ: ${taskData.priority}${taskData.note ? ` (${taskData.note})` : ''}`,
-        meta: [`สถานะ: Pending`, `ผู้สร้าง: วิภา ส.`],
-        linkText: 'เปิดใน Inbox',
-        linkRoute: '/inbox',
-        colorScheme: 'purple',
-      };
-      setTimelineEvents(prev => [newTimelineEvent, ...prev]);
-    }
-
-    // Persist to backend as internal note
-    try {
-      await fetch(`/api/conversations/${convId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: taskText,
-          isPrivate: true,
-          authorName: 'วิภา ส.',
-        }),
-      });
-    } catch (err) {
-      console.error('Failed to sync task with backend API', err);
-    }
-  };
-
-  const updateTaskStatus = (convId: string, messageId: string, status: TaskDetails['status']) => {
-    setConversations(prev =>
-      prev.map(c => {
-        if (c.id === convId) {
-          return {
-            ...c,
-            messages: c.messages.map(m => {
-              if (m.id === messageId && m.task) {
-                return {
-                  ...m,
-                  task: {
-                    ...m.task,
-                    status,
-                  },
-                };
-              }
-              return m;
-            }),
-          };
-        }
-        return c;
-      })
-    );
-  };
-
-  const approveCreditLimit = (requestId: string) => {
-    const req = creditRequests.find(r => r.id === requestId);
-    if (!req) return;
-
-    setCreditRequests(prev =>
-      prev.map(r => (r.id === requestId ? { ...r, status: 'approved' } : r))
-    );
-
-    // Update customer credit limit
-    setCustomers(prev =>
-      prev.map(c => {
-        if (c.id === req.customerId) {
-          return {
-            ...c,
-            creditLimit: req.requestedLimit,
-          };
-        }
-        return c;
-      })
-    );
-  };
-
-  const rejectCreditLimit = (requestId: string) => {
-    setCreditRequests(prev =>
-      prev.map(r => (r.id === requestId ? { ...r, status: 'rejected' } : r))
-    );
-  };
-
-  const toggleSegmentWebhook = (segmentId: string) => {
-    setSegments(prev =>
-      prev.map(s => (s.id === segmentId ? { ...s, webhookEnabled: !s.webhookEnabled } : s))
-    );
-  };
-
-  const updateSegmentRules = (segmentId: string, rules: Segment['rules']) => {
-    setSegments(prev =>
-      prev.map(s => (s.id === segmentId ? { ...s, rules } : s))
-    );
-  };
-
-  const addContact = (customerId: string, contactData: Omit<ContactPerson, 'id'>) => {
-    const newContact: ContactPerson = {
-      ...normalizeContactInput(contactData),
-      id: `cnt-${Date.now()}`,
-    };
-    setCustomers(prev =>
-      prev.map(c => {
-        if (c.id === customerId) {
-          const existing = c.contacts || [];
-          const updatedContacts = newContact.isPrimary
-            ? existing.map(cnt => ({ ...cnt, isPrimary: false })).concat(newContact)
-            : [...existing, newContact];
-          return { ...c, contacts: updatedContacts };
-        }
-        return c;
-      })
-    );
-  };
-
-  const updateContact = (customerId: string, updatedContact: ContactPerson) => {
-    const normalizedContact: ContactPerson = {
-      ...normalizeContactInput(updatedContact),
-      id: updatedContact.id,
-    };
-    setCustomers(prev =>
-      prev.map(c => {
-        if (c.id === customerId) {
-          const existing = c.contacts || [];
-          const updatedContacts = existing.map(cnt => {
-            if (cnt.id === normalizedContact.id) {
-              return normalizedContact;
-            }
-            if (normalizedContact.isPrimary && cnt.isPrimary) {
-              return { ...cnt, isPrimary: false };
-            }
-            return cnt;
-          });
-          return { ...c, contacts: updatedContacts };
-        }
-        return c;
-      })
-    );
-  };
-
-  const deleteContact = (customerId: string, contactId: string) => {
-    setCustomers(prev =>
-      prev.map(c => {
-        if (c.id === customerId) {
-          return {
-            ...c,
-            contacts: (c.contacts || []).filter(cnt => cnt.id !== contactId),
-          };
-        }
-        return c;
-      })
-    );
-  };
-
-  const addAddress = (customerId: string, addressData: Omit<CustomerAddress, 'id'>) => {
-    const newAddress: CustomerAddress = {
-      ...addressData,
-      id: `addr-${Date.now()}`,
-    };
-    setCustomers(prev =>
-      prev.map(c => {
-        if (c.id === customerId) {
-          const existing = c.addresses || [];
-          let updated = existing;
-          if (newAddress.isDefaultBilling) {
-            updated = updated.map(a => ({ ...a, isDefaultBilling: false }));
-          }
-          if (newAddress.isDefaultShipping) {
-            updated = updated.map(a => ({ ...a, isDefaultShipping: false }));
-          }
-          return { ...c, addresses: [...updated, newAddress] };
-        }
-        return c;
-      })
-    );
-  };
-
-  const updateAddress = (customerId: string, updatedAddress: CustomerAddress) => {
-    setCustomers(prev =>
-      prev.map(c => {
-        if (c.id === customerId) {
-          const existing = c.addresses || [];
-          const updated = existing.map(a => {
-            if (a.id === updatedAddress.id) {
-              return updatedAddress;
-            }
-            let modified = { ...a };
-            if (updatedAddress.isDefaultBilling && modified.isDefaultBilling) {
-              modified.isDefaultBilling = false;
-            }
-            if (updatedAddress.isDefaultShipping && modified.isDefaultShipping) {
-              modified.isDefaultShipping = false;
-            }
-            return modified;
-          });
-          return { ...c, addresses: updated };
-        }
-        return c;
-      })
-    );
-  };
-
-  const deleteAddress = (customerId: string, addressId: string) => {
-    setCustomers(prev =>
-      prev.map(c => {
-        if (c.id === customerId) {
-          return {
-            ...c,
-            addresses: (c.addresses || []).filter(a => a.id !== addressId),
-          };
-        }
-        return c;
-      })
-    );
-  };
-
-  const setDefaultAddress = (customerId: string, addressId: string, type: 'billing' | 'shipping') => {
-    setCustomers(prev =>
-      prev.map(c => {
-        if (c.id === customerId) {
-          const existing = c.addresses || [];
-          return { ...c, addresses: setDefaultAddressHelper(existing, addressId, type) };
-        }
-        return c;
-      })
-    );
-  };
-
-  const addCustomer = (customerData: CreateCustomerInput): Customer => {
-    const nextNum = customers.length + 124;
-    const newId = `C${nextNum.toString().padStart(5, '0')}`;
-    const newCustomer = buildNewCustomerRecord(newId, customerData);
-    setCustomers(prev => [newCustomer, ...prev]);
-    return newCustomer;
-  };
-
-  const updateCustomer = (
-    customerId: string,
-    updates: UpdateCustomerInput
-  ): Customer | undefined => {
-    const target = customers.find(c => c.id === customerId);
-    if (!target) return undefined;
-
-    const updated = applyCustomerUpdate(target, updates);
-    setCustomers(prev => prev.map(c => (c.id === customerId ? updated : c)));
-
-    if (updated.name !== target.name) {
-      setDeals(prev =>
-        prev.map(d => (d.customerId === customerId ? { ...d, customerName: updated.name } : d))
-      );
-      setTickets(prev =>
-        prev.map(t => (t.customerId === customerId ? { ...t, customerName: updated.name } : t))
-      );
-      setConversations(prev =>
-        prev.map(conv =>
-          conv.customerId === customerId ? { ...conv, customerName: updated.name } : conv
-        )
-      );
-      setCreditRequests(prev =>
-        prev.map(req =>
-          req.customerId === customerId ? { ...req, customerName: updated.name } : req
-        )
-      );
-    }
-
-    return updated;
-  };
+  const directory = useCustomerDirectoryState(handleCustomerRenamed);
+  const tasksAndCredit = useConversationTasksAndCreditState({
+    conversations: inbox.conversations,
+    setConversations: inbox.setConversations,
+    addTimelineEvent: dealsAndTickets.addTimelineEvent,
+    onApproveCustomerCreditLimit: directory.updateCustomerCreditLimit,
+  });
 
   return (
     <CustomerContext.Provider
       value={{
-        customers,
-        selectedCustomerId,
-        setSelectedCustomerId,
-        selectedCustomer,
-        deals,
-        tickets,
-        conversations,
-        creditRequests,
-        segments,
-        timelineEvents,
-        addTimelineEvent,
-        updateDealStage,
-        addDeal,
-        addTicket,
-        updateTicketStatus,
-        addTicketLog,
-        updateConversationStatus,
-        addMessageToConversation,
-        toggleBotStatus,
-        updateConversationLineUserId,
-        retrySendMessage,
-        addTaskToConversation,
-        updateTaskStatus,
-        approveCreditLimit,
-        rejectCreditLimit,
-        toggleSegmentWebhook,
-        updateSegmentRules,
-        searchQuery,
-        setSearchQuery,
-        addCustomer,
-        updateCustomer,
-        addContact,
-        updateContact,
-        deleteContact,
-        addAddress,
-        updateAddress,
-        deleteAddress,
-        setDefaultAddress,
+        customers: directory.customers,
+        selectedCustomerId: directory.selectedCustomerId,
+        setSelectedCustomerId: directory.setSelectedCustomerId,
+        selectedCustomer: directory.selectedCustomer,
+        deals: dealsAndTickets.deals,
+        tickets: dealsAndTickets.tickets,
+        conversations: inbox.conversations,
+        creditRequests: tasksAndCredit.creditRequests,
+        segments: tasksAndCredit.segments,
+        timelineEvents: dealsAndTickets.timelineEvents,
+        addTimelineEvent: dealsAndTickets.addTimelineEvent,
+        updateDealStage: dealsAndTickets.updateDealStage,
+        addDeal: dealsAndTickets.addDeal,
+        addTicket: dealsAndTickets.addTicket,
+        updateTicketStatus: dealsAndTickets.updateTicketStatus,
+        addTicketLog: dealsAndTickets.addTicketLog,
+        updateConversationStatus: inbox.updateConversationStatus,
+        addMessageToConversation: inbox.addMessageToConversation,
+        toggleBotStatus: inbox.toggleBotStatus,
+        updateConversationLineUserId: inbox.updateConversationLineUserId,
+        retrySendMessage: inbox.retrySendMessage,
+        addTaskToConversation: tasksAndCredit.addTaskToConversation,
+        updateTaskStatus: tasksAndCredit.updateTaskStatus,
+        approveCreditLimit: tasksAndCredit.approveCreditLimit,
+        rejectCreditLimit: tasksAndCredit.rejectCreditLimit,
+        toggleSegmentWebhook: tasksAndCredit.toggleSegmentWebhook,
+        updateSegmentRules: tasksAndCredit.updateSegmentRules,
+        searchQuery: directory.searchQuery,
+        setSearchQuery: directory.setSearchQuery,
+        addCustomer: directory.addCustomer,
+        updateCustomer: directory.updateCustomer,
+        addContact: directory.addContact,
+        updateContact: directory.updateContact,
+        deleteContact: directory.deleteContact,
+        addAddress: directory.addAddress,
+        updateAddress: directory.updateAddress,
+        deleteAddress: directory.deleteAddress,
+        setDefaultAddress: directory.setDefaultAddress,
       }}
     >
       {children}

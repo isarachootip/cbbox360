@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
+import { Check } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Customer, CustomerType, UpdateCustomerInput } from '../../types';
 import {
@@ -12,6 +13,10 @@ import {
   CustomerTypeToggle,
 } from './CorporateIdentityFields';
 import { parseLegacyPersonName } from '../../domain/customer/personName';
+import {
+  CustomerFormErrors,
+  validateEditCustomerInput,
+} from '../../domain/customer/customerValidation';
 
 interface EditCustomerModalProps {
   isOpen: boolean;
@@ -26,6 +31,7 @@ export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const formId = useId();
   const [customerType, setCustomerType] = useState<CustomerType>('INDIVIDUAL');
   const [personDraft, setPersonDraft] = useState<PersonNameDraft>(EMPTY_PERSON_NAME_DRAFT);
   const [corpDraft, setCorpDraft] = useState<CorporateDraft>({
@@ -36,9 +42,11 @@ export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [birthday, setBirthday] = useState('');
+  const [errors, setErrors] = useState<CustomerFormErrors>({});
 
   useEffect(() => {
     if (!isOpen) return;
+    setErrors({});
     setCustomerType(customer.customerType || 'INDIVIDUAL');
 
     const parsed = customer.firstName
@@ -67,101 +75,123 @@ export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone.trim()) return;
-
-    if (customerType === 'CORPORATE') {
-      if (!corpDraft.companyName.trim()) return;
-      onSubmit({
-        customerType: 'CORPORATE',
-        companyName: corpDraft.companyName.trim(),
-        taxId: corpDraft.taxId.trim(),
-        branchCode: corpDraft.branchCode.trim(),
-        phone: phone.trim(),
-        fullPhone: phone.trim(),
-        email: email.trim(),
-        birthday: birthday.trim() || '-',
-      });
-    } else {
-      if (!personDraft.firstName.trim()) return;
-      onSubmit({
-        customerType: 'INDIVIDUAL',
-        prefix: personDraft.prefix.trim(),
-        firstName: personDraft.firstName.trim(),
-        lastName: personDraft.lastName.trim(),
-        nickname: personDraft.nickname.trim(),
-        phone: phone.trim(),
-        fullPhone: phone.trim(),
-        email: email.trim(),
-        birthday: birthday.trim() || '-',
-      });
+    const res = validateEditCustomerInput({
+      customerType,
+      personDraft,
+      corpDraft,
+      phone,
+      email,
+      birthday,
+    });
+    if (!res.ok) {
+      setErrors(res.errors);
+      return;
     }
+    onSubmit(res.updates);
     onClose();
   };
+
+  const inputBase =
+    'w-full px-3.5 py-2.5 border rounded-lg text-sm bg-white text-text-primary transition-all focus:outline-none focus:ring-2';
+  const normalBorder = 'border-border focus:border-brand focus:ring-brand/20';
+  const errorBorder = 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/20';
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={`แก้ไขข้อมูลลูกค้า (${customer.id})`}
-      maxWidth="md"
+      subtitle="อัปเดตข้อมูลชื่อ ช่องทางติดต่อ หรือข้อมูลนิติบุคคลในโปรไฟล์ Customer 360°"
+      maxWidth="2xl"
       footer={
-        <div className="flex items-center justify-end gap-2">
+        <>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 border border-border rounded-lg text-xs font-medium text-text-secondary hover:bg-bg-subtle transition-colors"
+            className="px-5 py-2.5 border border-border rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white transition-colors cursor-pointer"
           >
             ยกเลิก
           </button>
           <button
-            type="button"
-            onClick={handleSubmit}
-            className="px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+            type="submit"
+            form={formId}
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-semibold shadow-card transition-colors cursor-pointer"
           >
-            บันทึกการแก้ไข
+            <Check className="w-4 h-4" />
+            <span>บันทึกการแก้ไข</span>
           </button>
-        </div>
+        </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
-        <CustomerTypeToggle value={customerType} onChange={setCustomerType} />
+      <form id={formId} noValidate onSubmit={handleSubmit} className="space-y-4 text-sm">
+        <CustomerTypeToggle
+          value={customerType}
+          onChange={(next) => {
+            setCustomerType(next);
+            setErrors({});
+          }}
+        />
 
         {customerType === 'INDIVIDUAL' ? (
-          <PersonNameFields value={personDraft} onChange={setPersonDraft} firstNameRequired />
+          <PersonNameFields
+            value={personDraft}
+            onChange={(next) => {
+              setPersonDraft(next);
+              setErrors((prev) => ({ ...prev, firstName: undefined }));
+            }}
+            firstNameRequired
+            firstNameError={errors.firstName}
+          />
         ) : (
-          <CorporateIdentityFields value={corpDraft} onChange={setCorpDraft} />
+          <CorporateIdentityFields
+            value={corpDraft}
+            onChange={(next) => {
+              setCorpDraft(next);
+              setErrors((prev) => ({ ...prev, companyName: undefined, taxId: undefined }));
+            }}
+            companyNameError={errors.companyName}
+            taxIdError={errors.taxId}
+          />
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2 border-t border-divider">
           <div>
-            <label className="block text-text-secondary font-medium mb-1">
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">
               เบอร์โทรหลัก <span className="text-rose-500">*</span>
             </label>
             <input
               type="tel"
               required
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-lg font-mono"
+              onChange={(e) => {
+                setPhone(e.target.value);
+                setErrors((prev) => ({ ...prev, phone: undefined }));
+              }}
+              className={`${inputBase} font-mono ${errors.phone ? errorBorder : normalBorder}`}
             />
+            {errors.phone && <p className="mt-1 text-xs font-medium text-rose-600">{errors.phone}</p>}
           </div>
           <div>
-            <label className="block text-text-secondary font-medium mb-1">อีเมลติดต่อ</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">อีเมลติดต่อ</label>
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-lg"
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setErrors((prev) => ({ ...prev, email: undefined }));
+              }}
+              className={`${inputBase} ${errors.email ? errorBorder : normalBorder}`}
             />
+            {errors.email && <p className="mt-1 text-xs font-medium text-rose-600">{errors.email}</p>}
           </div>
           <div>
-            <label className="block text-text-secondary font-medium mb-1">วันเกิด</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">วันเกิด</label>
             <input
               type="text"
               value={birthday}
               onChange={(e) => setBirthday(e.target.value)}
               placeholder="เช่น 14 ก.พ."
-              className="w-full px-3 py-2 border border-border rounded-lg"
+              className={`${inputBase} ${normalBorder}`}
             />
           </div>
         </div>

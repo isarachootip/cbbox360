@@ -36,7 +36,14 @@ export const CustomerListPage: React.FC = () => {
 
   const handleCreateCustomer = (data: CreateCustomerInput) => {
     const created = addCustomer(data);
-    showToast(`เพิ่มลูกค้า "${created.name}" เรียบร้อยแล้ว (${created.id})`, 'success');
+    const visibleWithFilters =
+      matchesCustomerSearch(created, searchQuery) &&
+      (selectedTier === 'all' || created.tier === selectedTier) &&
+      (selectedGrade === 'all' || created.creditGrade === selectedGrade);
+    if (!visibleWithFilters) {
+      handleResetFilters();
+    }
+    showToast(`บันทึกข้อมูลลูกค้า "${created.name}" เรียบร้อยแล้ว (${created.id})`, 'success');
     return created;
   };
 

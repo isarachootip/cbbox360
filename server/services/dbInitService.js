@@ -153,8 +153,18 @@ export const ensureDatabaseSchema = async () => {
         updated_at TIMESTAMPTZ DEFAULT NOW(),
         PRIMARY KEY (customer_id, kind)
       );
+
+      CREATE TABLE IF NOT EXISTS customers (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        customer_type TEXT NOT NULL DEFAULT 'INDIVIDUAL',
+        data JSONB NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_customers_created_at ON customers(created_at DESC);
     `);
-    console.log('✅ [DB Schema] Verified medical roles and customer_industry_profiles');
+    console.log('✅ [DB Schema] Verified medical roles, customer_industry_profiles, and customers');
     await ensureUserAgentColumns();
     return true;
   } catch (err) {

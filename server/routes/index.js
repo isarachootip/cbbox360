@@ -9,6 +9,7 @@ import auditLogRoutes from './auditLogRoutes.js';
 import aiRoutes from './aiRoutes.js';
 import authRoutes from './authRoutes.js';
 import userRoutes from './userRoutes.js';
+import customerRoutes from './customerRoutes.js';
 import industryProfileRoutes from './industryProfileRoutes.js';
 import { requireAuth, requireRole } from '../services/authContainer.js';
 import { bindActor } from '../middlewares/bindActor.js';
@@ -36,6 +37,7 @@ router.use('/canned-responses', requireAuth, cannedResponseRoutes);
 router.use('/connectors', requireAuth, requireRole('sysadmin', 'admin'), connectorRoutes);
 router.use('/audit-logs', requireAuth, bindActor, auditLogRoutes);
 router.use('/ai', requireAuth, bindActor, aiRoutes);
+router.use('/customers', requireAuth, customerRoutes);
 router.use('/customers', requireAuth, industryProfileRoutes);
 router.use('/', requireAuth, botRoutes);
 

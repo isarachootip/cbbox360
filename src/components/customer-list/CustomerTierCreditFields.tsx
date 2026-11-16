@@ -1,94 +1,16 @@
 import React from 'react';
-import type {
-  ContactPerson,
-  CreateCustomerInput,
-  CreditGrade,
-  CustomerType,
-  TierType,
-} from '../../types';
+import type { CreateCustomerInput, CreditGrade, TierType } from '../../types';
 import { PersonNameDraft, PersonNameFields } from '../customer-360/PersonNameFields';
-import type { CorporateDraft } from '../customer-360/CorporateIdentityFields';
-import { formatPersonFullName } from '../../domain/customer/personName';
+import {
+  CreateCustomerFormParams,
+  validateAndBuildCreateCustomer,
+} from '../../domain/customer/customerValidation';
 
-const buildContactFromDraft = (
-  draft: PersonNameDraft,
-  roleOrTitle: string,
-  phone: string,
-  email: string
-): ContactPerson => ({
-  id: `cnt-${Date.now()}`,
-  prefix: draft.prefix.trim() || undefined,
-  firstName: draft.firstName.trim(),
-  lastName: draft.lastName.trim() || undefined,
-  nickname: draft.nickname.trim() || undefined,
-  name: formatPersonFullName(draft),
-  roleOrTitle,
-  phone,
-  email: email || undefined,
-  isPrimary: true,
-});
-
-export const buildCreateCustomerPayload = (params: {
-  customerType: CustomerType;
-  personDraft: PersonNameDraft;
-  corpDraft: CorporateDraft;
-  contactDraft: PersonNameDraft;
-  contactRole: string;
-  phone: string;
-  email: string;
-  tier: TierType;
-  creditGrade: CreditGrade;
-  creditLimit: string;
-}): CreateCustomerInput | null => {
-  const cleanPhone = params.phone.trim();
-  const cleanEmail = params.email.trim();
-  if (!cleanPhone) return null;
-
-  if (params.customerType === 'CORPORATE') {
-    const companyName = params.corpDraft.companyName.trim();
-    if (!companyName) return null;
-    const contacts = params.contactDraft.firstName.trim()
-      ? [
-          buildContactFromDraft(
-            params.contactDraft,
-            params.contactRole.trim() || 'ผู้ติดต่อหลัก',
-            cleanPhone,
-            cleanEmail
-          ),
-        ]
-      : [];
-    return {
-      name: companyName,
-      companyName,
-      taxId: params.corpDraft.taxId.trim() || undefined,
-      branchCode: params.corpDraft.branchCode.trim() || undefined,
-      customerType: 'CORPORATE',
-      phone: cleanPhone,
-      email: cleanEmail,
-      tier: params.tier,
-      creditGrade: params.creditGrade,
-      creditLimit: Number(params.creditLimit) || 50000,
-      contacts,
-    };
-  }
-
-  const firstName = params.personDraft.firstName.trim();
-  if (!firstName) return null;
-  const fullName = formatPersonFullName(params.personDraft);
-  return {
-    name: fullName,
-    prefix: params.personDraft.prefix.trim() || undefined,
-    firstName,
-    lastName: params.personDraft.lastName.trim() || undefined,
-    nickname: params.personDraft.nickname.trim() || undefined,
-    customerType: 'INDIVIDUAL',
-    phone: cleanPhone,
-    email: cleanEmail,
-    tier: params.tier,
-    creditGrade: params.creditGrade,
-    creditLimit: Number(params.creditLimit) || 50000,
-    contacts: [buildContactFromDraft(params.personDraft, 'ผู้สั่งซื้อ', cleanPhone, cleanEmail)],
-  };
+export const buildCreateCustomerPayload = (
+  params: CreateCustomerFormParams
+): CreateCustomerInput | null => {
+  const result = validateAndBuildCreateCustomer(params);
+  return result.ok ? result.payload : null;
 };
 
 interface CorporatePrimaryContactSectionProps {
@@ -104,18 +26,28 @@ export const CorporatePrimaryContactSection: React.FC<CorporatePrimaryContactSec
   personDraft,
   onPersonChange,
 }) => (
-  <div className="p-2.5 rounded-lg border border-border bg-bg-subtle/50 space-y-2">
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-[11px] font-semibold text-text-primary">
-        ผู้ติดต่อหลัก (Primary Contact)
-      </span>
-      <input
-        type="text"
-        value={contactRole}
-        onChange={(e) => onRoleChange(e.target.value)}
-        placeholder="ตำแหน่ง เช่น ฝ่ายจัดซื้อ"
-        className="w-40 px-2 py-1 border border-border rounded text-[11px] bg-white"
-      />
+  <div className="p-4 rounded-xl border border-border bg-bg-subtle/60 space-y-3.5">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2 border-b border-border/70">
+      <div>
+        <span className="text-sm font-semibold text-text-primary block">
+          ผู้ติดต่อหลักขององค์กร (Primary Contact)
+        </span>
+        <span className="text-xs text-text-muted">
+          ไม่บังคับ · ระบุชื่อและตำแหน่งผู้ประสานงานเพื่อความสะดวกในการติดต่อ
+        </span>
+      </div>
+      <div className="sm:w-60">
+        <label className="block text-xs font-medium text-text-secondary mb-1">
+          ตำแหน่ง / แผนกงาน
+        </label>
+        <input
+          type="text"
+          value={contactRole}
+          onChange={(e) => onRoleChange(e.target.value)}
+          placeholder="เช่น ผู้จัดการฝ่ายจัดซื้อ"
+          className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
+        />
+      </div>
     </div>
     <PersonNameFields
       value={personDraft}
@@ -130,6 +62,7 @@ interface CustomerTierCreditFieldsProps {
   tier: TierType;
   creditGrade: CreditGrade;
   creditLimit: string;
+  creditLimitError?: string;
   onTierChange: (tier: TierType) => void;
   onGradeChange: (grade: CreditGrade) => void;
   onLimitChange: (limit: string) => void;
@@ -139,45 +72,67 @@ export const CustomerTierCreditFields: React.FC<CustomerTierCreditFieldsProps> =
   tier,
   creditGrade,
   creditLimit,
+  creditLimitError,
   onTierChange,
   onGradeChange,
   onLimitChange,
-}) => (
-  <div className="grid grid-cols-3 gap-2.5">
-    <div>
-      <label className="block text-text-secondary font-medium mb-1">ระดับ (Tier)</label>
-      <select
-        value={tier}
-        onChange={(e) => onTierChange(e.target.value as TierType)}
-        className="w-full px-2.5 py-1.5 border border-border rounded-lg text-xs bg-white"
-      >
-        <option value="MEMBER">MEMBER</option>
-        <option value="SILVER">SILVER</option>
-        <option value="GOLD">GOLD</option>
-        <option value="PLATINUM">PLATINUM</option>
-      </select>
+}) => {
+  const inputBase =
+    'w-full px-3.5 py-2.5 border rounded-lg text-sm bg-white text-text-primary transition-all focus:outline-none focus:ring-2';
+  const normalBorder = 'border-border focus:border-brand focus:ring-brand/20';
+  const errorBorder = 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/20';
+
+  return (
+    <div className="pt-3 border-t border-divider">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1.5">
+            ระดับสมาชิก (Tier)
+          </label>
+          <select
+            value={tier}
+            onChange={(e) => onTierChange(e.target.value as TierType)}
+            className={`${inputBase} ${normalBorder}`}
+          >
+            <option value="MEMBER">MEMBER</option>
+            <option value="SILVER">SILVER</option>
+            <option value="GOLD">GOLD</option>
+            <option value="PLATINUM">PLATINUM</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1.5">
+            เกรดเครดิต
+          </label>
+          <select
+            value={creditGrade}
+            onChange={(e) => onGradeChange(e.target.value as CreditGrade)}
+            className={`${inputBase} ${normalBorder}`}
+          >
+            <option value="A">Grade A</option>
+            <option value="B">Grade B</option>
+            <option value="C">Grade C</option>
+            <option value="D">Grade D</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1.5">
+            วงเงินเริ่มต้น (฿)
+          </label>
+          <input
+            type="number"
+            min={0}
+            step={1000}
+            value={creditLimit}
+            onChange={(e) => onLimitChange(e.target.value)}
+            aria-invalid={Boolean(creditLimitError)}
+            className={`${inputBase} font-mono ${creditLimitError ? errorBorder : normalBorder}`}
+          />
+          {creditLimitError && (
+            <p className="mt-1 text-xs font-medium text-rose-600">{creditLimitError}</p>
+          )}
+        </div>
+      </div>
     </div>
-    <div>
-      <label className="block text-text-secondary font-medium mb-1">เกรดเครดิต</label>
-      <select
-        value={creditGrade}
-        onChange={(e) => onGradeChange(e.target.value as CreditGrade)}
-        className="w-full px-2.5 py-1.5 border border-border rounded-lg text-xs bg-white"
-      >
-        <option value="A">Grade A</option>
-        <option value="B">Grade B</option>
-        <option value="C">Grade C</option>
-        <option value="D">Grade D</option>
-      </select>
-    </div>
-    <div>
-      <label className="block text-text-secondary font-medium mb-1">วงเงินเริ่มต้น (฿)</label>
-      <input
-        type="number"
-        value={creditLimit}
-        onChange={(e) => onLimitChange(e.target.value)}
-        className="w-full px-2.5 py-1.5 border border-border rounded-lg text-xs font-mono bg-white"
-      />
-    </div>
-  </div>
-);
+  );
+};

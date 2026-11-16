@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
+import { Check } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { ContactPerson } from '../../types';
 import { EMPTY_PERSON_NAME_DRAFT, PersonNameDraft, PersonNameFields } from './PersonNameFields';
@@ -26,21 +27,20 @@ export const ContactModal: React.FC<ContactModalProps> = ({
   onSubmit,
   initialData,
 }) => {
+  const formId = useId();
   const [personDraft, setPersonDraft] = useState<PersonNameDraft>(EMPTY_PERSON_NAME_DRAFT);
   const [formData, setFormData] = useState(EMPTY_CONTACT_FIELDS);
+  const [errors, setErrors] = useState<{ firstName?: string; phone?: string }>({});
 
   useEffect(() => {
+    setErrors({});
     if (!initialData) {
       setPersonDraft(EMPTY_PERSON_NAME_DRAFT);
       setFormData(EMPTY_CONTACT_FIELDS);
       return;
     }
     const parsed = initialData.firstName
-      ? {
-          prefix: initialData.prefix || '',
-          firstName: initialData.firstName,
-          lastName: initialData.lastName || '',
-        }
+      ? { prefix: initialData.prefix || '', firstName: initialData.firstName, lastName: initialData.lastName || '' }
       : parseLegacyPersonName(initialData.name);
 
     setPersonDraft({
@@ -62,7 +62,14 @@ export const ContactModal: React.FC<ContactModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const firstName = personDraft.firstName.trim();
-    if (!firstName || !formData.phone.trim()) return;
+    const cleanPhone = formData.phone.trim();
+    const nextErrors: { firstName?: string; phone?: string } = {};
+    if (!firstName) nextErrors.firstName = 'กรุณาระบุชื่อผู้ติดต่อ';
+    if (!cleanPhone) nextErrors.phone = 'กรุณาระบุเบอร์โทรศัพท์ผู้ติดต่อ';
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      return;
+    }
 
     onSubmit({
       prefix: personDraft.prefix.trim() || undefined,
@@ -71,7 +78,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
       nickname: personDraft.nickname.trim() || undefined,
       name: formatPersonFullName(personDraft),
       roleOrTitle: formData.roleOrTitle.trim() || 'ผู้ติดต่อ',
-      phone: formData.phone.trim(),
+      phone: cleanPhone,
       email: formData.email.trim() || undefined,
       lineId: formData.lineId.trim() || undefined,
       isPrimary: formData.isPrimary,
@@ -80,103 +87,121 @@ export const ContactModal: React.FC<ContactModalProps> = ({
     onClose();
   };
 
+  const inputBase =
+    'w-full px-3.5 py-2.5 border border-border rounded-lg text-sm bg-white text-text-primary transition-all focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand';
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={initialData ? 'แก้ไขข้อมูลผู้ติดต่อ' : 'เพิ่มผู้ติดต่อใหม่ (Contact Person)'}
-      maxWidth="md"
+      subtitle="บันทึกผู้ประสานงาน ตำแหน่ง และช่องทางติดต่อของลูกค้า"
+      maxWidth="2xl"
       footer={
-        <div className="flex items-center justify-end gap-2">
+        <>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 border border-border rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-bg-subtle transition-colors"
+            className="px-5 py-2.5 border border-border rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white transition-colors cursor-pointer"
           >
             ยกเลิก
           </button>
           <button
-            type="button"
-            onClick={handleSubmit}
-            className="px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+            type="submit"
+            form={formId}
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-semibold shadow-card transition-colors cursor-pointer"
           >
-            บันทึกผู้ติดต่อ
+            <Check className="w-4 h-4" />
+            <span>บันทึกผู้ติดต่อ</span>
           </button>
-        </div>
+        </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
-        <PersonNameFields value={personDraft} onChange={setPersonDraft} firstNameRequired />
+      <form id={formId} noValidate onSubmit={handleSubmit} className="space-y-4 text-sm">
+        <PersonNameFields
+          value={personDraft}
+          onChange={(next) => {
+            setPersonDraft(next);
+            if (errors.firstName) setErrors((prev) => ({ ...prev, firstName: undefined }));
+          }}
+          firstNameRequired
+          firstNameError={errors.firstName}
+          autoFocusFirstName={isOpen && !initialData}
+        />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
-            <label className="block text-text-secondary font-medium mb-1">ตำแหน่ง / แผนกงาน</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">ตำแหน่ง / แผนกงาน</label>
             <input
               type="text"
               value={formData.roleOrTitle}
               onChange={(e) => setFormData({ ...formData, roleOrTitle: e.target.value })}
               placeholder="เช่น ผู้จัดการฝ่ายจัดซื้อ, หัวหน้าบัญชี"
-              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white text-text-primary"
+              className={inputBase}
             />
           </div>
           <div>
-            <label className="block text-text-secondary font-medium mb-1">
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">
               เบอร์โทรศัพท์ <span className="text-rose-500">*</span>
             </label>
             <input
               type="tel"
               required
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, phone: e.target.value });
+                if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }));
+              }}
               placeholder="08x-xxx-xxxx หรือ 02-xxx-xxxx"
-              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white text-text-primary font-mono"
+              className={`${inputBase} font-mono ${errors.phone ? 'border-rose-400' : ''}`}
             />
+            {errors.phone && <p className="mt-1 text-xs font-medium text-rose-600">{errors.phone}</p>}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
-            <label className="block text-text-secondary font-medium mb-1">อีเมลสำหรับติดต่อ</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">อีเมลสำหรับติดต่อ</label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="example@company.com"
-              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white text-text-primary"
+              className={inputBase}
             />
           </div>
           <div>
-            <label className="block text-text-secondary font-medium mb-1">LINE ID</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">LINE ID</label>
             <input
               type="text"
               value={formData.lineId}
               onChange={(e) => setFormData({ ...formData, lineId: e.target.value })}
               placeholder="เช่น somchai_cb"
-              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white text-text-primary"
+              className={inputBase}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-text-secondary font-medium mb-1">บันทึก / ขอบเขตอำนาจตัดสินใจ</label>
+          <label className="block text-sm font-medium text-text-secondary mb-1.5">บันทึก / ขอบเขตอำนาจตัดสินใจ</label>
           <textarea
             rows={2}
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             placeholder="เช่น ผู้มีอำนาจสั่งซื้อและลงนาม PO, วางบิลเฉพาะวันศุกร์"
-            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white text-text-primary resize-none"
+            className={`${inputBase} resize-none`}
           />
         </div>
 
-        <div className="pt-2 border-t border-divider">
-          <label className="flex items-center gap-2 cursor-pointer select-none">
+        <div className="pt-2.5 border-t border-divider">
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={formData.isPrimary}
               onChange={(e) => setFormData({ ...formData, isPrimary: e.target.checked })}
               className="w-4 h-4 text-brand rounded border-border focus:ring-brand"
             />
-            <span className="text-text-primary font-semibold">ตั้งเป็นผู้ติดต่อหลัก (Primary Contact)</span>
+            <span className="text-sm text-text-primary font-semibold">ตั้งเป็นผู้ติดต่อหลัก (Primary Contact)</span>
           </label>
         </div>
       </form>
