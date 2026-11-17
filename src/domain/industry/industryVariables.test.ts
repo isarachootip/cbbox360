@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { buildIndustryVariables, templateToIndustryKind } from './industryVariables';
-import { hospitalProfileSchema, vehicleSchema, logisticsProfileSchema } from './schemas';
+import {
+  hospitalProfileSchema,
+  vehicleSchema,
+  logisticsProfileSchema,
+  contactCenterProfileSchema,
+} from './schemas';
 import { AutoServiceProfile } from '../../types/industryProfile';
 
 describe('templateToIndustryKind', () => {
@@ -8,6 +13,7 @@ describe('templateToIndustryKind', () => {
     expect(templateToIndustryKind('hospital')).toBe('hospital');
     expect(templateToIndustryKind('auto_service')).toBe('auto_service');
     expect(templateToIndustryKind('logistics')).toBe('logistics');
+    expect(templateToIndustryKind('contact_center')).toBe('contact_center');
     expect(templateToIndustryKind('b2b_wholesale')).toBeNull();
   });
 });
@@ -59,6 +65,28 @@ describe('buildIndustryVariables', () => {
     });
     expect(vars).toEqual({ tracking_no: 'TH-NEW' });
   });
+
+  it('maps contact center SLA tier, response target, queue, and contract reference', () => {
+    const vars = buildIndustryVariables(
+      {
+        kind: 'contact_center',
+        slaTier: 'vip',
+        preferredChannel: 'LINE',
+        preferredLanguage: 'TH',
+        contractRef: 'SLA-2026-0891',
+        assignedQueue: 'Tier 2 Escalation Desk',
+        lastCsatScore: 5,
+      },
+      { ticketId: 'TK-2399' }
+    );
+    expect(vars).toEqual({
+      sla_tier: 'VIP (1 ชม.)',
+      sla_time: 'ภายใน 1 ชั่วโมง',
+      assigned_team: 'Tier 2 Escalation Desk',
+      contract_ref: 'SLA-2026-0891',
+      ticket_id: 'TK-2399',
+    });
+  });
 });
 
 describe('schemas (boundary validation)', () => {
@@ -91,5 +119,39 @@ describe('schemas (boundary validation)', () => {
       drugAllergies: [], chronicConditions: [], insurancePolicies: [],
     });
     expect(result.success).toBe(false);
+  });
+
+  it('validates contact center CSAT score range (1..5) and required queue', () => {
+    expect(
+      contactCenterProfileSchema.safeParse({
+        kind: 'contact_center',
+        slaTier: 'priority',
+        preferredChannel: 'Phone',
+        preferredLanguage: 'TH',
+        assignedQueue: '',
+      }).success
+    ).toBe(false);
+
+    expect(
+      contactCenterProfileSchema.safeParse({
+        kind: 'contact_center',
+        slaTier: 'priority',
+        preferredChannel: 'Phone',
+        preferredLanguage: 'TH',
+        assignedQueue: 'Helpdesk Tier 1',
+        lastCsatScore: 6,
+      }).success
+    ).toBe(false);
+
+    expect(
+      contactCenterProfileSchema.safeParse({
+        kind: 'contact_center',
+        slaTier: 'priority',
+        preferredChannel: 'Phone',
+        preferredLanguage: 'TH',
+        assignedQueue: 'Helpdesk Tier 1',
+        lastCsatScore: 5,
+      }).success
+    ).toBe(true);
   });
 });

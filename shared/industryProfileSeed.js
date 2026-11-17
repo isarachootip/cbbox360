@@ -56,6 +56,16 @@ export const industryProfileSeed = {
       codBankAccount: 'KBank 123-4-56789-0',
       recentTrackingNumbers: ['TH2610-994812', 'TH2610-993301'],
     },
+    {
+      kind: 'contact_center',
+      slaTier: 'vip',
+      preferredChannel: 'LINE',
+      preferredLanguage: 'TH',
+      contractRef: 'SLA-2026-0891',
+      assignedQueue: 'Tier 2 Escalation & VIP Desk',
+      callbackWindow: '09:00 - 12:00 น.',
+      lastCsatScore: 5,
+    },
   ],
   C00124: [
     {
@@ -67,6 +77,16 @@ export const industryProfileSeed = {
       insurancePolicies: [
         { id: 'pol-3', provider: 'บัตรทอง (สปสช.)', policyNo: 'UCS-0099812', coverageType: 'UCS' },
       ],
+    },
+    {
+      kind: 'contact_center',
+      slaTier: 'priority',
+      preferredChannel: 'Phone',
+      preferredLanguage: 'TH',
+      contractRef: 'SLA-2026-1042',
+      assignedQueue: 'Customer Care Tier 1',
+      callbackWindow: '13:00 - 17:00 น.',
+      lastCsatScore: 4,
     },
   ],
 };

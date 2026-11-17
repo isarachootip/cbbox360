@@ -1,5 +1,6 @@
 import { BusinessTemplatePreset } from '../types';
 import { templateCompanyProfiles, templateKnowledgeItems } from './templateKnowledgePresets';
+import { contactCenterPreset } from './contactCenterPreset';
 import {
   hospitalConnectors,
   logisticsConnectors,
@@ -7,6 +8,7 @@ import {
 } from './industryConnectors';
 
 export const businessTemplates: BusinessTemplatePreset[] = [
+  contactCenterPreset,
   {
     id: 'hospital',
     name: 'Hospital & Healthcare',

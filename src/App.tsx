@@ -58,13 +58,13 @@ export const App: React.FC = () => {
     <ToastProvider>
       <AuditLogProvider>
         <AuthProvider>
-          <MenuProvider>
-            <CustomerProvider>
-              <TelephonyProvider>
-              <CannedResponseProvider>
-                <BotProvider>
-                  <BusinessTemplateProvider>
-                  <BrowserRouter>
+          <BusinessTemplateProvider>
+            <MenuProvider>
+              <CustomerProvider>
+                <TelephonyProvider>
+                  <CannedResponseProvider>
+                    <BotProvider>
+                      <BrowserRouter>
                     <LayoutProvider>
                       <TypographyProvider>
                         <Routes>
@@ -104,14 +104,14 @@ export const App: React.FC = () => {
                         </Routes>
                       </TypographyProvider>
                     </LayoutProvider>
-                  </BrowserRouter>
-                  </BusinessTemplateProvider>
-              </BotProvider>
-            </CannedResponseProvider>
-            </TelephonyProvider>
-          </CustomerProvider>
-        </MenuProvider>
-      </AuthProvider>
+                      </BrowserRouter>
+                    </BotProvider>
+                  </CannedResponseProvider>
+                </TelephonyProvider>
+              </CustomerProvider>
+            </MenuProvider>
+          </BusinessTemplateProvider>
+        </AuthProvider>
       </AuditLogProvider>
     </ToastProvider>
   );

@@ -2,13 +2,15 @@ import React from 'react';
 import { ExpiryStatus } from '../../../domain/industry/dateRules';
 import { ServiceStatus } from '../../../domain/industry/vehicleRules';
 
-type Tone = 'red' | 'amber' | 'emerald' | 'slate';
+type Tone = 'red' | 'amber' | 'emerald' | 'slate' | 'blue' | 'purple';
 
 const TONE_CLASSES: Record<Tone, { text: string; dot: string }> = {
   red: { text: 'text-red-600', dot: 'bg-red-500' },
   amber: { text: 'text-amber-600', dot: 'bg-amber-500' },
   emerald: { text: 'text-emerald-600', dot: 'bg-emerald-500' },
   slate: { text: 'text-slate-500', dot: 'bg-slate-400' },
+  blue: { text: 'text-blue-600', dot: 'bg-blue-500' },
+  purple: { text: 'text-purple-600', dot: 'bg-purple-500' },
 };
 
 interface StatusDisplay {

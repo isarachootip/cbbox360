@@ -8,6 +8,7 @@ import { useLayout } from '../../context/LayoutContext';
 import { UserRole } from '../../types';
 import { SidebarNavSection } from './SidebarNavSection';
 import { SidebarUserMenu } from './SidebarUserMenu';
+import { DemoBusinessSwitcher } from './DemoBusinessSwitcher';
 
 export const Sidebar: React.FC = () => {
   const { selectedCustomerId } = useCustomer();
@@ -104,6 +105,9 @@ export const Sidebar: React.FC = () => {
               <X className="w-5 h-5" />
             </button>
           </div>
+
+          {/* Demo Multi-Business Quick Switcher (hidden automatically when Production Locked) */}
+          <DemoBusinessSwitcher isCollapsed={isSidebarCollapsed} />
 
           {/* Primary Navigation Sections */}
           <div className="flex flex-col gap-4">

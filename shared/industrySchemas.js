@@ -12,7 +12,12 @@ const requiredText = (message) => z.string().trim().min(1, message);
 /** ISO 3779: 17 chars, letters I, O, Q are not allowed. */
 export const VIN_PATTERN = /^[A-HJ-NPR-Z0-9]{17}$/;
 
-export const INDUSTRY_KINDS = /** @type {const} */ (['hospital', 'auto_service', 'logistics']);
+export const INDUSTRY_KINDS = /** @type {const} */ ([
+  'hospital',
+  'auto_service',
+  'logistics',
+  'contact_center',
+]);
 export const industryKindSchema = z.enum(INDUSTRY_KINDS);
 
 export const insurancePolicySchema = z.object({
@@ -92,10 +97,27 @@ export const logisticsProfileSchema = z
     path: ['codBankAccount'],
   });
 
+export const contactCenterProfileSchema = z.object({
+  kind: z.literal('contact_center'),
+  slaTier: z.enum(['standard', 'priority', 'vip']),
+  preferredChannel: z.enum(['LINE', 'Phone', 'Facebook', 'Email']),
+  preferredLanguage: z.enum(['TH', 'EN']),
+  contractRef: z.string().trim().optional(),
+  assignedQueue: requiredText('กรุณาระบุทีมดูแลหลัก (Queue)'),
+  callbackWindow: z.string().trim().optional(),
+  lastCsatScore: z
+    .number()
+    .int('คะแนน CSAT ต้องเป็นจำนวนเต็ม')
+    .min(1, 'คะแนน CSAT ต้องอยู่ระหว่าง 1–5')
+    .max(5, 'คะแนน CSAT ต้องอยู่ระหว่าง 1–5')
+    .optional(),
+});
+
 export const industryProfileSchema = z.union([
   hospitalProfileSchema,
   autoServiceProfileSchema,
   logisticsProfileSchema,
+  contactCenterProfileSchema,
 ]);
 
 /** Maps a ZodError to `{ path, message }[]` for API responses and form display. */

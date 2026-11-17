@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { MenuItemConfig, UserRole, MenuSection } from '../types';
+import { MenuItemConfig, UserRole } from '../types';
 import { initialMenuItems } from '../data/menus';
+import { businessTemplates } from '../data/businessTemplates';
+import { filterMenusForBusiness } from '../domain/templates/businessMenuFilter';
+import { useBusinessTemplateState } from './BusinessTemplateContext';
 
 interface MenuContextType {
   menus: MenuItemConfig[];
@@ -21,6 +24,7 @@ const MenuContext = createContext<MenuContextType | undefined>(undefined);
 const MENUS_STORAGE_KEY = 'cb360_menus_config';
 
 export const MenuProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { state: templateState, setMenuOverride } = useBusinessTemplateState();
   const [menus, setMenus] = useState<MenuItemConfig[]>(() => {
     try {
       const saved = localStorage.getItem(MENUS_STORAGE_KEY);
@@ -121,6 +125,11 @@ export const MenuProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Toggle Role Access for a single menu item
   const toggleRoleAccess = (menuId: string, role: UserRole) => {
+    const target = menus.find((m) => m.id === menuId);
+    if (target && target.section !== 'ADMINISTRATION') {
+      const willEnable = !target.allowedRoles.includes(role);
+      if (willEnable) setMenuOverride(menuId, true);
+    }
     setMenus((prev) =>
       prev.map((m) => {
         if (m.id === menuId) {
@@ -180,13 +189,15 @@ export const MenuProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setMenus(initialMenuItems);
   };
 
-  // Get menus for a specific role
-  const getMenusByRole = (role?: UserRole): MenuItemConfig[] => {
-    if (!role) return menus;
-    return menus
-      .filter((m) => m.allowedRoles.includes(role))
-      .sort((a, b) => a.order - b.order);
-  };
+  // Get menus for a specific role, filtered by the active business profile + Admin overrides
+  const getMenusByRole = (role?: UserRole): MenuItemConfig[] =>
+    filterMenusForBusiness({
+      menus,
+      role,
+      activeBusiness: templateState.activeTemplateId,
+      presets: businessTemplates,
+      overrides: templateState.menuOverrides,
+    });
 
   // Check if role has access to a specific path
   const hasRoleAccess = (path: string, role?: UserRole): boolean => {

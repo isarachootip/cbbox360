@@ -1,110 +1,80 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { CannedResponse, CannedResponseCategory } from '../types';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { BusinessTemplateId, CannedResponse, CompanyProfile } from '../types';
 import { mockCannedResponses } from '../data/cannedResponses';
-import { defaultCompanyProfile } from '../data/templateKnowledgePresets';
-import { useToast } from './ToastContext';
+import { businessTemplates } from '../data/businessTemplates';
+import { CATEGORIES_CONFIG, CannedCategoryConfig } from '../data/cannedCategories';
+import {
+  ensureScopedCannedCatalog,
+  filterCannedByBusiness,
+} from '../domain/templates/businessScope';
+import {
+  replaceTemplateVariables,
+  resolveActiveCompanyProfile,
+} from '../domain/templates/variableReplacer';
+import { useBusinessTemplateState } from './BusinessTemplateContext';
+
+export { CATEGORIES_CONFIG };
 
 interface CannedResponseContextType {
   cannedResponses: CannedResponse[];
-  categories: { key: CannedResponseCategory; label: string; icon: string; description: string; color: string }[];
-  createCannedResponse: (data: Omit<CannedResponse, 'id' | 'createdAt' | 'updatedAt' | 'usageCount'>) => Promise<CannedResponse>;
-  updateCannedResponse: (id: string, data: Partial<Omit<CannedResponse, 'id' | 'createdAt'>>) => Promise<boolean>;
+  allCannedResponses: CannedResponse[];
+  categories: CannedCategoryConfig[];
+  createCannedResponse: (
+    data: Omit<CannedResponse, 'id' | 'createdAt' | 'updatedAt' | 'usageCount'>
+  ) => Promise<CannedResponse>;
+  updateCannedResponse: (
+    id: string,
+    data: Partial<Omit<CannedResponse, 'id' | 'createdAt'>>
+  ) => Promise<boolean>;
   deleteCannedResponse: (id: string) => Promise<boolean>;
   toggleActiveStatus: (id: string) => void;
   incrementUsage: (id: string) => void;
+  resetBusinessCannedResponses: (businessId: BusinessTemplateId) => void;
   replaceVariables: (template: string, customVars?: Record<string, string>) => string;
   refreshResponses: () => Promise<void>;
   isLoading: boolean;
 }
 
 const STORAGE_KEY = 'cusbox360_canned_responses';
+const COMPANY_PROFILES_KEY = 'cb360_company_profiles_by_business';
 
-export const CATEGORIES_CONFIG: {
-  key: CannedResponseCategory;
-  label: string;
-  icon: string;
-  description: string;
-  color: {
-    bg: string;
-    border: string;
-    text: string;
-    badge: string;
-    lightBg: string;
-  };
-}[] = [
-  {
-    key: 'greeting',
-    label: 'Greeting (ทักทาย / ต้อนรับ)',
-    icon: '👋',
-    description: 'ข้อความเปิดการสนทนา ต้อนรับลูกค้า และกล่าวทักทาย',
-    color: {
-      bg: 'bg-purple-50',
-      border: 'border-purple-200',
-      text: 'text-purple-700',
-      badge: 'text-purple-700 font-semibold',
-      lightBg: 'hover:bg-purple-50/50',
-    },
-  },
-  {
-    key: 'question',
-    label: 'Question (คำถาม / ขอข้อมูล)',
-    icon: '❓',
-    description: 'คำถามเก็บข้อมูล ขอหลักฐาน ที่อยู่ หรือสอบถามเพิ่มเติม',
-    color: {
-      key: 'question',
-      bg: 'bg-amber-50',
-      border: 'border-amber-200',
-      text: 'text-amber-700',
-      badge: 'text-amber-700 font-semibold',
-      lightBg: 'hover:bg-amber-50/50',
-    } as any,
-  },
-  {
-    key: 'answer',
-    label: 'Answer (คำตอบ / ข้อมูลสำคัญ)',
-    icon: '💡',
-    description: 'คำตอบสำเร็จรูป ข้อมูลชำระเงิน รอบส่งพัสดุ และเงื่อนไขบริการ',
-    color: {
-      bg: 'bg-emerald-50',
-      border: 'border-emerald-200',
-      text: 'text-emerald-700',
-      badge: 'text-emerald-700 font-semibold',
-      lightBg: 'hover:bg-emerald-50/50',
-    },
-  },
-];
+const formatShortcut = (shortcut: string): string => {
+  const clean = shortcut.trim();
+  return clean.startsWith('/') ? clean : `/${clean}`;
+};
+
+const loadInitialCatalog = (): CannedResponse[] => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed: unknown = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return ensureScopedCannedCatalog(parsed as CannedResponse[], businessTemplates);
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load canned responses from localStorage', e);
+  }
+  return ensureScopedCannedCatalog(mockCannedResponses, businessTemplates);
+};
 
 const CannedResponseContext = createContext<CannedResponseContextType | undefined>(undefined);
 
 export const CannedResponseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { showToast } = useToast();
-  const [cannedResponses, setCannedResponses] = useState<CannedResponse[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to load canned responses from localStorage', e);
-    }
-    return mockCannedResponses;
-  });
+  const { state: templateState } = useBusinessTemplateState();
+  const activeBusiness = templateState.activeTemplateId;
 
+  const [allResponses, setAllResponses] = useState<CannedResponse[]>(loadInitialCatalog);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Sync to localStorage whenever state changes
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cannedResponses));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(allResponses));
     } catch (e) {
       console.error('Failed to save canned responses to localStorage', e);
     }
-  }, [cannedResponses]);
+  }, [allResponses]);
 
-  // Sync from backend API if running
   const refreshResponses = async () => {
     try {
       setIsLoading(true);
@@ -112,10 +82,10 @@ export const CannedResponseProvider: React.FC<{ children: React.ReactNode }> = (
       if (res.ok) {
         const json = await res.json();
         if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
-          setCannedResponses(json.data);
+          setAllResponses(ensureScopedCannedCatalog(json.data, businessTemplates));
         }
       }
-    } catch (e) {
+    } catch {
       // Offline / dev fallback to local state
     } finally {
       setIsLoading(false);
@@ -126,200 +96,118 @@ export const CannedResponseProvider: React.FC<{ children: React.ReactNode }> = (
     refreshResponses();
   }, []);
 
-  // Helper: Format Shortcut to always start with "/"
-  const formatShortcut = (shortcut: string) => {
-    let clean = shortcut.trim();
-    if (!clean.startsWith('/')) {
-      clean = '/' + clean;
-    }
-    return clean;
-  };
+  const cannedResponses = useMemo(
+    () => filterCannedByBusiness(allResponses, activeBusiness),
+    [allResponses, activeBusiness]
+  );
 
-  // 1. Create
-  const createCannedResponse = async (
-    data: Omit<CannedResponse, 'id' | 'createdAt' | 'updatedAt' | 'usageCount'>
-  ): Promise<CannedResponse> => {
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-
+  const createCannedResponse: CannedResponseContextType['createCannedResponse'] = async (data) => {
+    const dateStr = new Date().toISOString().split('T')[0];
     const newResponse: CannedResponse = {
       ...data,
       id: `cr-${Date.now()}`,
       shortcut: formatShortcut(data.shortcut),
+      businessScope: data.businessScope ?? activeBusiness,
       usageCount: 0,
       createdAt: dateStr,
       updatedAt: dateStr,
     };
-
-    setCannedResponses((prev) => [newResponse, ...prev]);
-
-    // Backend sync
-    try {
-      await fetch('/api/canned-responses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newResponse),
-      });
-    } catch (e) {
-      console.warn('Backend API not responding, saved to local state');
-    }
-
+    setAllResponses((prev) => [newResponse, ...prev]);
+    fetch('/api/canned-responses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newResponse),
+    }).catch(() => {});
     return newResponse;
   };
 
-  // 2. Update
-  const updateCannedResponse = async (
-    id: string,
-    data: Partial<Omit<CannedResponse, 'id' | 'createdAt'>>
-  ): Promise<boolean> => {
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-
+  const updateCannedResponse: CannedResponseContextType['updateCannedResponse'] = async (
+    id,
+    data
+  ) => {
+    const dateStr = new Date().toISOString().split('T')[0];
     let updatedItem: CannedResponse | null = null;
-
-    setCannedResponses((prev) =>
+    setAllResponses((prev) =>
       prev.map((item) => {
-        if (item.id === id) {
-          updatedItem = {
-            ...item,
-            ...data,
-            shortcut: data.shortcut ? formatShortcut(data.shortcut) : item.shortcut,
-            updatedAt: dateStr,
-          };
-          return updatedItem;
-        }
-        return item;
+        if (item.id !== id) return item;
+        updatedItem = {
+          ...item,
+          ...data,
+          shortcut: data.shortcut ? formatShortcut(data.shortcut) : item.shortcut,
+          updatedAt: dateStr,
+        };
+        return updatedItem;
       })
     );
-
-    // Backend sync
     if (updatedItem) {
-      try {
-        await fetch(`/api/canned-responses/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedItem),
-        });
-      } catch (e) {
-        console.warn('Backend API sync error');
-      }
+      fetch(`/api/canned-responses/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedItem),
+      }).catch(() => {});
     }
-
     return true;
   };
 
-  // 3. Delete
   const deleteCannedResponse = async (id: string): Promise<boolean> => {
-    setCannedResponses((prev) => prev.filter((item) => item.id !== id));
-
-    // Backend sync
-    try {
-      await fetch(`/api/canned-responses/${id}`, {
-        method: 'DELETE',
-      });
-    } catch (e) {
-      console.warn('Backend API sync error');
-    }
-
+    setAllResponses((prev) => prev.filter((item) => item.id !== id));
+    fetch(`/api/canned-responses/${id}`, { method: 'DELETE' }).catch(() => {});
     return true;
   };
 
-  // 4. Toggle Active Status
   const toggleActiveStatus = (id: string) => {
-    setCannedResponses((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const updated = { ...item, isActive: !item.isActive };
-          // Background sync
-          fetch(`/api/canned-responses/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updated),
-          }).catch(() => {});
-          return updated;
-        }
-        return item;
-      })
+    setAllResponses((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, isActive: !item.isActive } : item))
     );
   };
 
-  // 5. Increment Usage
   const incrementUsage = (id: string) => {
     const now = new Date();
     const timeStr = `วันนี้ ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-    setCannedResponses((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const updated = {
-            ...item,
-            usageCount: (item.usageCount || 0) + 1,
-            lastUsedAt: timeStr,
-          };
-          return updated;
-        }
-        return item;
-      })
+    setAllResponses((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, usageCount: (item.usageCount || 0) + 1, lastUsedAt: timeStr }
+          : item
+      )
     );
   };
 
-  // 6. Template Variable Replacer
-  const replaceVariables = (
-    template: string,
-    customVars?: Record<string, string>
-  ): string => {
-    let profile = defaultCompanyProfile;
-    try {
-      const savedBot = localStorage.getItem('cb360_bot_settings');
-      if (savedBot) {
-        const parsed = JSON.parse(savedBot);
-        if (parsed?.companyProfile) profile = parsed.companyProfile;
-      }
-    } catch (_e) {
-      // Fallback to defaultCompanyProfile
-    }
-    const defaultVars: Record<string, string> = {
-      company_name: profile.companyName,
-      company_phone: profile.phone,
-      company_email: profile.email,
-      company_address: profile.address,
-      business_type: profile.businessType,
-      customer_name: 'สมชาย ใจดี',
-      order_code: 'SO-10482',
-      tracking_no: 'TH2609-88412',
-      agent_name: 'วิภา ส.',
-      phone: '081-892-5678',
-      credit_term: '30 วัน',
-      hn_number: 'HN-6904812',
-      doctor_name: 'นพ. กิตติพงศ์ วงศ์เวช',
-      department: 'ศูนย์อายุรกรรมหัวใจ ชั้น 3',
-      appoint_date: '22 ต.ค. 2026 เวลา 09:30 น.',
-      courier_name: 'สมศักดิ์ (089-234-5678)',
-      cod_amount: '2,450 บาท',
-      license_plate: '1กข-9988 กรุงเทพฯ',
-      mileage_km: '80,000 กม.',
-      job_order_no: 'JO-2610-084',
-      ...customVars,
-    };
+  const resetBusinessCannedResponses = (businessId: BusinessTemplateId) => {
+    setAllResponses((prev) => {
+      const withoutBusiness = prev.filter((item) => item.businessScope !== businessId);
+      const baseB2b =
+        businessId === 'b2b_wholesale'
+          ? mockCannedResponses.filter((m) => m.businessScope === 'b2b_wholesale')
+          : [];
+      return ensureScopedCannedCatalog([...withoutBusiness, ...baseB2b], businessTemplates);
+    });
+  };
 
-    let result = template;
-    for (const [key, val] of Object.entries(defaultVars)) {
-      const regex = new RegExp(`\\{${key}\\}`, 'gi');
-      result = result.replace(regex, val);
+  const replaceVariables = (template: string, customVars?: Record<string, string>): string => {
+    let overrides: Partial<Record<BusinessTemplateId, CompanyProfile>> | undefined;
+    try {
+      const raw = localStorage.getItem(COMPANY_PROFILES_KEY);
+      if (raw) overrides = JSON.parse(raw);
+    } catch {
+      // Fallback to preset profile
     }
-    return result;
+    const profile = resolveActiveCompanyProfile(activeBusiness, overrides);
+    return replaceTemplateVariables(template, profile, customVars);
   };
 
   return (
     <CannedResponseContext.Provider
       value={{
         cannedResponses,
-        categories: CATEGORIES_CONFIG as any,
+        allCannedResponses: allResponses,
+        categories: CATEGORIES_CONFIG,
         createCannedResponse,
         updateCannedResponse,
         deleteCannedResponse,
         toggleActiveStatus,
         incrementUsage,
+        resetBusinessCannedResponses,
         replaceVariables,
         refreshResponses,
         isLoading,

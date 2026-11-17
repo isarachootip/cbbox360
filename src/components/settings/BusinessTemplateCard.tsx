@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Headset,
   Stethoscope,
   Truck,
   Car,
@@ -19,6 +20,7 @@ interface BusinessTemplateCardProps {
   template: BusinessTemplatePreset;
   isActive: boolean;
   isApplied: boolean;
+  isLocked?: boolean;
   onPreview: (template: BusinessTemplatePreset) => void;
   onApply: (templateId: BusinessTemplatePreset['id']) => void;
   onConfigureApi: () => void;
@@ -28,12 +30,15 @@ export const BusinessTemplateCard: React.FC<BusinessTemplateCardProps> = ({
   template,
   isActive,
   isApplied,
+  isLocked = false,
   onPreview,
   onApply,
   onConfigureApi,
 }) => {
   const renderIcon = (iconName: BusinessTemplatePreset['iconName']) => {
     switch (iconName) {
+      case 'headset':
+        return <Headset className="w-5 h-5 text-cyan-600" />;
       case 'hospital':
         return <Stethoscope className="w-5 h-5 text-emerald-600" />;
       case 'truck':
@@ -80,7 +85,7 @@ export const BusinessTemplateCard: React.FC<BusinessTemplateCardProps> = ({
               }`}
             />
             <span>
-              {isActive ? 'กำลังใช้งานหลัก' : isApplied ? 'ติดตั้งเสริมแล้ว' : 'พร้อมติดตั้ง'}
+              {isActive ? 'กำลังใช้งานหลัก' : isApplied ? 'บันทึกค่าไว้แล้ว' : 'พร้อมสลับใช้งาน'}
             </span>
           </span>
         </div>
@@ -115,8 +120,6 @@ export const BusinessTemplateCard: React.FC<BusinessTemplateCardProps> = ({
             <BookOpen className="w-3.5 h-3.5 text-amber-600" />
             <strong className="text-text-primary">{template.knowledgeItems.length}</strong> หัวข้อ KM
           </span>
-          <span className="hidden">
-          </span>
         </div>
 
         <div className="flex items-center justify-between gap-2 pt-1">
@@ -142,15 +145,24 @@ export const BusinessTemplateCard: React.FC<BusinessTemplateCardProps> = ({
             )}
             <button
               type="button"
+              disabled={isLocked && !isActive}
               onClick={() => onApply(template.id)}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs ${
-                isActive
+                isLocked && !isActive
+                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                  : isActive
                   ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                   : 'bg-brand hover:bg-brand-hover text-white'
               }`}
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{isApplied ? 'ซิงก์ซ้ำ (Re-Merge)' : 'เลือกใช้เทมเพลตนี้'}</span>
+              <span>
+                {isActive
+                  ? 'กำลังใช้งานหลัก'
+                  : isLocked
+                  ? 'ถูกล็อกใช้งานจริง'
+                  : 'สลับมาใช้ธุรกิจนี้'}
+              </span>
             </button>
           </div>
         </div>

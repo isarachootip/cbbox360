@@ -425,6 +425,7 @@ export interface CannedResponse {
   tags?: string[];
   isActive: boolean;
   usageCount: number;
+  businessScope?: BusinessScope;
   lastUsedAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -438,6 +439,7 @@ export interface BotAutoReplyRule {
   triggerType: BotTriggerType;
   keywords: string[];
   matchType: 'contains' | 'exact';
+  businessScope?: BusinessScope;
   cannedResponseId?: string;
   customReplyText?: string;
   isActive: boolean;
@@ -539,7 +541,15 @@ export interface AuditLogEntry {
   details?: string;
 }
 
-export type BusinessTemplateId = 'hospital' | 'logistics' | 'auto_service' | 'b2b_wholesale';
+export type BusinessTemplateId =
+  | 'contact_center'
+  | 'hospital'
+  | 'logistics'
+  | 'auto_service'
+  | 'b2b_wholesale';
+
+export type BusinessScope = 'common' | BusinessTemplateId;
+export type DeploymentMode = 'demo' | 'production_locked';
 
 export interface TemplateApplyOptions {
   mergeConnectors: boolean;
@@ -555,8 +565,8 @@ export interface BusinessTemplatePreset {
   thaiTitle: string;
   tagline: string;
   description: string;
-  iconName: 'hospital' | 'truck' | 'car' | 'building';
-  accentColor: 'emerald' | 'blue' | 'amber' | 'purple';
+  iconName: 'headset' | 'hospital' | 'truck' | 'car' | 'building';
+  accentColor: 'cyan' | 'emerald' | 'blue' | 'amber' | 'purple';
   recommendedMenus: string[];
   customVariables: { key: string; label: string; example: string }[];
   workflowHighlights: string[];

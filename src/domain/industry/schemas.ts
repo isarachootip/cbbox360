@@ -14,6 +14,7 @@ export {
   vehicleSchema,
   autoServiceProfileSchema,
   logisticsProfileSchema,
+  contactCenterProfileSchema,
   industryProfileSchema,
 } from '../../../shared/industrySchemas.js';
 

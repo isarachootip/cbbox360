@@ -1,6 +1,8 @@
-import { CannedResponse } from '../types';
+import { BusinessScope, CannedResponse } from '../types';
 
-export const mockCannedResponses: CannedResponse[] = [
+const COMMON_CANNED_IDS = new Set(['cr-1', 'cr-2', 'cr-3', 'cr-4', 'cr-13']);
+
+const baseCannedResponses: CannedResponse[] = [
   // ================= 1. GREETING GROUP (ข้อความทักทาย / ต้อนรับ) =================
   {
     id: 'cr-1',
@@ -202,3 +204,8 @@ export const mockCannedResponses: CannedResponse[] = [
     updatedAt: '2026-09-24',
   },
 ];
+
+export const mockCannedResponses: CannedResponse[] = baseCannedResponses.map((item) => ({
+  ...item,
+  businessScope: (COMMON_CANNED_IDS.has(item.id) ? 'common' : 'b2b_wholesale') as BusinessScope,
+}));

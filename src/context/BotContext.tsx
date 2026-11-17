@@ -1,18 +1,29 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { BotSettings, BotAutoReplyRule, CompanyProfile, KnowledgeItem } from '../types';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import {
+  BotSettings,
+  BotAutoReplyRule,
+  BusinessTemplateId,
+  CompanyProfile,
+  KnowledgeItem,
+} from '../types';
 import { initialBotSettings } from '../data/botSettings';
-import { defaultCompanyProfile, defaultKnowledgeItems } from '../data/templateKnowledgePresets';
-import { matchKnowledgeOrCompanyReply } from '../domain/templates/knowledgeMerge';
+import { businessTemplates } from '../data/businessTemplates';
+import { defaultKnowledgeItems } from '../data/templateKnowledgePresets';
+import {
+  ensureScopedBotRules,
+  ensureScopedKnowledgeItems,
+  filterBotRulesByBusiness,
+  filterKnowledgeByBusiness,
+} from '../domain/templates/businessScope';
+import { resolveActiveCompanyProfile } from '../domain/templates/variableReplacer';
+import {
+  BotTestMatchResult,
+  evaluateBotMatch,
+  normalizeBotSettings,
+} from '../domain/templates/botMatcher';
+import { useBusinessTemplateState } from './BusinessTemplateContext';
 import { useCannedResponses } from './CannedResponseContext';
 import { useToast } from './ToastContext';
-
-interface TestMatchResult {
-  matched: boolean;
-  type: 'handoff' | 'rule' | 'welcome' | 'off_hours' | 'km' | 'none';
-  rule?: BotAutoReplyRule;
-  replyText: string;
-  matchedKeyword?: string;
-}
 
 interface BotContextType {
   settings: BotSettings;
@@ -27,96 +38,95 @@ interface BotContextType {
   updateRule: (id: string, partial: Partial<BotAutoReplyRule>) => void;
   deleteRule: (id: string) => void;
   toggleRuleActive: (id: string) => void;
-  testMatch: (userText: string, customVars?: Record<string, string>) => TestMatchResult;
+  resetBusinessBotData: (businessId: BusinessTemplateId) => void;
+  testMatch: (userText: string, customVars?: Record<string, string>) => BotTestMatchResult;
   isSaving: boolean;
 }
 
 const BotContext = createContext<BotContextType | undefined>(undefined);
 const STORAGE_KEY = 'cb360_bot_settings';
+const COMPANY_PROFILES_KEY = 'cb360_company_profiles_by_business';
 
-const normalizeBotSettings = (raw: Partial<BotSettings>): BotSettings => ({
-  ...initialBotSettings,
-  ...raw,
-  companyProfile: {
-    ...defaultCompanyProfile,
-    ...(raw.companyProfile || {}),
-  },
-  pbxConfig: {
-    enabled: initialBotSettings.pbxConfig?.enabled ?? true,
-    phoneUrl:
-      initialBotSettings.pbxConfig?.phoneUrl ??
-      'https://pbx01.cb360.online:5001/phone/index.html',
-    windowName: initialBotSettings.pbxConfig?.windowName ?? 'pbx_360_phone',
-    outboundPrefix: initialBotSettings.pbxConfig?.outboundPrefix ?? '',
-    requireExtension: initialBotSettings.pbxConfig?.requireExtension ?? false,
-    fallbackTelUri: initialBotSettings.pbxConfig?.fallbackTelUri ?? true,
-    ...(raw.pbxConfig || {}),
-  },
-  knowledgeItems: Array.isArray(raw.knowledgeItems) ? raw.knowledgeItems : defaultKnowledgeItems,
-});
+const loadCompanyOverrides = (): Partial<Record<BusinessTemplateId, CompanyProfile>> => {
+  try {
+    const raw = localStorage.getItem(COMPANY_PROFILES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
 
 export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { cannedResponses, replaceVariables } = useCannedResponses();
+  const { state: templateState } = useBusinessTemplateState();
+  const activeBusiness = templateState.activeTemplateId;
+  const { cannedResponses, allCannedResponses, replaceVariables } = useCannedResponses();
   const { showToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [companyOverrides, setCompanyOverrides] =
+    useState<Partial<Record<BusinessTemplateId, CompanyProfile>>>(loadCompanyOverrides);
 
-  const [settings, setSettings] = useState<BotSettings>(() => {
+  const [rawSettings, setRawSettings] = useState<BotSettings>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed.isEnabled === 'boolean') {
-          return normalizeBotSettings(parsed);
+          return normalizeBotSettings(parsed, allCannedResponses);
         }
       }
     } catch (e) {
       console.warn('Failed to load bot settings from localStorage', e);
     }
-    return initialBotSettings;
+    return normalizeBotSettings(initialBotSettings, allCannedResponses);
   });
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(rawSettings));
     } catch (e) {
-      console.error('Failed to save bot settings to localStorage', e);
+      console.error('Failed to save bot settings', e);
     }
-  }, [settings]);
+  }, [rawSettings]);
 
   useEffect(() => {
-    const fetchRemoteSettings = async () => {
-      try {
-        const res = await fetch('/api/bot-settings');
-        if (res.ok) {
-          const json = await res.json();
-          if (json?.data) {
-            setSettings(normalizeBotSettings(json.data));
-          }
-        }
-      } catch (_err) {
-        // Fallback to local
-      }
-    };
-    fetchRemoteSettings();
-  }, []);
+    try {
+      localStorage.setItem(COMPANY_PROFILES_KEY, JSON.stringify(companyOverrides));
+    } catch (e) {
+      console.error('Failed to save company profile overrides', e);
+    }
+  }, [companyOverrides]);
 
-  const saveToBackend = async (newSettings: BotSettings) => {
+  const saveToBackend = async (next: BotSettings) => {
     try {
       setIsSaving(true);
       await fetch('/api/bot-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newSettings),
+        body: JSON.stringify(next),
       });
-    } catch (_err) {
-      // Ignore network fail in offline mode
+    } catch {
+      // Offline mode fallback
     } finally {
       setIsSaving(false);
     }
   };
 
+  const scopedSettings: BotSettings = useMemo(() => {
+    const activeProfile = resolveActiveCompanyProfile(activeBusiness, companyOverrides);
+    return {
+      ...rawSettings,
+      companyProfile: activeProfile,
+      companyName: activeProfile.companyName,
+      rules: filterBotRulesByBusiness(rawSettings.rules, activeBusiness),
+      knowledgeItems: filterKnowledgeByBusiness(
+        rawSettings.knowledgeItems ?? defaultKnowledgeItems,
+        activeBusiness
+      ),
+    };
+  }, [rawSettings, activeBusiness, companyOverrides]);
+
   const updateSettings = (partial: Partial<BotSettings>, toastMessage?: string) => {
-    setSettings((prev) => {
+    setRawSettings((prev) => {
       const updated = { ...prev, ...partial };
       saveToBackend(updated);
       return updated;
@@ -125,25 +135,20 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateCompanyProfile = (partial: Partial<CompanyProfile>) => {
-    setSettings((prev) => {
-      const nextProfile: CompanyProfile = {
-        ...(prev.companyProfile ?? defaultCompanyProfile),
-        ...partial,
-      };
-      const updated: BotSettings = {
-        ...prev,
-        companyProfile: nextProfile,
-        companyName: nextProfile.companyName,
-      };
-      saveToBackend(updated);
-      return updated;
-    });
+    const base = resolveActiveCompanyProfile(activeBusiness, companyOverrides);
+    const nextProfile: CompanyProfile = { ...base, ...partial };
+    setCompanyOverrides((prev) => ({ ...prev, [activeBusiness]: nextProfile }));
     showToast('บันทึกข้อมูลองค์กรเรียบร้อยแล้ว', 'success');
   };
 
   const addKnowledgeItem = (itemData: Omit<KnowledgeItem, 'id'>) => {
-    const newItem: KnowledgeItem = { ...itemData, id: `km-${Date.now()}` };
-    setSettings((prev) => {
+    const newItem: KnowledgeItem = {
+      ...itemData,
+      id: `km-${Date.now()}`,
+      templateId: activeBusiness,
+      businessScope: itemData.businessScope ?? activeBusiness,
+    };
+    setRawSettings((prev) => {
       const current = prev.knowledgeItems ?? defaultKnowledgeItems;
       const updated = { ...prev, knowledgeItems: [newItem, ...current] };
       saveToBackend(updated);
@@ -153,49 +158,35 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateKnowledgeItem = (id: string, partial: Partial<KnowledgeItem>) => {
-    setSettings((prev) => {
-      const current = prev.knowledgeItems ?? defaultKnowledgeItems;
-      const updated = {
-        ...prev,
-        knowledgeItems: current.map((item) => (item.id === id ? { ...item, ...partial } : item)),
-      };
-      saveToBackend(updated);
-      return updated;
-    });
+    setRawSettings((prev) => ({
+      ...prev,
+      knowledgeItems: (prev.knowledgeItems ?? defaultKnowledgeItems).map((item) =>
+        item.id === id ? { ...item, ...partial } : item
+      ),
+    }));
     showToast('อัปเดตหัวข้อความรู้ AI สำเร็จ', 'success');
   };
 
   const deleteKnowledgeItem = (id: string) => {
-    setSettings((prev) => {
-      const current = prev.knowledgeItems ?? defaultKnowledgeItems;
-      const updated = {
-        ...prev,
-        knowledgeItems: current.filter((item) => item.id !== id),
-      };
-      saveToBackend(updated);
-      return updated;
-    });
+    setRawSettings((prev) => ({
+      ...prev,
+      knowledgeItems: (prev.knowledgeItems ?? defaultKnowledgeItems).filter((i) => i.id !== id),
+    }));
     showToast('ลบหัวข้อความรู้ AI สำเร็จ', 'info');
   };
 
   const toggleKnowledgeItemActive = (id: string) => {
-    setSettings((prev) => {
-      const current = prev.knowledgeItems ?? defaultKnowledgeItems;
-      const updated = {
-        ...prev,
-        knowledgeItems: current.map((item) =>
-          item.id === id ? { ...item, isActive: !item.isActive } : item
-        ),
-      };
-      saveToBackend(updated);
-      return updated;
-    });
+    setRawSettings((prev) => ({
+      ...prev,
+      knowledgeItems: (prev.knowledgeItems ?? defaultKnowledgeItems).map((item) =>
+        item.id === id ? { ...item, isActive: !item.isActive } : item
+      ),
+    }));
   };
 
   const toggleBot = () => {
-    setSettings((prev) => {
+    setRawSettings((prev) => {
       const updated = { ...prev, isEnabled: !prev.isEnabled };
-      saveToBackend(updated);
       showToast(
         updated.isEnabled ? 'เปิดใช้งาน Bot ตอบอัตโนมัติแล้ว' : 'ปิดใช้งาน Bot ตอบอัตโนมัติแล้ว',
         updated.isEnabled ? 'success' : 'info'
@@ -205,113 +196,66 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addRule = (ruleData: Omit<BotAutoReplyRule, 'id'>) => {
-    const newRule: BotAutoReplyRule = { ...ruleData, id: `rule-${Date.now()}` };
-    setSettings((prev) => {
-      const updated = { ...prev, rules: [...prev.rules, newRule] };
-      saveToBackend(updated);
-      return updated;
-    });
+    const newRule: BotAutoReplyRule = {
+      ...ruleData,
+      id: `rule-${Date.now()}`,
+      businessScope: ruleData.businessScope ?? activeBusiness,
+    };
+    setRawSettings((prev) => ({ ...prev, rules: [...prev.rules, newRule] }));
     showToast(`เพิ่มกฎ "${newRule.name}" สำเร็จ`, 'success');
   };
 
   const updateRule = (id: string, partial: Partial<BotAutoReplyRule>) => {
-    setSettings((prev) => {
-      const updated = {
-        ...prev,
-        rules: prev.rules.map((r) => (r.id === id ? { ...r, ...partial } : r)),
-      };
-      saveToBackend(updated);
-      return updated;
-    });
+    setRawSettings((prev) => ({
+      ...prev,
+      rules: prev.rules.map((r) => (r.id === id ? { ...r, ...partial } : r)),
+    }));
     showToast('อัปเดตกฎ Auto-Reply สำเร็จ', 'success');
   };
 
   const deleteRule = (id: string) => {
-    setSettings((prev) => {
-      const updated = { ...prev, rules: prev.rules.filter((r) => r.id !== id) };
-      saveToBackend(updated);
-      return updated;
-    });
+    setRawSettings((prev) => ({ ...prev, rules: prev.rules.filter((r) => r.id !== id) }));
     showToast('ลบกฎ Auto-Reply สำเร็จ', 'success');
   };
 
   const toggleRuleActive = (id: string) => {
-    setSettings((prev) => {
-      const updated = {
+    setRawSettings((prev) => ({
+      ...prev,
+      rules: prev.rules.map((r) => (r.id === id ? { ...r, isActive: !r.isActive } : r)),
+    }));
+  };
+
+  const resetBusinessBotData = (businessId: BusinessTemplateId) => {
+    setCompanyOverrides((prev) => {
+      const copy = { ...prev };
+      delete copy[businessId];
+      return copy;
+    });
+    setRawSettings((prev) => {
+      const keptRules = prev.rules.filter((r) => r.businessScope !== businessId);
+      const baseB2bRules =
+        businessId === 'b2b_wholesale'
+          ? initialBotSettings.rules.filter((r) => r.businessScope === 'b2b_wholesale')
+          : [];
+      const keptKm = (prev.knowledgeItems ?? defaultKnowledgeItems).filter(
+        (k) => (k.businessScope ?? k.templateId) !== businessId
+      );
+      const baseB2bKm = businessId === 'b2b_wholesale' ? defaultKnowledgeItems : [];
+      return {
         ...prev,
-        rules: prev.rules.map((r) => (r.id === id ? { ...r, isActive: !r.isActive } : r)),
+        rules: ensureScopedBotRules([...keptRules, ...baseB2bRules], businessTemplates, allCannedResponses),
+        knowledgeItems: ensureScopedKnowledgeItems([...keptKm, ...baseB2bKm], businessTemplates),
       };
-      saveToBackend(updated);
-      return updated;
     });
   };
 
-  const testMatch = (userText: string, customVars?: Record<string, string>): TestMatchResult => {
-    if (!settings.isEnabled) {
-      return { matched: false, type: 'none', replyText: 'Bot ปิดใช้งานอยู่ (Inactive)' };
-    }
-    const cleanInput = userText.trim().toLowerCase();
-
-    if (settings.humanHandoffEnabled) {
-      const handoffHit = settings.humanHandoffKeywords.some((kw) =>
-        cleanInput.includes(kw.trim().toLowerCase())
-      );
-      if (handoffHit) {
-        return { matched: true, type: 'handoff', replyText: settings.handoffMessage };
-      }
-    }
-
-    const activeRules = settings.rules
-      .filter((r) => r.isActive)
-      .sort((a, b) => a.priority - b.priority);
-
-    for (const rule of activeRules) {
-      for (const kw of rule.keywords) {
-        const cleanKw = kw.trim().toLowerCase();
-        if (!cleanKw) continue;
-        const hit = rule.matchType === 'exact' ? cleanInput === cleanKw : cleanInput.includes(cleanKw);
-        if (hit) {
-          let text = rule.customReplyText;
-          if (!text && rule.cannedResponseId) {
-            const canned = cannedResponses.find((c) => c.id === rule.cannedResponseId);
-            if (canned) text = replaceVariables(canned.content, customVars);
-          }
-          return {
-            matched: true,
-            type: 'rule',
-            rule,
-            replyText: text || 'ไม่มีข้อความตอบกลับที่กำหนดไว้',
-            matchedKeyword: kw,
-          };
-        }
-      }
-    }
-
-    const kmHit = matchKnowledgeOrCompanyReply(
-      userText,
-      settings.companyProfile ?? defaultCompanyProfile,
-      settings.knowledgeItems ?? defaultKnowledgeItems
-    );
-    if (kmHit.matched) {
-      return {
-        matched: true,
-        type: 'km',
-        replyText: kmHit.replyText,
-        matchedKeyword: kmHit.matchedTopic,
-      };
-    }
-
-    return {
-      matched: false,
-      type: 'none',
-      replyText: 'ไม่พบคำสำคัญที่ตรงกับกฎใดๆ ในระบบ',
-    };
-  };
+  const testMatch = (userText: string, customVars?: Record<string, string>): BotTestMatchResult =>
+    evaluateBotMatch(userText, scopedSettings, cannedResponses, replaceVariables, customVars);
 
   return (
     <BotContext.Provider
       value={{
-        settings,
+        settings: scopedSettings,
         updateSettings,
         updateCompanyProfile,
         addKnowledgeItem,
@@ -323,6 +267,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateRule,
         deleteRule,
         toggleRuleActive,
+        resetBusinessBotData,
         testMatch,
         isSaving,
       }}

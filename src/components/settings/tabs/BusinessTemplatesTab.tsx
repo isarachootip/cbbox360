@@ -10,6 +10,7 @@ import {
 import { BusinessTemplatePreset, TemplateApplyOptions } from '../../../types';
 import { useBusinessTemplate } from '../../../hooks/useBusinessTemplate';
 import { BusinessTemplateCard } from '../BusinessTemplateCard';
+import { BusinessModeLockCard } from '../BusinessModeLockCard';
 import { TemplatePreviewModal } from '../TemplatePreviewModal';
 
 interface BusinessTemplatesTabProps {
@@ -25,13 +26,18 @@ export const BusinessTemplatesTab: React.FC<BusinessTemplatesTabProps> = ({
   const {
     templates,
     activeTemplateId,
+    deploymentMode,
+    isLocked,
+    isSysAdmin,
     appliedTemplateIds,
     lastAppliedAt,
     applyTemplate,
+    setDeploymentMode,
     resetToDefaultTemplate,
   } = useBusinessTemplate();
 
   const [previewTemplate, setPreviewTemplate] = useState<BusinessTemplatePreset | null>(null);
+  const activePreset = templates.find((t) => t.id === activeTemplateId) ?? templates[0];
 
   const handleConfirmApply = async (options: TemplateApplyOptions) => {
     if (!previewTemplate) return;
@@ -41,19 +47,26 @@ export const BusinessTemplatesTab: React.FC<BusinessTemplatesTabProps> = ({
 
   return (
     <div className="space-y-6">
+      <BusinessModeLockCard
+        activeTemplate={activePreset}
+        deploymentMode={deploymentMode}
+        isSysAdmin={isSysAdmin}
+        onChangeMode={setDeploymentMode}
+      />
+
       <div className="p-5 rounded-xl border border-border bg-white shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
             <h2 className="text-sm font-bold text-text-primary">
-              เทมเพลตตั้งค่าธุรกิจสำเร็จรูป (Industry Setup Blueprints)
+              คลังเทมเพลตธุรกิจแยกตามอุตสาหกรรม (Scoped Industry Blueprints)
             </h2>
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>โหมด Non-Destructive Merge</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>แยกชุดข้อมูลรายธุรกิจ ไม่ปนกัน</span>
             </span>
           </div>
           <p className="text-xs text-text-secondary">
-            เลือกประเภทธุรกิจเพื่อเพิ่ม API Connectors เฉพาะอุตสาหกรรม, คลังความรู้ AI (KM), ข้อความตอบกลับด่วน และกฎแชทบอทโดยไม่ลบข้อมูลเดิม
+            แต่ละธุรกิจมีชุดข้อความตอบกลับด่วน, Keyword บอท, คลังความรู้ AI และเมนูเฉพาะทางของตนเอง การปรับแก้ในธุรกิจหนึ่งจะไม่กระทบธุรกิจอื่น
           </p>
         </div>
 
@@ -63,11 +76,16 @@ export const BusinessTemplatesTab: React.FC<BusinessTemplatesTabProps> = ({
           )}
           <button
             type="button"
+            disabled={isLocked}
             onClick={resetToDefaultTemplate}
-            className="px-3 py-1.5 rounded-lg border border-border hover:bg-slate-50 text-xs font-semibold text-text-secondary flex items-center gap-1.5 transition-all"
+            className={`px-3 py-1.5 rounded-lg border border-border text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              isLocked
+                ? 'bg-slate-50 text-slate-400 cursor-not-allowed'
+                : 'hover:bg-slate-50 text-text-secondary'
+            }`}
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>รีเซ็ตค่าเริ่มต้น</span>
+            <span>รีเซ็ตค่ามาตรฐานธุรกิจนี้</span>
           </button>
         </div>
       </div>
@@ -79,6 +97,7 @@ export const BusinessTemplatesTab: React.FC<BusinessTemplatesTabProps> = ({
             template={tpl}
             isActive={activeTemplateId === tpl.id}
             isApplied={appliedTemplateIds.includes(tpl.id)}
+            isLocked={isLocked}
             onPreview={setPreviewTemplate}
             onApply={(id) => applyTemplate(id)}
             onConfigureApi={() => navigate('/connectors')}
@@ -88,7 +107,7 @@ export const BusinessTemplatesTab: React.FC<BusinessTemplatesTabProps> = ({
 
       <div className="p-4 rounded-xl border border-border bg-slate-50/70 flex flex-wrap items-center justify-between gap-3">
         <span className="text-xs text-text-secondary">
-          หลังจากกดติดตั้งเทมเพลตแล้ว คุณสามารถเข้าไปปรับแต่งข้อมูลบริษัท/คลังความรู้ AI, API Token, ข้อความตอบกลับ และคีย์เวิร์ดบอทต่อได้ทันที:
+          ปรับแต่งข้อมูลองค์กร/คลังความรู้ AI, API Token, ข้อความตอบกลับ และคีย์เวิร์ดบอทของธุรกิจที่กำลังเลือกอยู่:
         </span>
         <div className="flex flex-wrap items-center gap-3">
           {onSwitchToKnowledgeTab && (

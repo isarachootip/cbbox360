@@ -24,5 +24,6 @@ export interface KnowledgeItem {
   content: string;
   tags?: string[];
   isActive: boolean;
-  templateId?: 'hospital' | 'logistics' | 'auto_service' | 'b2b_wholesale';
+  templateId?: 'contact_center' | 'hospital' | 'logistics' | 'auto_service' | 'b2b_wholesale';
+  businessScope?: 'common' | 'contact_center' | 'hospital' | 'logistics' | 'auto_service' | 'b2b_wholesale';
 }

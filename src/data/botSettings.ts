@@ -1,5 +1,12 @@
-import { BotSettings } from '../types';
+import { BotAutoReplyRule, BotSettings, BusinessScope } from '../types';
 import { defaultCompanyProfile, defaultKnowledgeItems } from './templateKnowledgePresets';
+
+const COMMON_RULE_IDS = new Set(['rule-greeting', 'rule-hours']);
+const withRuleScopes = (rules: BotAutoReplyRule[]): BotAutoReplyRule[] =>
+  rules.map((rule) => ({
+    ...rule,
+    businessScope: (COMMON_RULE_IDS.has(rule.id) ? 'common' : 'b2b_wholesale') as BusinessScope,
+  }));
 
 export const initialBotSettings: BotSettings = {
   isEnabled: true,
@@ -45,7 +52,7 @@ export const initialBotSettings: BotSettings = {
     requireExtension: false,
     fallbackTelUri: true,
   },
-  rules: [
+  rules: withRuleScopes([
     {
       id: 'rule-greeting',
       name: 'ทักทายและต้อนรับลูกค้า (Greeting)',
@@ -146,5 +153,5 @@ export const initialBotSettings: BotSettings = {
       isActive: true,
       priority: 9,
     },
-  ],
+  ]),
 };

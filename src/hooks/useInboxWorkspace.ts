@@ -1,12 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { useCustomer } from '../context/CustomerContext';
 import { useCannedResponses } from '../context/CannedResponseContext';
+import { useBusinessTemplateState } from '../context/BusinessTemplateContext';
 import { useToast } from '../context/ToastContext';
 import { CannedResponse } from '../types';
 import { InboxStatusFilter, InboxTabFilter } from '../components/inbox/ConversationListPane';
 import { ComposerMode } from '../components/inbox/InboxComposer';
 import { TaskComposerDraft } from '../components/inbox/InboxTaskComposerForm';
 import { useInboxAutoReply } from './useInboxAutoReply';
+import { useIndustryProfile } from './useIndustryProfile';
+import { templateToIndustryKind } from '../domain/industry/industryVariables';
+import { buildInboxCustomerVariables } from '../domain/templates/variableReplacer';
 import { updateAiUsageLog } from '../services/aiAssistantApi';
 
 const createInitialTaskDraft = (): TaskComposerDraft => ({
@@ -22,6 +26,7 @@ export function useInboxWorkspace() {
   const {
     conversations,
     customers,
+    tickets,
     updateConversationStatus,
     addMessageToConversation,
     toggleBotStatus,
@@ -50,6 +55,11 @@ export function useInboxWorkspace() {
 
   const selectedConv = conversations.find((c) => c.id === selectedConvId) || conversations[0];
   const currentCustomer = customers.find((c) => c.id === selectedConv.customerId) || customers[0];
+  const { state: templateState } = useBusinessTemplateState();
+  const industry = useIndustryProfile(
+    currentCustomer.id,
+    templateToIndustryKind(templateState.activeTemplateId)
+  );
 
   const { cancelTimer } = useInboxAutoReply({
     conversations,
@@ -84,21 +94,8 @@ export function useInboxWorkspace() {
   };
 
   const applyCannedResponse = (response: CannedResponse) => {
-    const primaryContact = currentCustomer?.contacts?.find((c) => c.isPrimary);
-    const resolvedFirstName =
-      currentCustomer?.firstName ||
-      primaryContact?.firstName ||
-      selectedConv.customerName.split(/\s+/)[0] ||
-      selectedConv.customerName;
-    const text = replaceVariables(response.content, {
-      customer_name: selectedConv.customerName,
-      first_name: resolvedFirstName,
-      nickname: currentCustomer?.nickname || primaryContact?.nickname || resolvedFirstName,
-      order_code: currentCustomer?.lastOrderCode || 'SO-10482',
-      tracking_no: 'TH2609-88412',
-      agent_name: selectedConv.assignedTo || 'วิภา ส.',
-      phone: currentCustomer?.fullPhone || '081-892-5678',
-    });
+    const vars = buildInboxCustomerVariables(currentCustomer, selectedConv, tickets, industry.profile);
+    const text = replaceVariables(response.content, vars);
     setInputText(text);
     setIsSlashMenuOpen(false);
     setSlashSearchQuery('');

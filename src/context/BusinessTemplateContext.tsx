@@ -1,22 +1,56 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { z } from 'zod';
-import { BusinessTemplateId } from '../types';
+import { BusinessTemplateId, DeploymentMode, UserRole } from '../types';
 import {
   EMPTY_ADDED_RESOURCES,
   TemplateAddedResources,
   mergeAddedResources,
 } from '../domain/templates/templateMerge';
+import {
+  BusinessMenuOverrides,
+  toggleBusinessMenuOverride,
+} from '../domain/templates/businessMenuFilter';
 
 const STORAGE_KEY = 'cb360_business_template_state';
 
-const templateIdSchema = z.enum(['hospital', 'logistics', 'auto_service', 'b2b_wholesale']);
-const roleSchema = z.enum(['sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor', 'doctor', 'nurse']);
+const templateIdSchema = z.enum([
+  'contact_center',
+  'hospital',
+  'logistics',
+  'auto_service',
+  'b2b_wholesale',
+]);
+const roleSchema = z.enum([
+  'sysadmin',
+  'admin',
+  'SF_1',
+  'SF_2',
+  'SF_3',
+  'supervisor',
+  'doctor',
+  'nurse',
+]);
+const deploymentModeSchema = z.enum(['demo', 'production_locked']);
+
+const menuOverrideEntrySchema = z.object({
+  enabled: z.array(z.string()),
+  disabled: z.array(z.string()),
+});
 
 const storedStateSchema = z.object({
   activeTemplateId: templateIdSchema,
+  deploymentMode: deploymentModeSchema.optional(),
   appliedTemplateIds: z.array(templateIdSchema),
   lastAppliedAt: z.string().optional(),
-  // Optional: state saved by Phase 1 did not track added resources.
+  menuOverrides: z
+    .object({
+      contact_center: menuOverrideEntrySchema.optional(),
+      hospital: menuOverrideEntrySchema.optional(),
+      logistics: menuOverrideEntrySchema.optional(),
+      auto_service: menuOverrideEntrySchema.optional(),
+      b2b_wholesale: menuOverrideEntrySchema.optional(),
+    })
+    .optional(),
   addedResources: z
     .object({
       connectorIds: z.array(z.string()),
@@ -30,15 +64,19 @@ const storedStateSchema = z.object({
 
 export interface BusinessTemplateState {
   activeTemplateId: BusinessTemplateId;
+  deploymentMode: DeploymentMode;
   appliedTemplateIds: BusinessTemplateId[];
   lastAppliedAt?: string;
   addedResources: TemplateAddedResources;
+  menuOverrides: BusinessMenuOverrides;
 }
 
 const DEFAULT_STATE: BusinessTemplateState = {
   activeTemplateId: 'b2b_wholesale',
+  deploymentMode: 'demo',
   appliedTemplateIds: ['b2b_wholesale'],
   addedResources: EMPTY_ADDED_RESOURCES,
+  menuOverrides: {},
 };
 
 const loadState = (): BusinessTemplateState => {
@@ -47,7 +85,12 @@ const loadState = (): BusinessTemplateState => {
     if (!raw) return DEFAULT_STATE;
     const result = storedStateSchema.safeParse(JSON.parse(raw));
     if (!result.success) return DEFAULT_STATE;
-    return { ...result.data, addedResources: result.data.addedResources ?? EMPTY_ADDED_RESOURCES };
+    return {
+      ...result.data,
+      deploymentMode: result.data.deploymentMode ?? 'demo',
+      addedResources: result.data.addedResources ?? EMPTY_ADDED_RESOURCES,
+      menuOverrides: result.data.menuOverrides ?? {},
+    };
   } catch (e) {
     console.warn('Failed to load business template state', e);
     return DEFAULT_STATE;
@@ -56,6 +99,9 @@ const loadState = (): BusinessTemplateState => {
 
 interface BusinessTemplateContextType {
   state: BusinessTemplateState;
+  switchBusiness: (templateId: BusinessTemplateId) => boolean;
+  setDeploymentMode: (mode: DeploymentMode, actorRole?: UserRole) => boolean;
+  setMenuOverride: (menuId: string, shouldShow: boolean) => void;
   recordApplied: (templateId: BusinessTemplateId, added: TemplateAddedResources) => void;
   resetState: () => void;
 }
@@ -73,20 +119,64 @@ export const BusinessTemplateProvider: React.FC<{ children: React.ReactNode }> =
     }
   }, [state]);
 
-  const recordApplied = (templateId: BusinessTemplateId, added: TemplateAddedResources) => {
-    const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+  const nowTime = () =>
+    `วันนี้ ${new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.`;
+
+  const switchBusiness = (templateId: BusinessTemplateId): boolean => {
+    if (state.deploymentMode === 'production_locked') return false;
     setState((prev) => ({
+      ...prev,
       activeTemplateId: templateId,
       appliedTemplateIds: Array.from(new Set([...prev.appliedTemplateIds, templateId])),
-      lastAppliedAt: `วันนี้ ${time} น.`,
+      lastAppliedAt: nowTime(),
+    }));
+    return true;
+  };
+
+  const setDeploymentMode = (mode: DeploymentMode, actorRole?: UserRole): boolean => {
+    if (actorRole !== 'sysadmin') return false;
+    setState((prev) => ({ ...prev, deploymentMode: mode, lastAppliedAt: nowTime() }));
+    return true;
+  };
+
+  const setMenuOverride = (menuId: string, shouldShow: boolean) => {
+    setState((prev) => ({
+      ...prev,
+      menuOverrides: toggleBusinessMenuOverride(
+        prev.menuOverrides,
+        prev.activeTemplateId,
+        menuId,
+        shouldShow
+      ),
+    }));
+  };
+
+  const recordApplied = (templateId: BusinessTemplateId, added: TemplateAddedResources) => {
+    setState((prev) => ({
+      ...prev,
+      activeTemplateId: templateId,
+      appliedTemplateIds: Array.from(new Set([...prev.appliedTemplateIds, templateId])),
+      lastAppliedAt: nowTime(),
       addedResources: mergeAddedResources(prev.addedResources, added),
     }));
   };
 
-  const resetState = () => setState(DEFAULT_STATE);
+  const resetState = () => {
+    if (state.deploymentMode === 'production_locked') return;
+    setState(DEFAULT_STATE);
+  };
 
   return (
-    <BusinessTemplateContext.Provider value={{ state, recordApplied, resetState }}>
+    <BusinessTemplateContext.Provider
+      value={{
+        state,
+        switchBusiness,
+        setDeploymentMode,
+        setMenuOverride,
+        recordApplied,
+        resetState,
+      }}
+    >
       {children}
     </BusinessTemplateContext.Provider>
   );

@@ -87,3 +87,27 @@ export const autoServiceConnectors: ConnectorConfig[] = [
     ],
   },
 ];
+
+export const contactCenterConnectors: ConnectorConfig[] = [
+  {
+    id: 'conn-cc-sla-engine',
+    name: 'Omnichannel Ticketing & SLA Escalation Webhook',
+    iconName: 'shield',
+    category: 'industry',
+    accountName: 'Helpdesk SLA & Workforce Queue',
+    accountId: 'sla.contactpro.engine',
+    status: 'connected',
+    statusText: 'เชื่อมต่อแล้ว (Auto-Ticket & SLA Breach Alert)',
+    lastSync: 'เพิ่งซิงก์เมื่อสักครู่',
+    messagesCountToday: 328,
+    description:
+      'ผูกแชทและสายเรียกเข้ากับระบบเปิด Ticket อัตโนมัติ คำนวณเวลา SLA ตามระดับลูกค้า และยิงแจ้งเตือนเมื่อเคสใกล้เกินกำหนด',
+    webhookUrl: 'https://api.cb360.co.th/v1/webhooks/industry/contact-center-sla',
+    appId: 'CC_SLA_ENGINE_01',
+    features: [
+      { key: 'auto_ticket', label: 'ออกเลข Ticket อัตโนมัติเมื่อลูกค้าแจ้งปัญหาในแชทหรือสายโทรเข้า', enabled: true },
+      { key: 'sla_escalation', label: 'แจ้งเตือน Supervisor ทันทีเมื่อเคส VIP เหลือเวลา SLA น้อยกว่า 15 นาที', enabled: true },
+      { key: 'csat_dispatch', label: 'ส่งแบบสำรวจคะแนนความพึงพอใจ (CSAT 1-5) อัตโนมัติเมื่อปิดเคส', enabled: true },
+    ],
+  },
+];
