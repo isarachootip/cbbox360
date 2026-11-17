@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { PhoneIncoming, PhoneOutgoing, ExternalLink } from 'lucide-react';
 import type { CallLogRecord, CallLogStatus } from '../../types';
 import { StatusBadge } from '../common/StatusBadge';
+import { ClickToCallButton } from '../common/ClickToCallButton';
 
 interface CallHistoryTableProps {
   callLogs: CallLogRecord[];
@@ -65,7 +66,14 @@ export const CallHistoryTable: React.FC<CallHistoryTableProps> = ({
                   </td>
 
                   <td className="py-3 px-4 whitespace-nowrap font-mono">
-                    <div className="font-bold text-text-primary">{log.phone}</div>
+                    <ClickToCallButton
+                      phone={log.phone}
+                      fullPhone={log.normalizedPhone}
+                      customerId={log.customerId}
+                      customerName={log.customerName}
+                      matchedContactName={log.matchedContactName}
+                      className="font-bold"
+                    />
                     <div className="text-[11px] text-text-secondary">
                       Ext: {log.ext || '—'} {log.callId ? `· ${log.callId}` : ''}
                     </div>
@@ -103,14 +111,25 @@ export const CallHistoryTable: React.FC<CallHistoryTableProps> = ({
                   </td>
 
                   <td className="py-3 px-4 text-right whitespace-nowrap">
-                    <button
-                      type="button"
-                      onClick={() => onReopenScreenPop(log.phone, log.ext, log.callId)}
-                      className="px-2.5 py-1 border border-border hover:bg-bg-subtle rounded-lg text-[11px] font-semibold text-text-primary inline-flex items-center gap-1 cursor-pointer transition-colors"
-                    >
-                      <span>Screen-Pop</span>
-                      <ExternalLink className="w-3 h-3 text-brand" />
-                    </button>
+                    <div className="inline-flex items-center gap-1.5">
+                      <ClickToCallButton
+                        phone={log.phone}
+                        fullPhone={log.normalizedPhone}
+                        customerId={log.customerId}
+                        customerName={log.customerName}
+                        matchedContactName={log.matchedContactName}
+                        variant="button"
+                        label="โทรกลับ"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => onReopenScreenPop(log.phone, log.ext, log.callId)}
+                        className="px-2.5 py-1 border border-border hover:bg-bg-subtle rounded-lg text-[11px] font-semibold text-text-primary inline-flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <span>Screen-Pop</span>
+                        <ExternalLink className="w-3 h-3 text-brand" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

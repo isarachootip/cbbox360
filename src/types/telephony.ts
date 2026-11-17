@@ -21,6 +21,23 @@ export interface CustomerPhoneMatch {
   normalizedPhone: string;
 }
 
+export interface PbxClickToCallConfig {
+  enabled: boolean;
+  phoneUrl: string;
+  windowName: string;
+  outboundPrefix: string;
+  requireExtension: boolean;
+  fallbackTelUri: boolean;
+}
+
+export interface OutboundCallPayload {
+  rawPhone: string;
+  fullPhone?: string;
+  customerId?: string;
+  customerName?: string;
+  matchedContactName?: string;
+}
+
 export interface CallLogRecord {
   id: string;
   callId?: string;
@@ -36,4 +53,6 @@ export interface CallLogRecord {
   durationFormatted: string;
   timestamp: string;
   agentName: string;
+  dialUrl?: string;
+  startedAtMs?: number;
 }

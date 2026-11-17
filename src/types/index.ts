@@ -26,6 +26,8 @@ export type {
   CtiScreenPopQuery,
   CustomerPhoneMatch,
   CallLogRecord,
+  PbxClickToCallConfig,
+  OutboundCallPayload,
 } from './telephony';
 export type TierType = 'MEMBER' | 'SILVER' | 'GOLD' | 'PLATINUM';
 export type CreditGrade = 'A' | 'B' | 'C' | 'D';
@@ -466,6 +468,7 @@ export interface BotSettings {
   aiSuggestReplyEnabled?: boolean;
   aiSummaryEnabled?: boolean;
   autoReplyTimeoutSeconds?: number;
+  pbxConfig?: import('./telephony').PbxClickToCallConfig;
   rules: BotAutoReplyRule[];
 }
 

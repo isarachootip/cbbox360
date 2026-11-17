@@ -1,9 +1,12 @@
 import React from 'react';
 import { MapPin, ExternalLink, Edit2, Trash2, Truck } from 'lucide-react';
 import { CustomerAddress, AddressType } from '../../types';
+import { ClickToCallButton } from '../common/ClickToCallButton';
 
 interface AddressCardProps {
   address: CustomerAddress;
+  customerId?: string;
+  customerName?: string;
   onEdit: (addr: CustomerAddress) => void;
   onDelete: (addrId: string, title: string) => void;
   onSetDefaultShipping?: (addrId: string, title: string) => void;
@@ -12,6 +15,8 @@ interface AddressCardProps {
 
 export const AddressCard: React.FC<AddressCardProps> = ({
   address,
+  customerId,
+  customerName,
   onEdit,
   onDelete,
   onSetDefaultShipping,
@@ -86,10 +91,19 @@ export const AddressCard: React.FC<AddressCardProps> = ({
 
         {/* Receiver Info */}
         {(address.receiverName || address.receiverPhone) && (
-          <div className="mt-2 text-[11px] text-text-secondary flex items-center gap-2">
+          <div className="mt-2 text-[11px] text-text-secondary flex items-center gap-2 flex-wrap">
             <span className="font-medium text-text-primary">ผู้รับ: {address.receiverName || '-'}</span>
             <span>•</span>
-            <span className="font-mono">{address.receiverPhone || '-'}</span>
+            {address.receiverPhone ? (
+              <ClickToCallButton
+                phone={address.receiverPhone}
+                customerId={customerId}
+                customerName={customerName}
+                matchedContactName={address.receiverName || address.title}
+              />
+            ) : (
+              <span className="font-mono">-</span>
+            )}
           </div>
         )}
 

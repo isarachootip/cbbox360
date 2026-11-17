@@ -87,6 +87,8 @@ export const AddressesTab: React.FC<AddressesTabProps> = ({ customer }) => {
             <AddressCard
               key={addr.id}
               address={addr}
+              customerId={customer.id}
+              customerName={customer.name}
               onEdit={handleOpenEdit}
               onDelete={handleDelete}
               onSetDefaultShipping={handleSetDefaultShipping}

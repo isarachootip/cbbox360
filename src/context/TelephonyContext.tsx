@@ -2,12 +2,17 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import type { CallLogRecord, CtiScreenPopQuery, CustomerPhoneMatch } from '../types';
 import {
   buildCallTimelineEvent,
-  formatNowCallTimestamp,
+  createOutboundCallRecord,
+  createScreenPopCallRecord,
+  formatElapsedDuration,
   loadStoredCallLogs,
   saveStoredCallLogs,
+  type CreateOutboundCallInput,
 } from '../domain/telephony/callLogHelpers';
 import { useCustomer } from './CustomerContext';
 import { useAuth } from './AuthContext';
+
+export type RegisterOutboundCallInput = CreateOutboundCallInput;
 
 interface TelephonyContextType {
   callLogs: CallLogRecord[];
@@ -16,6 +21,7 @@ interface TelephonyContextType {
     query: CtiScreenPopQuery,
     match?: CustomerPhoneMatch
   ) => CallLogRecord;
+  registerOutboundCall: (input: RegisterOutboundCallInput) => CallLogRecord;
   attachCustomerToActiveCall: (
     customerId: string,
     customerName: string,
@@ -33,30 +39,13 @@ export const TelephonyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [callLogs, setCallLogs] = useState<CallLogRecord[]>(loadStoredCallLogs);
   const [activeCall, setActiveCall] = useState<CallLogRecord | null>(null);
 
-  useEffect(() => {
-    saveStoredCallLogs(callLogs);
-  }, [callLogs]);
+  useEffect(() => saveStoredCallLogs(callLogs), [callLogs]);
 
   const agentName = currentUser?.name || 'วิภา ส.';
 
   const registerScreenPopCall = useCallback(
     (query: CtiScreenPopQuery, match?: CustomerPhoneMatch): CallLogRecord => {
-      const newRecord: CallLogRecord = {
-        id: `call-${Date.now()}`,
-        callId: query.callId,
-        phone: query.displayNumber || query.rawNumber,
-        normalizedPhone: query.normalizedNumber,
-        ext: query.ext,
-        direction: query.direction,
-        status: 'Active',
-        customerId: match?.customer.id,
-        customerName: match?.customer.name,
-        matchedContactName: match?.matchedLabel,
-        durationFormatted: 'กำลังสนทนา',
-        timestamp: formatNowCallTimestamp(),
-        agentName,
-      };
-
+      const newRecord = createScreenPopCallRecord(query, agentName, match);
       setActiveCall((prev) =>
         prev &&
         prev.status === 'Active' &&
@@ -65,7 +54,6 @@ export const TelephonyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           ? prev
           : newRecord
       );
-
       setCallLogs((prev) => {
         const duplicate = prev.some(
           (item) =>
@@ -75,7 +63,16 @@ export const TelephonyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         );
         return duplicate ? prev : [newRecord, ...prev];
       });
+      return newRecord;
+    },
+    [agentName]
+  );
 
+  const registerOutboundCall = useCallback(
+    (input: RegisterOutboundCallInput): CallLogRecord => {
+      const newRecord = createOutboundCallRecord(input, agentName);
+      setActiveCall(newRecord);
+      setCallLogs((prev) => [newRecord, ...prev]);
       return newRecord;
     },
     [agentName]
@@ -100,22 +97,22 @@ export const TelephonyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const completeActiveCall = useCallback(
     (summary: string) => {
       if (!activeCall) return;
-      const cleanSummary = summary.trim() || 'รับสายผ่าน 3CX Screen-Pop เรียบร้อย';
+      const defaultSummary =
+        activeCall.direction === 'outbound'
+          ? 'โทรออกผ่าน PABX WebPhone (Click-to-Call) เรียบร้อย'
+          : 'รับสายผ่าน 3CX Screen-Pop เรียบร้อย';
+      const cleanSummary = summary.trim() || defaultSummary;
+      const elapsed = activeCall.startedAtMs
+        ? formatElapsedDuration(activeCall.startedAtMs)
+        : '02:15';
 
       setCallLogs((prev) =>
         prev.map((log) =>
           log.id === activeCall.id
-            ? {
-                ...log,
-                status: 'Completed',
-                summary: cleanSummary,
-                durationFormatted:
-                  log.durationFormatted === 'กำลังสนทนา' ? '02:15' : log.durationFormatted,
-              }
+            ? { ...log, status: 'Completed', summary: cleanSummary, durationFormatted: elapsed }
             : log
         )
       );
-
       if (activeCall.customerId) {
         addTimelineEvent(
           buildCallTimelineEvent(activeCall, activeCall.customerId, cleanSummary, agentName)
@@ -128,10 +125,13 @@ export const TelephonyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const dismissActiveCall = useCallback(() => {
     if (!activeCall) return;
+    const elapsed = activeCall.startedAtMs
+      ? formatElapsedDuration(activeCall.startedAtMs)
+      : '01:05';
     setCallLogs((prev) =>
       prev.map((log) =>
         log.id === activeCall.id && log.status === 'Active'
-          ? { ...log, status: 'Completed', durationFormatted: '01:05' }
+          ? { ...log, status: 'Completed', durationFormatted: elapsed }
           : log
       )
     );
@@ -144,6 +144,7 @@ export const TelephonyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         callLogs,
         activeCall,
         registerScreenPopCall,
+        registerOutboundCall,
         attachCustomerToActiveCall,
         completeActiveCall,
         dismissActiveCall,
@@ -156,8 +157,6 @@ export const TelephonyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
 export const useTelephony = (): TelephonyContextType => {
   const ctx = useContext(TelephonyContext);
-  if (!ctx) {
-    throw new Error('useTelephony must be used within a TelephonyProvider');
-  }
+  if (!ctx) throw new Error('useTelephony must be used within a TelephonyProvider');
   return ctx;
 };

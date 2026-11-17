@@ -78,6 +78,14 @@ export const defaultBotSettings = {
   ],
   aiSuggestReplyEnabled: true,
   aiSummaryEnabled: true,
+  pbxConfig: {
+    enabled: true,
+    phoneUrl: 'https://pbx01.cb360.online:5001/phone/index.html',
+    windowName: 'pbx_360_phone',
+    outboundPrefix: '',
+    requireExtension: false,
+    fallbackTelUri: true,
+  },
   rules: [
     {
       id: 'rule-greeting',

@@ -4,6 +4,7 @@ import { ArrowRight, ExternalLink } from 'lucide-react';
 import { ChatMessage, Customer } from '../../types';
 import { TierBadge } from './TierBadge';
 import { GradeBadge } from './GradeBadge';
+import { ClickToCallButton } from './ClickToCallButton';
 import { useToast } from '../../context/ToastContext';
 import { useCustomer } from '../../context/CustomerContext';
 import { AiSummaryCard } from '../inbox/AiSummaryCard';
@@ -85,7 +86,12 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({
       <div className="space-y-2 py-3 border-y border-divider text-ui">
         <div className="flex items-center justify-between">
           <span className="text-text-secondary">มือถือ</span>
-          <span className="tabular-nums text-text-primary font-medium">{customer.phone}</span>
+          <ClickToCallButton
+            phone={customer.phone}
+            fullPhone={customer.fullPhone}
+            customerId={customer.id}
+            customerName={customer.name}
+          />
         </div>
         <div className="flex items-center justify-between">
           <span className="text-text-secondary">ยอด 12 เดือน</span>

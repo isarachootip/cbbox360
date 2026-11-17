@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Copy, PhoneIncoming, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Copy, PhoneIncoming, PhoneOutgoing, ExternalLink } from 'lucide-react';
 import type { ConnectorConfig } from '../../types';
 import { buildScreenPopUrlTemplate } from '../../domain/telephony/phoneMatcher';
+import { buildPbxWebPhoneDialUrl, parsePbxConfig } from '../../domain/telephony/clickToCall';
+import { useBot } from '../../context/BotContext';
 
 interface ThreeCxConfigPanelProps {
   editForm: ConnectorConfig;
@@ -20,7 +23,10 @@ export const ThreeCxConfigPanel: React.FC<ThreeCxConfigPanelProps> = ({
 }) => {
   const [samplePhone, setSamplePhone] = useState('0823451122');
   const [sampleExt, setSampleExt] = useState('101');
+  const { settings } = useBot();
+  const pbxConfig = parsePbxConfig(settings.pbxConfig);
   const liveTemplateUrl = buildScreenPopUrlTemplate(window.location.origin);
+  const liveClickToCallPreview = buildPbxWebPhoneDialUrl(pbxConfig.phoneUrl, '<เบอร์>');
 
   return (
     <div className="space-y-4 text-xs">
@@ -54,6 +60,33 @@ export const ThreeCxConfigPanel: React.FC<ThreeCxConfigPanelProps> = ({
           <div>%Agent% = เลขภายใน (Ext)</div>
           <div>%CallID% = รหัสอ้างอิงสาย</div>
         </div>
+      </div>
+
+      <div className="p-3.5 bg-bg-subtle rounded-xl border border-border space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <span className="font-bold text-text-primary flex items-center gap-1.5">
+              <PhoneOutgoing className="w-3.5 h-3.5 text-brand" />
+              <span>Outbound Click-to-Call WebPhone URL</span>
+            </span>
+            <span className="text-[11px] text-text-secondary">
+              เปิดแท็บซ้ำอัตโนมัติผ่าน window.open(url, &quot;{pbxConfig.windowName}&quot;)
+            </span>
+          </div>
+          <Link
+            to="/settings"
+            className="px-2.5 py-1 bg-white border border-border hover:border-brand text-brand rounded-lg font-semibold flex items-center gap-1 flex-shrink-0"
+          >
+            <span>แก้ไขใน Settings</span>
+            <ExternalLink className="w-3 h-3" />
+          </Link>
+        </div>
+        <input
+          type="text"
+          readOnly
+          value={liveClickToCallPreview || pbxConfig.phoneUrl}
+          className="w-full px-3 py-2 bg-white border border-border rounded-lg font-mono text-[11px] text-brand font-semibold"
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-3">

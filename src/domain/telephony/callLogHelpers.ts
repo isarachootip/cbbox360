@@ -1,6 +1,16 @@
 import { z } from 'zod';
-import type { CallLogRecord, TimelineEvent } from '../../types';
+import type { CallLogRecord, CtiScreenPopQuery, CustomerPhoneMatch, TimelineEvent } from '../../types';
 import { initialCallLogs } from '../../data/callLogs';
+
+export interface CreateOutboundCallInput {
+  displayPhone: string;
+  normalizedPhone: string;
+  dialUrl: string;
+  ext?: string;
+  customerId?: string;
+  customerName?: string;
+  matchedContactName?: string;
+}
 
 const CALL_LOGS_STORAGE_KEY = 'cb360_call_logs_v1';
 
@@ -19,9 +29,23 @@ const callLogRecordSchema = z.object({
   durationFormatted: z.string(),
   timestamp: z.string(),
   agentName: z.string(),
+  dialUrl: z.string().optional(),
+  startedAtMs: z.number().optional(),
 });
 
 const callLogArraySchema = z.array(callLogRecordSchema);
+
+export const formatElapsedDuration = (startedAtMs?: number, nowMs = Date.now()): string => {
+  if (!startedAtMs || nowMs <= startedAtMs) {
+    return '00:00';
+  }
+  const totalSeconds = Math.max(1, Math.floor((nowMs - startedAtMs) / 1000));
+  const mins = Math.floor(totalSeconds / 60)
+    .toString()
+    .padStart(2, '0');
+  const secs = (totalSeconds % 60).toString().padStart(2, '0');
+  return `${mins}:${secs}`;
+};
 
 export const formatNowCallTimestamp = (): string => {
   const now = new Date();
@@ -47,6 +71,51 @@ export const saveStoredCallLogs = (logs: CallLogRecord[]): void => {
   } catch {
     // Ignore storage quota errors
   }
+};
+
+export const createScreenPopCallRecord = (
+  query: CtiScreenPopQuery,
+  agentName: string,
+  match?: CustomerPhoneMatch
+): CallLogRecord => ({
+  id: `call-${Date.now()}`,
+  callId: query.callId,
+  phone: query.displayNumber || query.rawNumber,
+  normalizedPhone: query.normalizedNumber,
+  ext: query.ext,
+  direction: query.direction,
+  status: 'Active',
+  customerId: match?.customer.id,
+  customerName: match?.customer.name,
+  matchedContactName: match?.matchedLabel,
+  durationFormatted: 'กำลังสนทนา',
+  timestamp: formatNowCallTimestamp(),
+  agentName,
+  startedAtMs: Date.now(),
+});
+
+export const createOutboundCallRecord = (
+  input: CreateOutboundCallInput,
+  agentName: string
+): CallLogRecord => {
+  const nowMs = Date.now();
+  return {
+    id: `call-${nowMs}`,
+    callId: `out-${Math.floor(10000 + Math.random() * 90000)}`,
+    phone: input.displayPhone,
+    normalizedPhone: input.normalizedPhone,
+    ext: input.ext || undefined,
+    direction: 'outbound',
+    status: 'Active',
+    customerId: input.customerId,
+    customerName: input.customerName,
+    matchedContactName: input.matchedContactName,
+    durationFormatted: 'กำลังโทรออก',
+    timestamp: formatNowCallTimestamp(),
+    agentName,
+    dialUrl: input.dialUrl,
+    startedAtMs: nowMs,
+  };
 };
 
 export const buildCallTimelineEvent = (

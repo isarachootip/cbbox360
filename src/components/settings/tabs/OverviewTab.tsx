@@ -4,6 +4,7 @@ import { CannedResponse } from '../../../types';
 import { useBot } from '../../../context/BotContext';
 import { AiFeaturesToggleCard } from '../AiFeaturesToggleCard';
 import { TypographySettingsCard } from '../TypographySettingsCard';
+import { PbxPhoneSettingsCard } from '../PbxPhoneSettingsCard';
 import { OverviewModulesGrid } from '../OverviewModulesGrid';
 
 interface OverviewTabProps {
@@ -57,6 +58,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
       {/* Display & Typography Comfort Settings */}
       <TypographySettingsCard />
+
+      {/* PABX WebPhone Click-to-Call URL Configuration */}
+      <PbxPhoneSettingsCard />
 
       {/* AI Copilot Features Toggle (Suggested Reply & AI Summary) */}
       <AiFeaturesToggleCard />

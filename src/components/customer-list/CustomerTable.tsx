@@ -4,6 +4,7 @@ import { ChevronRight, Phone, UserX } from 'lucide-react';
 import { Customer } from '../../types';
 import { TierBadge } from '../common/TierBadge';
 import { GradeBadge } from '../common/GradeBadge';
+import { ClickToCallButton } from '../common/ClickToCallButton';
 
 interface CustomerTableProps {
   customers: Customer[];
@@ -63,18 +64,12 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
           </thead>
           <tbody className="divide-y divide-divider">
             {customers.map((c) => {
-              const churnDot =
+              const churnStyle =
                 c.churnRisk === 'สูง'
-                  ? 'bg-rose-500'
+                  ? { dot: 'bg-rose-500', text: 'text-rose-600' }
                   : c.churnRisk === 'ปานกลาง'
-                  ? 'bg-amber-500'
-                  : 'bg-emerald-500';
-              const churnText =
-                c.churnRisk === 'สูง'
-                  ? 'text-rose-600'
-                  : c.churnRisk === 'ปานกลาง'
-                  ? 'text-amber-600'
-                  : 'text-emerald-600';
+                  ? { dot: 'bg-amber-500', text: 'text-amber-600' }
+                  : { dot: 'bg-emerald-500', text: 'text-emerald-600' };
 
               return (
                 <tr
@@ -107,7 +102,12 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
                           <span>·</span>
                           <span className="flex items-center gap-1">
                             <Phone className="w-3 h-3" />
-                            {c.phone}
+                            <ClickToCallButton
+                              phone={c.phone}
+                              fullPhone={c.fullPhone}
+                              customerId={c.id}
+                              customerName={c.name}
+                            />
                           </span>
                         </div>
                       </div>
@@ -156,24 +156,33 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
                   </td>
 
                   <td className="py-3 px-4 text-center select-none">
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${churnText}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${churnDot}`} />
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${churnStyle.text}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${churnStyle.dot}`} />
                       <span>{c.churnRisk}</span>
                     </span>
                   </td>
 
                   <td className="py-3 px-4 text-right select-none">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRowClick(c);
-                      }}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-brand hover:text-brand-hover hover:bg-brand-tint rounded-lg transition-colors cursor-pointer"
-                    >
-                      <span>360°</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="inline-flex items-center gap-1">
+                      <ClickToCallButton
+                        phone={c.phone}
+                        fullPhone={c.fullPhone}
+                        customerId={c.id}
+                        customerName={c.name}
+                        variant="icon"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRowClick(c);
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-brand hover:text-brand-hover hover:bg-brand-tint rounded-lg transition-colors cursor-pointer"
+                      >
+                        <span>360°</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

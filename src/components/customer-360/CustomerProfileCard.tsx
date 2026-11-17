@@ -4,6 +4,7 @@ import { Customer } from '../../types';
 import { TierBadge } from '../common/TierBadge';
 import { GradeBadge } from '../common/GradeBadge';
 import { ProgressBar } from '../common/ProgressBar';
+import { ClickToCallButton } from '../common/ClickToCallButton';
 import { CustomerConsentSummaryBlock } from './CustomerConsentSummaryBlock';
 
 interface CustomerProfileCardProps {
@@ -127,9 +128,12 @@ export const CustomerProfileCard: React.FC<CustomerProfileCardProps> = ({
             <Phone className="w-3.5 h-3.5 text-text-secondary" />
             <span>มือถือ</span>
           </span>
-          <span className="tabular-nums text-text-primary font-medium">
-            {customer.phone}
-          </span>
+          <ClickToCallButton
+            phone={customer.phone}
+            fullPhone={customer.fullPhone}
+            customerId={customer.id}
+            customerName={customer.name}
+          />
         </div>
         <div className="flex items-center justify-between gap-2">
           <span className="text-text-secondary flex items-center gap-1.5">

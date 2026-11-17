@@ -16,7 +16,7 @@ interface TestMatchResult {
 
 interface BotContextType {
   settings: BotSettings;
-  updateSettings: (partial: Partial<BotSettings>) => void;
+  updateSettings: (partial: Partial<BotSettings>, toastMessage?: string) => void;
   updateCompanyProfile: (partial: Partial<CompanyProfile>) => void;
   addKnowledgeItem: (item: Omit<KnowledgeItem, 'id'>) => void;
   updateKnowledgeItem: (id: string, partial: Partial<KnowledgeItem>) => void;
@@ -40,6 +40,17 @@ const normalizeBotSettings = (raw: Partial<BotSettings>): BotSettings => ({
   companyProfile: {
     ...defaultCompanyProfile,
     ...(raw.companyProfile || {}),
+  },
+  pbxConfig: {
+    enabled: initialBotSettings.pbxConfig?.enabled ?? true,
+    phoneUrl:
+      initialBotSettings.pbxConfig?.phoneUrl ??
+      'https://pbx01.cb360.online:5001/phone/index.html',
+    windowName: initialBotSettings.pbxConfig?.windowName ?? 'pbx_360_phone',
+    outboundPrefix: initialBotSettings.pbxConfig?.outboundPrefix ?? '',
+    requireExtension: initialBotSettings.pbxConfig?.requireExtension ?? false,
+    fallbackTelUri: initialBotSettings.pbxConfig?.fallbackTelUri ?? true,
+    ...(raw.pbxConfig || {}),
   },
   knowledgeItems: Array.isArray(raw.knowledgeItems) ? raw.knowledgeItems : defaultKnowledgeItems,
 });
@@ -104,13 +115,13 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateSettings = (partial: Partial<BotSettings>) => {
+  const updateSettings = (partial: Partial<BotSettings>, toastMessage?: string) => {
     setSettings((prev) => {
       const updated = { ...prev, ...partial };
       saveToBackend(updated);
       return updated;
     });
-    showToast('บันทึกการตั้งค่า Bot เรียบร้อยแล้ว', 'success');
+    showToast(toastMessage || 'บันทึกการตั้งค่า Bot เรียบร้อยแล้ว', 'success');
   };
 
   const updateCompanyProfile = (partial: Partial<CompanyProfile>) => {

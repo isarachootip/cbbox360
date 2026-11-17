@@ -112,6 +112,8 @@ export const ContactsTab: React.FC<ContactsTabProps> = ({ customer }) => {
             <ContactCard
               key={contact.id}
               contact={contact}
+              customerId={customer.id}
+              customerName={customer.name}
               onSetPrimary={handleSetPrimary}
               onEdit={handleOpenEdit}
               onDelete={handleDelete}

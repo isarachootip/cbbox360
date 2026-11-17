@@ -1,9 +1,12 @@
 import React from 'react';
 import { Phone, Mail, MessageSquare, Edit2, Trash2, Star } from 'lucide-react';
 import type { ContactPerson } from '../../types';
+import { ClickToCallButton } from '../common/ClickToCallButton';
 
 interface ContactCardProps {
   contact: ContactPerson;
+  customerId?: string;
+  customerName?: string;
   onSetPrimary: (contact: ContactPerson) => void;
   onEdit: (contact: ContactPerson) => void;
   onDelete: (contactId: string, name: string) => void;
@@ -11,6 +14,8 @@ interface ContactCardProps {
 
 export const ContactCard: React.FC<ContactCardProps> = ({
   contact,
+  customerId,
+  customerName,
   onSetPrimary,
   onEdit,
   onDelete,
@@ -80,7 +85,12 @@ export const ContactCard: React.FC<ContactCardProps> = ({
       <div className="mt-2.5 space-y-1 text-xs">
         <div className="flex items-center gap-2 text-text-primary">
           <Phone className="w-3.5 h-3.5 text-text-secondary shrink-0" />
-          <span className="font-mono font-medium">{contact.phone}</span>
+          <ClickToCallButton
+            phone={contact.phone}
+            customerId={customerId}
+            customerName={customerName}
+            matchedContactName={contact.name}
+          />
         </div>
         {contact.email && (
           <div className="flex items-center gap-2 text-text-secondary">
