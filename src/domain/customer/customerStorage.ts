@@ -84,6 +84,14 @@ export const customerRecordSchema: z.ZodType<Customer> = z.object({
     marketingLine: z.boolean(),
     marketingEmail: z.boolean(),
     marketingSms: z.boolean(),
+    marketingPhone: z.boolean().optional(),
+    profilingAnalytics: z.boolean().optional(),
+    sensitiveMedical: z.boolean().optional(),
+    policyVersion: z.string().optional(),
+    consentSource: z
+      .enum(['LINE LIFF', 'Web Form', '3CX Call', 'Walk-in', 'Email', 'Admin'])
+      .optional(),
+    updatedAt: z.string().optional(),
   }),
   creditLimit: z.number(),
   creditUsed: z.number(),

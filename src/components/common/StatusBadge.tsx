@@ -30,6 +30,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         return { dot: 'bg-amber-500', text: 'text-amber-600' };
       case 'waiting':
       case 'in_review':
+      case 'in review':
       case 'รออนุมัติ':
       case 'รอตรวจสอบ':
         return { dot: 'bg-purple-500', text: 'text-purple-600' };

@@ -1,4 +1,24 @@
+import type {
+  ConsentFilterPreset,
+  ConsentPolicyTemplate,
+  ConsentSource,
+  CustomerConsentFlags,
+  DsrRequest,
+  DsrRequestType,
+  DsrStatus,
+  ResolvedCustomerConsent,
+} from './consent';
 export type { CompanyProfile, KnowledgeCategory, KnowledgeItem } from './knowledge';
+export type {
+  ConsentFilterPreset,
+  ConsentPolicyTemplate,
+  ConsentSource,
+  CustomerConsentFlags,
+  DsrRequest,
+  DsrRequestType,
+  DsrStatus,
+  ResolvedCustomerConsent,
+};
 export type {
   CallDirection,
   CallLogStatus,
@@ -90,11 +110,7 @@ export interface Customer extends PersonNameParts {
   };
   birthday: string; // "14 ก.พ."
   customerSince: string; // "มี.ค. 2021"
-  consent: {
-    marketingLine: boolean;
-    marketingEmail: boolean;
-    marketingSms: boolean;
-  };
+  consent: CustomerConsentFlags;
   creditLimit: number; // 300000
   creditUsed: number; // 126000 (42%)
   creditOverdue: number; // 0

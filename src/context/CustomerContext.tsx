@@ -6,6 +6,7 @@ import type {
   CreditLimitRequest,
   Customer,
   CustomerAddress,
+  CustomerConsentFlags,
   Deal,
   Segment,
   TaskDetails,
@@ -57,6 +58,11 @@ interface CustomerContextType {
   setSearchQuery: (query: string) => void;
   addCustomer: (customerData: CreateCustomerInput) => Customer;
   updateCustomer: (customerId: string, updates: UpdateCustomerInput) => Customer | undefined;
+  updateCustomerConsent: (
+    customerId: string,
+    patch: Partial<CustomerConsentFlags>,
+    extraFields?: { email?: string; nickname?: string }
+  ) => Customer | undefined;
   addContact: (customerId: string, contact: Omit<ContactPerson, 'id'>) => void;
   updateContact: (customerId: string, contact: ContactPerson) => void;
   deleteContact: (customerId: string, contactId: string) => void;
@@ -122,6 +128,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSearchQuery: directory.setSearchQuery,
         addCustomer: directory.addCustomer,
         updateCustomer: directory.updateCustomer,
+        updateCustomerConsent: directory.updateCustomerConsent,
         addContact: directory.addContact,
         updateContact: directory.updateContact,
         deleteContact: directory.deleteContact,

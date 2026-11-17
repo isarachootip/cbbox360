@@ -4,6 +4,7 @@ import type {
   CreateCustomerInput,
   Customer,
   CustomerAddress,
+  CustomerConsentFlags,
   UpdateCustomerInput,
 } from '../types';
 import {
@@ -107,6 +108,18 @@ export const useCustomerDirectoryState = (
     mutateSingleCustomer(customerId, (c) => ({ ...c, creditLimit: nextLimit }));
   };
 
+  const updateCustomerConsent = (
+    customerId: string,
+    patch: Partial<CustomerConsentFlags>,
+    extraFields?: { email?: string; nickname?: string }
+  ): Customer | undefined =>
+    mutateSingleCustomer(customerId, (c) => ({
+      ...c,
+      ...(extraFields?.email !== undefined ? { email: extraFields.email } : {}),
+      ...(extraFields && 'nickname' in extraFields ? { nickname: extraFields.nickname } : {}),
+      consent: { ...c.consent, ...patch },
+    }));
+
   const addContact = (customerId: string, contactData: Omit<ContactPerson, 'id'>) => {
     const newContact: ContactPerson = {
       ...normalizeContactInput(contactData),
@@ -192,6 +205,7 @@ export const useCustomerDirectoryState = (
     setSearchQuery,
     addCustomer,
     updateCustomer,
+    updateCustomerConsent,
     updateCustomerCreditLimit,
     addContact,
     updateContact,

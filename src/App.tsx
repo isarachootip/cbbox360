@@ -29,6 +29,7 @@ import { CreditSalesPage } from './pages/CreditSalesPage';
 import { ConnectorsPage } from './pages/ConnectorsPage';
 import { CtiScreenPopPage } from './pages/CtiScreenPopPage';
 import { VoicePage } from './pages/VoicePage';
+import { ConsentPage } from './pages/ConsentPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 
 // Protected Route Component
@@ -87,7 +88,7 @@ export const App: React.FC = () => {
                         <Route path="menus" element={<MenuManagementPage />} />
                         
                         {/* Placeholders & Tools */}
-                        <Route path="consent" element={<PlaceholderPage />} />
+                        <Route path="consent" element={<ConsentPage />} />
                         <Route path="voice" element={<VoicePage />} />
                         <Route path="connectors" element={<ConnectorsPage />} />
                         <Route path="settings" element={<SettingsPage />} />

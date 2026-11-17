@@ -1,9 +1,10 @@
 import React from 'react';
-import { Check, X, Phone, Mail, Calendar, Clock, ShieldCheck, Edit2 } from 'lucide-react';
+import { Phone, Mail, Calendar, Clock, Edit2 } from 'lucide-react';
 import { Customer } from '../../types';
 import { TierBadge } from '../common/TierBadge';
 import { GradeBadge } from '../common/GradeBadge';
 import { ProgressBar } from '../common/ProgressBar';
+import { CustomerConsentSummaryBlock } from './CustomerConsentSummaryBlock';
 
 interface CustomerProfileCardProps {
   customer: Customer;
@@ -169,23 +170,7 @@ export const CustomerProfileCard: React.FC<CustomerProfileCardProps> = ({
       </div>
 
       {/* Consent (PDPA) */}
-      <div className="border-t border-divider pt-3.5 space-y-2 select-none">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-text-primary">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>Consent (PDPA)</span>
-        </div>
-        <div className="flex flex-wrap gap-2.5 text-xs">
-          <span className="inline-flex items-center gap-1 font-medium text-emerald-700">
-            LINE <Check className="w-3.5 h-3.5 text-emerald-600" />
-          </span>
-          <span className="inline-flex items-center gap-1 font-medium text-emerald-700">
-            Email <Check className="w-3.5 h-3.5 text-emerald-600" />
-          </span>
-          <span className="inline-flex items-center gap-1 font-medium text-rose-600">
-            SMS <X className="w-3.5 h-3.5 text-rose-500" />
-          </span>
-        </div>
-      </div>
+      <CustomerConsentSummaryBlock customer={customer} />
     </div>
   );
 };

@@ -163,8 +163,25 @@ export const ensureDatabaseSchema = async () => {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_customers_created_at ON customers(created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS consent_dsr_requests (
+        id TEXT PRIMARY KEY,
+        customer_id TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'Open',
+        data JSONB NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS consent_policies (
+        id TEXT PRIMARY KEY,
+        version TEXT NOT NULL,
+        is_active BOOLEAN NOT NULL DEFAULT FALSE,
+        data JSONB NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
     `);
-    console.log('✅ [DB Schema] Verified medical roles, customer_industry_profiles, and customers');
+    console.log('✅ [DB Schema] Verified medical roles, customer_industry_profiles, customers, and consent tables');
     await ensureUserAgentColumns();
     return true;
   } catch (err) {
