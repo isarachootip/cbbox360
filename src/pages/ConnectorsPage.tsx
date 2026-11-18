@@ -44,16 +44,11 @@ export const ConnectorsPage: React.FC = () => {
       try {
         const parsed = JSON.parse(saved);
         return parsed.map((c: ConnectorConfig) => {
-          if (c.id === 'conn-line' && (!c.accountName || c.accountName.includes('CusShop') || c.accountName.includes('@596vuzml'))) {
+          if (c.id === 'conn-line') {
             return {
               ...c,
-              accountName: 'cb360 (@596vuzmi)',
-              accountId: '@596vuzmi',
-              basicId: '@596vuzmi',
-              appId: '2011580063',
-              appSecret: 'f2030ccfd113a46d89297e3919df39c1',
-              accessToken: 'G6HhxgQDo/1Ji4LOomrfk8Eh4yhBn74w0i+T2vXPjdA2/8bRXZCtvXF9hSwFpjM0MKhTYasa+K/CKZjamIj9JhvqhXCKJXtH/I2YjgGpTkZgwNweMhhOe0GcuLKArE8W1B4tn68xsWeRD/0WY1cpowdB04t89/1O/w1cDnyilFU=',
-              webhookUrl: 'https://cb360.online/api/webhooks/line/2011580063',
+              appSecret: '',
+              accessToken: '',
             };
           }
           return c;

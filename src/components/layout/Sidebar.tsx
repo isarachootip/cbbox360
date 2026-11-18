@@ -5,6 +5,7 @@ import { useCustomer } from '../../context/CustomerContext';
 import { useAuth } from '../../context/AuthContext';
 import { useMenu } from '../../context/MenuContext';
 import { useLayout } from '../../context/LayoutContext';
+import { useTenantRuntime } from '../../../core/client/providers/TenantRuntimeContext';
 import { UserRole } from '../../types';
 import { SidebarNavSection } from './SidebarNavSection';
 import { SidebarUserMenu } from './SidebarUserMenu';
@@ -14,6 +15,7 @@ export const Sidebar: React.FC = () => {
   const { selectedCustomerId } = useCustomer();
   const { currentUser } = useAuth();
   const { getMenusByRole } = useMenu();
+  const { branding } = useTenantRuntime();
   const {
     isMobileSidebarOpen,
     closeMobileSidebar,
@@ -55,26 +57,26 @@ export const Sidebar: React.FC = () => {
           >
             <Link
               to="/"
-              title="หน้าหลัก CusBox360"
+              title={`หน้าหลัก ${branding.appName}`}
               className="flex items-center justify-center group"
             >
               {isSidebarCollapsed ? (
                 <>
                   <img
-                    src="/logo-icon-transparent.png"
-                    alt="CB360"
+                    src={branding.iconUrl || '/logo-icon-transparent.png'}
+                    alt={branding.appName}
                     className="hidden lg:block w-8 h-8 object-contain drop-shadow-2xs group-hover:scale-105 transition-transform"
                   />
                   <img
-                    src="/logo-full-transparent.png"
-                    alt="CB360 - Customer Box 360°"
+                    src={branding.logoUrl || '/logo-full-transparent.png'}
+                    alt={branding.appName}
                     className="lg:hidden w-full max-w-[146px] h-auto object-contain"
                   />
                 </>
               ) : (
                 <img
-                  src="/logo-full-transparent.png"
-                  alt="CB360 - Customer Box 360°"
+                  src={branding.logoUrl || '/logo-full-transparent.png'}
+                  alt={branding.appName}
                   className="w-full max-w-[144px] h-auto object-contain drop-shadow-2xs group-hover:scale-[1.01] transition-transform duration-200"
                 />
               )}

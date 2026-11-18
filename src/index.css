@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --cb-brand-rgb: 31 111 209;
+    --cb-brand-hover-rgb: 21 88 176;
+    --cb-brand-deep-rgb: 23 78 140;
+    --cb-brand-tint-rgb: 230 240 253;
+    --cb-brand-selected-rgb: 237 244 253;
+  }
+
   :root,
   html[data-font-scale='comfortable'] {
     --cb-font-scale: 1.05;

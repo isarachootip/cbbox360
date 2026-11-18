@@ -14,6 +14,11 @@ import consentRoutes from './consentRoutes.js';
 import industryProfileRoutes from './industryProfileRoutes.js';
 import { requireAuth, requireRole } from '../services/authContainer.js';
 import { bindActor } from '../middlewares/bindActor.js';
+import { createTenantBootstrapRouter } from '../../core/server/tenancy/tenantBootstrapRoutes.js';
+import { createCustomFieldRouter } from '../../core/server/custom-fields/customFieldRoutes.js';
+import { createServerModuleRegistry } from '../../core/server/registry/serverModuleRegistry.js';
+
+export const serverModuleRegistry = createServerModuleRegistry({ requireAuth });
 
 const router = Router();
 
@@ -27,9 +32,14 @@ router.get('/health', async (req, res) => {
   }
 });
 
-// Public: login flow, and LINE/Meta webhooks (authenticated by signature, not session)
+// Public: login flow, runtime white-label branding, and LINE/Meta webhooks
+router.use('/', createTenantBootstrapRouter({ requireAuth }));
 router.use('/auth', authRoutes);
 router.use('/webhooks', webhookRoutes);
+
+// Core dynamic custom fields & pluggable module registry routes
+router.use('/', createCustomFieldRouter({ requireAuth }));
+router.use('/', serverModuleRegistry.buildApiRouter());
 
 // Everything below requires a logged-in session
 router.use('/users', requireAuth, userRoutes);

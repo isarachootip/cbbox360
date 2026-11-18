@@ -3,6 +3,8 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
+    "./core/client/**/*.{js,ts,jsx,tsx}",
+    "./modules/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -20,11 +22,11 @@ export default {
           label: '#5A7190',
         },
         brand: {
-          DEFAULT: '#1F6FD1',
-          hover: '#1558B0',
-          deep: '#174E8C',
-          tint: '#E6F0FD',
-          selected: '#EDF4FD',
+          DEFAULT: 'rgb(var(--cb-brand-rgb, 31 111 209) / <alpha-value>)',
+          hover: 'rgb(var(--cb-brand-hover-rgb, 21 88 176) / <alpha-value>)',
+          deep: 'rgb(var(--cb-brand-deep-rgb, 23 78 140) / <alpha-value>)',
+          tint: 'rgb(var(--cb-brand-tint-rgb, 230 240 253) / <alpha-value>)',
+          selected: 'rgb(var(--cb-brand-selected-rgb, 237 244 253) / <alpha-value>)',
         },
         border: {
           DEFAULT: '#E2E8F0',

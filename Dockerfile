@@ -19,6 +19,7 @@ COPY --from=builder /app/dist ./dist
 COPY server.js db.js migrate.js ./
 COPY server/ ./server/
 COPY shared/ ./shared/
+COPY core/ ./core/
 
 ENV NODE_ENV=production
 ENV PORT=3000

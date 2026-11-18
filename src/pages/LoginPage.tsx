@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useTenantRuntime } from '../../core/client/providers/TenantRuntimeContext';
 import { TwoFactorVerifyCard } from '../components/auth/TwoFactorVerifyCard';
 import { sanitizeReturnTo } from '../domain/telephony/screenPopSchema';
 
@@ -19,6 +20,7 @@ export const LoginPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const returnTo = sanitizeReturnTo(searchParams.get('returnTo'));
   const { login, pendingTwoFactorUsername, verifyTwoFactor, cancelTwoFactor } = useAuth();
+  const { branding } = useTenantRuntime();
   const { showToast } = useToast();
 
   const [username, setUsername] = useState('');
@@ -41,7 +43,7 @@ export const LoginPage: React.FC = () => {
     setIsLoading(false);
 
     if (result.success) {
-      showToast(`ยินดีต้อนรับเข้าสู่ระบบ CusBox360`, 'success');
+      showToast(`ยินดีต้อนรับเข้าสู่ระบบ ${branding.appName}`, 'success');
       navigate(returnTo, { replace: true });
     } else if (!result.requireTwoFactor) {
       setErrorMessage(result.error || 'เข้าสู่ระบบไม่สำเร็จ');
@@ -72,17 +74,23 @@ export const LoginPage: React.FC = () => {
           <div className="flex items-center gap-3 mb-8">
             <div className="h-12 w-12 rounded-xl bg-white border border-border shadow-sm flex items-center justify-center p-1 overflow-hidden flex-shrink-0">
               <img
-                src="/logo-icon.png"
-                alt="Customer Box 360 Logo"
+                src={branding.iconUrl || '/logo-icon.png'}
+                alt={`${branding.appName} Logo`}
                 className="w-full h-full object-contain"
               />
             </div>
             <div>
               <span className="font-extrabold text-2xl text-[#0F2B4D] tracking-tight block leading-none">
-                CB<span className="text-[#1F6FD1]">360</span>
+                {branding.appName === 'CusBox360' ? (
+                  <>
+                    CB<span className="text-brand">360</span>
+                  </>
+                ) : (
+                  <span className="text-brand">{branding.appName}</span>
+                )}
               </span>
               <span className="text-[11px] text-sidebar-label tracking-wide font-medium mt-0.5 block">
-                Customer Box 360° & Activity Plug-ins
+                Omnichannel CRM & Contact Center
               </span>
             </div>
           </div>

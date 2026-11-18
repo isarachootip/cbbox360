@@ -10,6 +10,9 @@ import { ensureDatabaseSchema } from './server/services/dbInitService.js';
 import { ensureAllSeedAccounts, ensureOperatorAccounts } from './server/services/userSeedService.js';
 import { userRepository } from './server/repositories/userRepository.js';
 import { hashPassword } from './server/utils/cryptoUtils.js';
+import { query } from './db.js';
+import { runMigrations } from './core/server/db/migrationRunner.js';
+import { createTenantResolverMiddleware } from './core/server/tenancy/tenantResolverMiddleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,6 +41,13 @@ if (env.SYSADMIN_INITIAL_PASSWORD && !validSysadminPassword) {
 }
 ensureDatabaseSchema()
   .then(() =>
+    runMigrations({
+      db: { query },
+      scope: 'core',
+      migrationsDir: path.join(__dirname, 'core', 'server', 'db', 'migrations'),
+    }).catch((migErr) => console.warn('⚠️ [Core Migration Notice]:', migErr.message))
+  )
+  .then(() =>
     ensureAllSeedAccounts({
       userRepo: userRepository,
       hashPassword,
@@ -62,6 +72,11 @@ ensureDatabaseSchema()
   })
   .catch((err) => console.error('❌ [Auth Seed Error]:', err.message));
 initBotSettingsFromDb();
+
+// Multi-tenant Context & Isolation Resolver
+const tenantResolver = createTenantResolverMiddleware();
+app.use('/api', tenantResolver);
+app.use('/v1/webhooks', tenantResolver);
 
 // API Routes
 app.use('/api', apiRoutes);

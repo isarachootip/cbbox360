@@ -11,6 +11,7 @@ import { BotProvider } from './context/BotContext';
 import { LayoutProvider } from './context/LayoutContext';
 import { TypographyProvider } from './context/TypographyContext';
 import { BusinessTemplateProvider } from './context/BusinessTemplateContext';
+import { TenantRuntimeProvider } from '../core/client/providers/TenantRuntimeContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { ForceChangePasswordCard } from './components/auth/ForceChangePasswordCard';
 import { LoginPage } from './pages/LoginPage';
@@ -58,7 +59,8 @@ export const App: React.FC = () => {
     <ToastProvider>
       <AuditLogProvider>
         <AuthProvider>
-          <BusinessTemplateProvider>
+          <TenantRuntimeProvider>
+            <BusinessTemplateProvider>
             <MenuProvider>
               <CustomerProvider>
                 <TelephonyProvider>
@@ -110,7 +112,8 @@ export const App: React.FC = () => {
                 </TelephonyProvider>
               </CustomerProvider>
             </MenuProvider>
-          </BusinessTemplateProvider>
+            </BusinessTemplateProvider>
+          </TenantRuntimeProvider>
         </AuthProvider>
       </AuditLogProvider>
     </ToastProvider>
