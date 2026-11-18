@@ -126,8 +126,7 @@ export const buildAiPromptPayload = ({
     customerContext.customerType === 'CORPORATE' || customerContext.type === 'B2B' ? 'B2B' : 'B2C';
   const tier = customerContext.tier || 'MEMBER';
   const lastOrders = maskSensitiveData(
-    customerContext.lastOrdersText ||
-      `${customerContext.lastOrderCode || 'SO-10482'}, สถานะ: กำลังจัดส่ง, เลขพัสดุ: ${customerContext.trackingNumber || 'TH2609-88412'}`
+    customerContext.lastOrdersText || customerContext.lastOrderCode || 'ไม่มีรายการอ้างอิงล่าสุด'
   );
   const openTickets = maskSensitiveData(
     customerContext.openTicketsText || 'ไม่มี Ticket ที่เปิดอยู่'

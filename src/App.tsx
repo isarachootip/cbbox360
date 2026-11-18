@@ -12,6 +12,10 @@ import { LayoutProvider } from './context/LayoutContext';
 import { TypographyProvider } from './context/TypographyContext';
 import { BusinessTemplateProvider } from './context/BusinessTemplateContext';
 import { TenantRuntimeProvider } from '../core/client/providers/TenantRuntimeContext';
+import { EntitledRoute } from '../core/client/registry/EntitledRoute';
+import { registerBuiltInClientModules } from '../modules/clientBootstrap';
+
+registerBuiltInClientModules();
 import { AppLayout } from './components/layout/AppLayout';
 import { ForceChangePasswordCard } from './components/auth/ForceChangePasswordCard';
 import { LoginPage } from './pages/LoginPage';
@@ -85,7 +89,14 @@ export const App: React.FC = () => {
                         <Route path="segments" element={<SegmentsPage />} />
                         <Route path="tiers" element={<TierLoyaltyPage />} />
                         <Route path="cases" element={<ServiceCasePage />} />
-                        <Route path="credit" element={<CreditSalesPage />} />
+                        <Route
+                          path="credit"
+                          element={
+                            <EntitledRoute featureKey="module:credit-sales">
+                              <CreditSalesPage />
+                            </EntitledRoute>
+                          }
+                        />
                         <Route path="users" element={<UserManagementPage />} />
                         <Route path="menus" element={<MenuManagementPage />} />
                         

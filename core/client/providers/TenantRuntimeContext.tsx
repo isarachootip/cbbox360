@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { DEFAULT_ROLE_PERMISSIONS, matchPermission } from '../../shared/permissions.js';
 import { useAuth } from '../../../src/context/AuthContext';
+import { clientModuleRegistry } from '../registry/clientModuleRegistry';
 
 export interface TenantBranding {
   appName: string;
@@ -13,23 +14,12 @@ export interface TenantBranding {
 
 export interface TenantFieldDefinition {
   id: string;
-  entityType: 'contact' | 'case' | 'deal' | 'appointment' | 'policy' | 'claim';
+  entityType: string;
   key: string;
   label: string;
   type:
-    | 'text'
-    | 'textarea'
-    | 'number'
-    | 'currency'
-    | 'date'
-    | 'datetime'
-    | 'boolean'
-    | 'select'
-    | 'multiselect'
-    | 'tags'
-    | 'phone'
-    | 'email'
-    | 'object_list';
+    | 'text' | 'textarea' | 'number' | 'currency' | 'date' | 'datetime'
+    | 'boolean' | 'select' | 'multiselect' | 'tags' | 'phone' | 'email' | 'object_list';
   options?: { value: string; label: string }[];
   validation?: {
     required?: boolean;
@@ -78,7 +68,6 @@ const DEFAULT_RUNTIME: TenantRuntimeState = {
     accentColor: '#1558B0',
   },
   entitlements: {
-    'module:credit-sales': true,
     'flag:ai_copilot': true,
     'flag:voice_3cx': true,
     'flag:pdpa_consent': true,
@@ -123,7 +112,13 @@ const TenantRuntimeContext = createContext<TenantRuntimeContextValue | undefined
 
 export const TenantRuntimeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser } = useAuth();
-  const [runtime, setRuntime] = useState<TenantRuntimeState>(DEFAULT_RUNTIME);
+  const [runtime, setRuntime] = useState<TenantRuntimeState>(() => ({
+    ...DEFAULT_RUNTIME,
+    entitlements: {
+      ...DEFAULT_RUNTIME.entitlements,
+      ...clientModuleRegistry.getDefaultFallbackEntitlements(),
+    },
+  }));
 
   const loadBootstrap = async () => {
     try {

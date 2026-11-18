@@ -43,6 +43,8 @@ export interface ClientModuleRoute {
 export interface ClientModuleManifest {
   id: string;
   requiredEntitlement: string;
+  /** When true, enabled in offline/default single-tenant fallback unless overridden by server bootstrap. */
+  enabledByDefaultInFallback?: boolean;
   menus?: ClientModuleMenu[];
   routes?: ClientModuleRoute[];
   contactTabs?: ClientModuleTab[];
@@ -58,6 +60,14 @@ class ClientModuleRegistryStore {
 
   getEntitledModules(isEntitled: (key: string) => boolean): ClientModuleManifest[] {
     return Array.from(this.manifests.values()).filter((m) => isEntitled(m.requiredEntitlement));
+  }
+
+  getDefaultFallbackEntitlements(): Record<string, boolean> {
+    const out: Record<string, boolean> = {};
+    for (const m of this.manifests.values()) {
+      if (m.enabledByDefaultInFallback) out[m.requiredEntitlement] = true;
+    }
+    return out;
   }
 
   getSlotComponents(

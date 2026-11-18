@@ -7,16 +7,11 @@ import { AddressesTab } from './AddressesTab';
 import { CustomerSecondaryTabs } from './CustomerSecondaryTabs';
 import { IndustryProfileTab, INDUSTRY_TAB_LABELS } from './industry/IndustryProfileTab';
 import { useIndustryProfile } from '../../hooks/useIndustryProfile';
-
-export type Customer360Tab =
-  | 'Timeline'
-  | 'Orders'
-  | 'Service'
-  | 'Credit'
-  | 'Contacts'
-  | 'Addresses'
-  | 'Segments'
-  | 'Industry';
+import { clientModuleRegistry } from '../../../core/client/registry/clientModuleRegistry';
+import { useEntitlement } from '../../../core/client/hooks/useEntitlement';
+import { useLabel } from '../../../core/client/hooks/useLabel';
+import { useTenantRuntime } from '../../../core/client/providers/TenantRuntimeContext';
+import { DynamicFieldSection } from '../../../core/client/custom-fields/DynamicFieldSection';
 
 interface CustomerTimelineViewProps {
   customer: Customer;
@@ -40,49 +35,50 @@ export const CustomerTimelineView: React.FC<CustomerTimelineViewProps> = ({
   industry,
 }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<Customer360Tab>('Timeline');
+  const { isEntitled, hasPermission } = useEntitlement();
+  const { t } = useLabel();
+  const { contactFieldDefs } = useTenantRuntime();
+
+  const [activeTab, setActiveTab] = useState<string>('Timeline');
   const [timelineFilter, setTimelineFilter] = useState<string>('ทั้งหมด');
 
-  const tabs: Customer360Tab[] = [
-    'Timeline',
-    'Orders',
-    'Service',
-    'Credit',
-    'Contacts',
-    'Addresses',
-    'Segments',
-    ...(industry.kind ? (['Industry'] as const) : []),
-  ];
+  const moduleTabs = clientModuleRegistry.getContactTabs(isEntitled, hasPermission);
 
-  const labelMap: Record<Customer360Tab, string> = {
-    Timeline: 'Timeline',
-    Orders: 'Orders',
-    Service: 'Service',
-    Credit: 'Credit',
-    Contacts: `ผู้ติดต่อ (${(customer.contacts || []).length})`,
-    Addresses: `ที่อยู่ & พิกัด (${(customer.addresses || []).length})`,
-    Segments: 'Segments',
-    Industry: industry.kind ? INDUSTRY_TAB_LABELS[industry.kind] : '',
-  };
+  const tabDefinitions: { key: string; label: string }[] = [
+    { key: 'Timeline', label: 'Timeline' },
+    { key: 'Service', label: 'Service' },
+    { key: 'Contacts', label: `ผู้ติดต่อ (${(customer.contacts || []).length})` },
+    { key: 'Addresses', label: `ที่อยู่ & พิกัด (${(customer.addresses || []).length})` },
+    { key: 'Segments', label: 'Segments' },
+    ...(contactFieldDefs.length > 0
+      ? [{ key: 'CustomFields', label: t('tab.custom_fields', 'ข้อมูลเพิ่มเติม') }]
+      : []),
+    ...moduleTabs.map((mt) => ({ key: `mod:${mt.key}`, label: t(mt.labelKey, mt.defaultLabel) })),
+    ...(industry.kind
+      ? [{ key: 'Industry', label: INDUSTRY_TAB_LABELS[industry.kind] }]
+      : []),
+  ];
 
   const filteredEvents = timelineEvents.filter(
     (evt) => timelineFilter === 'ทั้งหมด' || evt.type === timelineFilter
   );
 
+  const matchedModuleTab = moduleTabs.find((mt) => `mod:${mt.key}` === activeTab);
+
   return (
     <div className="bg-white rounded-card border border-border flex flex-col shadow-card overflow-hidden min-w-0">
       <div className="border-b border-border px-5 flex items-center gap-5 bg-white overflow-x-auto custom-scrollbar select-none">
-        {tabs.map((tab) => (
+        {tabDefinitions.map((tab) => (
           <button
             type="button"
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
             className={`py-3.5 text-[13.5px] font-semibold transition-all relative shrink-0 ${
-              activeTab === tab ? 'text-brand' : 'text-text-secondary hover:text-text-primary'
+              activeTab === tab.key ? 'text-brand' : 'text-text-secondary hover:text-text-primary'
             }`}
           >
-            {labelMap[tab]}
-            {activeTab === tab && (
+            {tab.label}
+            {activeTab === tab.key && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand rounded-t" />
             )}
           </button>
@@ -94,7 +90,7 @@ export const CustomerTimelineView: React.FC<CustomerTimelineViewProps> = ({
           <div className="space-y-4">
             <div className="flex items-center gap-2 pb-1 flex-wrap select-none">
               <span className="text-xs text-text-secondary font-medium">กรอง:</span>
-              {['ทั้งหมด', 'Order', 'แชท', 'โทร', 'Ticket', 'Deal'].map((filter) => (
+              {['ทั้งหมด', 'แชท', 'โทร', 'Ticket', 'Deal'].map((filter) => (
                 <button
                   type="button"
                   key={filter}
@@ -148,15 +144,15 @@ export const CustomerTimelineView: React.FC<CustomerTimelineViewProps> = ({
           </div>
         )}
 
-        {(activeTab === 'Orders' ||
-          activeTab === 'Service' ||
-          activeTab === 'Credit' ||
-          activeTab === 'Segments') && (
+        {(activeTab === 'Service' || activeTab === 'Segments') && (
           <CustomerSecondaryTabs activeTab={activeTab} customer={customer} tickets={tickets} />
         )}
-
         {activeTab === 'Contacts' && <ContactsTab customer={customer} />}
         {activeTab === 'Addresses' && <AddressesTab customer={customer} />}
+        {activeTab === 'CustomFields' && (
+          <DynamicFieldSection definitions={contactFieldDefs} values={{}} />
+        )}
+        {matchedModuleTab && <matchedModuleTab.component contactId={customer.id} />}
         {activeTab === 'Industry' && <IndustryProfileTab industry={industry} />}
       </div>
     </div>

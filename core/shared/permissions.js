@@ -1,6 +1,7 @@
 /**
- * permissions.js — Canonical Core Permission Codes & Default Role Grants.
- * Shared across Backend enforcement and Frontend UI access checks without industry-coupled SQL enums.
+ * permissions.js — Canonical Core Permission Codes & Extensible Role Grants.
+ * Pure platform core: contains zero industry-specific role names. Modules and templates
+ * register domain roles (e.g. via `registerDefaultRolePreset` or `tenant_roles` DB rows).
  */
 
 export const CORE_PERMISSIONS = {
@@ -19,11 +20,7 @@ export const CORE_PERMISSIONS = {
   ADMIN_TEMPLATES: 'admin:templates',
 };
 
-/**
- * Baseline permissions preserving 100% backward compatibility with existing seeded accounts
- * while allowing each tenant/template to define arbitrary new roles in `tenant_roles`.
- * @type {Record<string, string[]>}
- */
+/** @type {Record<string, string[]>} */
 export const DEFAULT_ROLE_PERMISSIONS = {
   sysadmin: ['*'],
   admin: [
@@ -49,30 +46,20 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     'inbox:read',
     'inbox:write',
   ],
+  agent: ['contact:read', 'contact:write', 'case:read', 'case:write', 'inbox:read', 'inbox:write'],
   SF_1: ['contact:read', 'contact:write', 'inbox:read', 'inbox:write', 'deal:read', 'deal:write'],
   SF_2: ['contact:read', 'contact:write', 'case:read', 'case:write', 'inbox:read', 'inbox:write'],
-  SF_3: ['contact:read', 'case:read', 'credit:read', 'credit:write'],
-  doctor: [
-    'contact:read',
-    'contact:write',
-    'contact.pii:read',
-    'contact.pdpa_s26:read',
-    'contact.pdpa_s26:write',
-    'case:read',
-    'case:write',
-    'appointment:read',
-    'appointment:write',
-  ],
-  nurse: [
-    'contact:read',
-    'contact.pii:read',
-    'contact.pdpa_s26:read',
-    'contact.allergy:write',
-    'case:read',
-    'case:write',
-    'appointment:read',
-    'appointment:write',
-  ],
+  SF_3: ['contact:read', 'case:read'],
+};
+
+/**
+ * Allows pluggable modules to register baseline role permission presets without polluting Core.
+ * @param {string} roleKey
+ * @param {string[]} permissions
+ */
+export const registerDefaultRolePreset = (roleKey, permissions) => {
+  const prev = DEFAULT_ROLE_PERMISSIONS[roleKey] || [];
+  DEFAULT_ROLE_PERMISSIONS[roleKey] = Array.from(new Set([...prev, ...permissions]));
 };
 
 /**

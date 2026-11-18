@@ -21,7 +21,7 @@
     },
     "allowJs": true
   },
-  "include": ["src", "shared", "core/client", "core/shared"],
+  "include": ["src", "shared", "core/client", "core/shared", "modules"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.js"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

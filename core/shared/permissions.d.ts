@@ -15,4 +15,5 @@ export declare const CORE_PERMISSIONS: {
 };
 
 export declare const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]>;
+export declare function registerDefaultRolePreset(roleKey: string, permissions: string[]): void;
 export declare function matchPermission(granted: string[], required: string): boolean;

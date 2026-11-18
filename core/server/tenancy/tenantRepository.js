@@ -19,7 +19,7 @@ const makeDefaultTenant = () => ({
   slug: DEFAULT_TENANT_ID,
   name: 'CusBox360 Default Workspace',
   status: 'active',
-  templateId: 'b2b_wholesale',
+  templateId: null,
   templateVersion: '1.0.0',
   isolationMode: 'shared_db',
   dbDsnEncrypted: null,

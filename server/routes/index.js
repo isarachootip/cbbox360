@@ -17,8 +17,10 @@ import { bindActor } from '../middlewares/bindActor.js';
 import { createTenantBootstrapRouter } from '../../core/server/tenancy/tenantBootstrapRoutes.js';
 import { createCustomFieldRouter } from '../../core/server/custom-fields/customFieldRoutes.js';
 import { createServerModuleRegistry } from '../../core/server/registry/serverModuleRegistry.js';
+import { registerBuiltInServerModules } from '../../modules/serverBootstrap.js';
 
 export const serverModuleRegistry = createServerModuleRegistry({ requireAuth });
+registerBuiltInServerModules(serverModuleRegistry);
 
 const router = Router();
 

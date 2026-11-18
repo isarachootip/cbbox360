@@ -6,10 +6,13 @@ import { query as defaultDbQuery } from '../../../db.js';
 import { getCurrentTenantId, DEFAULT_TENANT_ID } from '../tenancy/tenantContext.js';
 
 export const DEFAULT_TENANT_ENTITLEMENTS = {
-  'module:credit-sales': true,
   'flag:ai_copilot': true,
   'flag:voice_3cx': true,
   'flag:pdpa_consent': true,
+};
+
+export const registerDefaultTenantEntitlement = (featureKey, enabled = true) => {
+  DEFAULT_TENANT_ENTITLEMENTS[featureKey] = Boolean(enabled);
 };
 
 export const createInMemoryEntitlementService = () => {

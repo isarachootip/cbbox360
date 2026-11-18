@@ -20,6 +20,8 @@ COPY server.js db.js migrate.js ./
 COPY server/ ./server/
 COPY shared/ ./shared/
 COPY core/ ./core/
+COPY modules/ ./modules/
+COPY connectors/ ./connectors/
 
 ENV NODE_ENV=production
 ENV PORT=3000

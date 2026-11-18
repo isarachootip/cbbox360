@@ -83,7 +83,7 @@ export const ensureDatabaseSchema = async () => {
         username TEXT UNIQUE NOT NULL,
         email TEXT,
         display_name TEXT NOT NULL,
-        role TEXT NOT NULL CHECK (role IN ('sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor', 'doctor', 'nurse')),
+        role TEXT NOT NULL,
         department TEXT,
         skills JSONB NOT NULL DEFAULT '[]'::jsonb,
         extension TEXT NOT NULL DEFAULT '',
@@ -140,19 +140,18 @@ export const ensureDatabaseSchema = async () => {
   try {
     await query(`
       ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
-      ALTER TABLE users ADD CONSTRAINT users_role_check
-        CHECK (role IN ('sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor', 'doctor', 'nurse'));
       ALTER TABLE users ADD COLUMN IF NOT EXISTS skills JSONB NOT NULL DEFAULT '[]'::jsonb;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS extension TEXT NOT NULL DEFAULT '';
 
       CREATE TABLE IF NOT EXISTS customer_industry_profiles (
         customer_id TEXT NOT NULL,
-        kind TEXT NOT NULL CHECK (kind IN ('hospital', 'auto_service', 'logistics')),
+        kind TEXT NOT NULL,
         data JSONB NOT NULL,
         updated_by TEXT NOT NULL,
         updated_at TIMESTAMPTZ DEFAULT NOW(),
         PRIMARY KEY (customer_id, kind)
       );
+      ALTER TABLE customer_industry_profiles DROP CONSTRAINT IF EXISTS customer_industry_profiles_kind_check;
 
       CREATE TABLE IF NOT EXISTS customers (
         id TEXT PRIMARY KEY,

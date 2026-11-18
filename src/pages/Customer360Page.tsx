@@ -4,7 +4,6 @@ import { Plus } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { CustomerProfileCard } from '../components/customer-360/CustomerProfileCard';
 import { EditCustomerModal } from '../components/customer-360/EditCustomerModal';
-import { CreditTaskConfirmModal } from '../components/customer-360/CreditTaskConfirmModal';
 import { CustomerTimelineView } from '../components/customer-360/CustomerTimelineView';
 import { CustomerRightSummaryColumn } from '../components/customer-360/CustomerRightSummaryColumn';
 import { CustomerSearchBox } from '../components/customer-360/CustomerSearchBox';
@@ -14,13 +13,16 @@ import { useToast } from '../context/ToastContext';
 import { useBusinessTemplateState } from '../context/BusinessTemplateContext';
 import { useIndustryProfile } from '../hooks/useIndustryProfile';
 import { templateToIndustryKind } from '../domain/industry/industryVariables';
-import { AllergyAlertBanner } from '../components/customer-360/industry/AllergyAlertBanner';
 import { ActiveCallBanner } from '../components/telephony/ActiveCallBanner';
+import { ExtensionSlot } from '../../core/client/registry/ExtensionSlot';
+import { useLabel } from '../../core/client/hooks/useLabel';
+import { IndustryHeaderAlertBridge } from '../../modules/industry-profiles/panelRegistry';
 
 export const Customer360Page: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t, contactLabel, contactPluralLabel } = useLabel();
   const {
     customers,
     selectedCustomer,
@@ -28,7 +30,6 @@ export const Customer360Page: React.FC = () => {
     timelineEvents,
     deals,
     tickets,
-    addTicket,
     addCustomer,
     updateCustomer,
   } = useCustomer();
@@ -45,25 +46,6 @@ export const Customer360Page: React.FC = () => {
 
   const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
   const [isEditCustomerModalOpen, setIsEditCustomerModalOpen] = useState(false);
-  const [isCreditTaskModalOpen, setIsCreditTaskModalOpen] = useState(false);
-
-  const handleCreateCreditTask = () => {
-    addTicket({
-      customerId: customer.id,
-      customerName: customer.name,
-      customerTier: customer.tier,
-      title: `เสนอเพิ่มวงเงินเครดิตเป็น ฿400,000 (${customer.name})`,
-      category: 'Credit',
-      channel: 'LINE',
-      status: 'Open',
-      slaHoursLeft: 24,
-      slaFormatted: '1 วัน',
-      slaStatus: 'normal',
-      assignee: 'ประเทือง ว.',
-    });
-    showToast('สร้าง Task ให้ทีมสินเชื่อเรียบร้อยแล้ว (อัปเดตใน Service & Case)', 'success');
-    setIsCreditTaskModalOpen(false);
-  };
 
   const customerDeal =
     deals.find(
@@ -85,7 +67,7 @@ export const Customer360Page: React.FC = () => {
               to="/customers"
               className="hover:text-brand hover:underline font-medium transition-colors"
             >
-              ลูกค้า
+              {contactPluralLabel}
             </Link>
             <span>/</span>
             <span className="font-bold text-text-primary text-[14.5px]">{customer.name}</span>
@@ -107,18 +89,15 @@ export const Customer360Page: React.FC = () => {
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
           >
             <Plus className="w-4 h-4" />
-            <span>ลูกค้าใหม่</span>
+            <span>{t('contact.create_button', `${contactLabel}ใหม่`)}</span>
           </button>
         }
       />
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5">
         <ActiveCallBanner customer={customer} className="max-w-[1640px] mx-auto mb-4" />
-        <AllergyAlertBanner
-          profile={industry.profile}
-          redacted={industry.redacted}
-          className="max-w-[1640px] mx-auto mb-4"
-        />
+        <ExtensionSlot name="contact.header.banner" contactId={customer.id} />
+        <IndustryHeaderAlertBridge industry={industry} className="max-w-[1640px] mx-auto mb-4" />
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] xl:grid-cols-[332px_1fr_320px] gap-4 max-w-[1640px] mx-auto">
           <CustomerProfileCard
             customer={customer}
@@ -134,7 +113,6 @@ export const Customer360Page: React.FC = () => {
             customer={customer}
             customerDeal={customerDeal}
             customerTicket={customerTicket}
-            onOpenCreditTaskModal={() => setIsCreditTaskModalOpen(true)}
           />
         </div>
       </div>
@@ -144,7 +122,7 @@ export const Customer360Page: React.FC = () => {
         onClose={() => setIsNewCustomerModalOpen(false)}
         onSubmit={(customerData) => {
           const created = addCustomer(customerData);
-          showToast(`เพิ่มลูกค้า "${created.name}" เรียบร้อยแล้ว (${created.id})`, 'success');
+          showToast(`เพิ่ม${contactLabel} "${created.name}" เรียบร้อยแล้ว (${created.id})`, 'success');
           setSelectedCustomerId(created.id);
           navigate(`/customers/${created.id}`);
           return created;
@@ -158,16 +136,9 @@ export const Customer360Page: React.FC = () => {
         onSubmit={(updates) => {
           const updated = updateCustomer(customer.id, updates);
           if (updated) {
-            showToast(`บันทึกข้อมูลลูกค้า "${updated.name}" เรียบร้อยแล้ว`, 'success');
+            showToast(`บันทึกข้อมูล${contactLabel} "${updated.name}" เรียบร้อยแล้ว`, 'success');
           }
         }}
-      />
-
-      <CreditTaskConfirmModal
-        isOpen={isCreditTaskModalOpen}
-        customer={customer}
-        onClose={() => setIsCreditTaskModalOpen(false)}
-        onConfirm={handleCreateCreditTask}
       />
     </div>
   );

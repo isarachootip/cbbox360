@@ -22,7 +22,7 @@ const SEVERITY_STYLES: Record<DeclarativeAlertItem['severity'], { border: string
 
 /**
  * Generic config-driven alert banner rendered from `field_definitions.ui.alertBanner`.
- * Replaces the hospital-specific `<AllergyAlertBanner />` without referencing any industry in Core.
+ * Surfaces high-priority sensitive field notices without referencing any specific industry in Core.
  */
 export const SensitivityAlertBanner: React.FC<SensitivityAlertBannerProps> = ({
   banners,

@@ -4,7 +4,7 @@
 import { z } from 'zod';
 import { agentSkillsArraySchema } from '../../shared/agentSkills.js';
 
-const roleSchema = z.enum(['sysadmin', 'admin', 'SF_1', 'SF_2', 'SF_3', 'supervisor', 'doctor', 'nurse']);
+const roleSchema = z.string().trim().min(2).max(40).regex(/^[A-Za-z0-9_-]+$/);
 const statusSchema = z.enum(['active', 'inactive']);
 
 const createSchema = z.object({
