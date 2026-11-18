@@ -1,5 +1,5 @@
 contacts:
-  - id: P00101
+  - id: C00123
     name: "สมชาย ใจดี"
     phone: "081-892-5678"
     customFields:
@@ -8,8 +8,35 @@ contacts:
       treatment_right: "PRIVATE_INSURANCE"
       preferred_department: "ศูนย์อายุรกรรมหัวใจ"
       preferred_doctor: "นพ. กิตติพงศ์ วงศ์เวช"
+  - id: C00124
+    name: "บจก. นำชัยการพิมพ์ (สวัสดิการพนักงาน)"
+    phone: "089-410-2211"
+    customFields:
+      hn: "HN-6905109"
+      drug_allergies: []
+      treatment_right: "SSO"
+      preferred_department: "ศูนย์ตรวจสุขภาพอาชีวอนามัย"
+      preferred_doctor: "พญ. ศศิธร เลิศเวช"
+  - id: C00125
+    name: "พิม ชนิดา"
+    phone: "086-771-9045"
+    customFields:
+      hn: "HN-6906224"
+      drug_allergies: ["Aspirin"]
+      treatment_right: "UCS"
+      preferred_department: "แผนกอายุรกรรมทั่วไป"
+      preferred_doctor: "นพ. วรพล สุขสันต์"
+  - id: P00101
+    name: "ประเสริฐ สุขใจ"
+    phone: "081-555-0199"
+    customFields:
+      hn: "HN-6904800"
+      drug_allergies: ["Sulfa"]
+      treatment_right: "SELF_PAY"
+      preferred_department: "ศูนย์กระดูกและข้อ"
+      preferred_doctor: "นพ. ธีรภัทร ดำรงเวช"
 appointments:
-  - contactId: P00101
+  - contactId: C00123
     hn: "HN-6904812"
     department: "ศูนย์อายุรกรรมหัวใจ"
     doctorName: "นพ. กิตติพงศ์ วงศ์เวช"

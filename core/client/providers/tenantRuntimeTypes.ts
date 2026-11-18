@@ -25,6 +25,11 @@ export interface TenantFieldDefinition {
     max?: number;
   };
   sensitivity?: 'normal' | 'pii' | 'pdpa_s26';
+  acl?: {
+    viewPerm?: string;
+    editPerm?: string;
+    redactMode?: 'hide' | 'mask' | 'flag_only';
+  };
   ui?: {
     group?: string;
     order?: number;

@@ -10,7 +10,7 @@ import { useIndustryProfile } from '../../hooks/useIndustryProfile';
 import { clientModuleRegistry } from '../../../core/client/registry/clientModuleRegistry';
 import { useEntitlement } from '../../../core/client/hooks/useEntitlement';
 import { useLabel } from '../../../core/client/hooks/useLabel';
-import { useTenantRuntime } from '../../../core/client/providers/TenantRuntimeContext';
+import { useContactCustomFields } from '../../../core/client/hooks/useContactCustomFields';
 import { DynamicFieldSection } from '../../../core/client/custom-fields/DynamicFieldSection';
 
 interface CustomerTimelineViewProps {
@@ -36,8 +36,8 @@ export const CustomerTimelineView: React.FC<CustomerTimelineViewProps> = ({
 }) => {
   const navigate = useNavigate();
   const { isEntitled, hasPermission } = useEntitlement();
-  const { t } = useLabel();
-  const { contactFieldDefs } = useTenantRuntime();
+  const { t, contactLabel } = useLabel();
+  const cf = useContactCustomFields(customer.id);
 
   const [activeTab, setActiveTab] = useState<string>('Timeline');
   const [timelineFilter, setTimelineFilter] = useState<string>('ทั้งหมด');
@@ -50,8 +50,8 @@ export const CustomerTimelineView: React.FC<CustomerTimelineViewProps> = ({
     { key: 'Contacts', label: `ผู้ติดต่อ (${(customer.contacts || []).length})` },
     { key: 'Addresses', label: `ที่อยู่ & พิกัด (${(customer.addresses || []).length})` },
     { key: 'Segments', label: 'Segments' },
-    ...(contactFieldDefs.length > 0
-      ? [{ key: 'CustomFields', label: t('tab.custom_fields', 'ข้อมูลเพิ่มเติม') }]
+    ...(cf.definitions.length > 0
+      ? [{ key: 'CustomFields', label: t('tab.custom_fields', `ข้อมูล${contactLabel}`) }]
       : []),
     ...moduleTabs.map((mt) => ({ key: `mod:${mt.key}`, label: t(mt.labelKey, mt.defaultLabel) })),
     ...(industry.kind
@@ -150,7 +150,13 @@ export const CustomerTimelineView: React.FC<CustomerTimelineViewProps> = ({
         {activeTab === 'Contacts' && <ContactsTab customer={customer} />}
         {activeTab === 'Addresses' && <AddressesTab customer={customer} />}
         {activeTab === 'CustomFields' && (
-          <DynamicFieldSection definitions={contactFieldDefs} values={{}} />
+          <DynamicFieldSection
+            definitions={cf.definitions}
+            values={cf.values}
+            redactedFlags={cf.redactedFlags}
+            canEditField={cf.canEditField}
+            onSave={cf.saveValues}
+          />
         )}
         {matchedModuleTab && <matchedModuleTab.component contactId={customer.id} />}
         {activeTab === 'Industry' && <IndustryProfileTab industry={industry} />}

@@ -8,6 +8,7 @@ import {
   User,
 } from 'lucide-react';
 import { Conversation } from '../../types';
+import { useLabel } from '../../../core/client/hooks/useLabel';
 
 interface InboxChatHeaderProps {
   conversation: Conversation;
@@ -32,6 +33,7 @@ export const InboxChatHeader: React.FC<InboxChatHeaderProps> = ({
   onPending,
   onResolve,
 }) => {
+  const { contactLabel } = useLabel();
   return (
     <div className="h-[58px] sm:h-[62px] bg-white border-b border-border px-3.5 sm:px-5 flex items-center justify-between flex-shrink-0 gap-3">
       <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -89,9 +91,9 @@ export const InboxChatHeader: React.FC<InboxChatHeaderProps> = ({
         <button
           type="button"
           onClick={onOpenMobileCustomerDetail}
-          aria-label="ดูข้อมูลลูกค้า CDP"
+          aria-label={`ดูข้อมูล${contactLabel}`}
           className="xl:hidden p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-border"
-          title="ข้อมูลลูกค้า (CDP)"
+          title={`ข้อมูล${contactLabel}`}
         >
           <User className="w-4 h-4" />
         </button>
@@ -123,7 +125,7 @@ export const InboxChatHeader: React.FC<InboxChatHeaderProps> = ({
         <button
           type="button"
           onClick={onToggleDesktopRightPanel}
-          title={isRightPanelOpen ? 'พับเก็บแผงข้อมูลลูกค้าด้านขวา' : 'เปิดแผงข้อมูลลูกค้าด้านขวา (CDP)'}
+          title={isRightPanelOpen ? `พับเก็บแผงข้อมูล${contactLabel}ด้านขวา` : `เปิดแผงข้อมูล${contactLabel}ด้านขวา`}
           aria-label={isRightPanelOpen ? 'พับเก็บแผงข้อมูลลูกค้าด้านขวา' : 'เปิดแผงข้อมูลลูกค้าด้านขวา'}
           className={`hidden xl:inline-flex p-1.5 rounded-lg border transition-colors cursor-pointer ${
             isRightPanelOpen

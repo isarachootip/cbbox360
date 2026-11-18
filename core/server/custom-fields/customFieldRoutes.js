@@ -8,6 +8,7 @@ import { customFieldService as defaultCfService } from './customFieldService.js'
 import { permissionService as defaultPermService } from '../rbac/permissionService.js';
 import { redactCustomFields, verifyCustomFieldWriteAccess } from './fieldRedactor.js';
 import { writeAuditLog as defaultAudit } from '../../../server/services/auditService.js';
+import { loadTemplateSeedContacts } from '../template-engine/templateSeedLoader.js';
 
 export const createCustomFieldRouter = ({
   requireAuth,
@@ -26,11 +27,26 @@ export const createCustomFieldRouter = ({
   router.get('/contacts/:contactId/custom-fields', requireAuth, async (req, res) => {
     const tenantId = getCurrentTenantId();
     const contactId = String(req.params.contactId);
-    const [defs, rawValues, grantedPermissions] = await Promise.all([
+    let [defs, rawValues, grantedPermissions] = await Promise.all([
       cfService.listFieldDefs(tenantId, 'contact'),
       cfService.getEntityFields(tenantId, 'contact', contactId),
       permService.getRolePermissions(tenantId, req.user?.role),
     ]);
+
+    if (defs.length > 0 && (!rawValues || Object.keys(rawValues).length === 0) && req.tenant?.templateId) {
+      const seedMatch = loadTemplateSeedContacts(req.tenant.templateId).find(
+        (c) => String(c.id).toLowerCase() === contactId.toLowerCase()
+      );
+      if (seedMatch?.customFields) {
+        const seeded = await cfService.validateAndSaveEntityFields({
+          tenantId,
+          entityType: 'contact',
+          entityId: contactId,
+          values: seedMatch.customFields,
+        });
+        if (seeded.ok) rawValues = seeded.values;
+      }
+    }
 
     const redacted = await redactCustomFields({
       defs,

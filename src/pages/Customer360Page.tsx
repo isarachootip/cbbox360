@@ -16,6 +16,8 @@ import { templateToIndustryKind } from '../domain/industry/industryVariables';
 import { ActiveCallBanner } from '../components/telephony/ActiveCallBanner';
 import { ExtensionSlot } from '../../core/client/registry/ExtensionSlot';
 import { useLabel } from '../../core/client/hooks/useLabel';
+import { useContactCustomFields } from '../../core/client/hooks/useContactCustomFields';
+import { SensitivityAlertBanner } from '../../core/client/custom-fields/SensitivityAlertBanner';
 import { IndustryHeaderAlertBridge } from '../../modules/industry-profiles/panelRegistry';
 
 export const Customer360Page: React.FC = () => {
@@ -39,6 +41,7 @@ export const Customer360Page: React.FC = () => {
     selectedCustomer;
 
   const { state: templateState } = useBusinessTemplateState();
+  const cf = useContactCustomFields(customer.id);
   const industry = useIndustryProfile(
     customer.id,
     templateToIndustryKind(templateState.activeTemplateId)
@@ -96,6 +99,7 @@ export const Customer360Page: React.FC = () => {
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5">
         <ActiveCallBanner customer={customer} className="max-w-[1640px] mx-auto mb-4" />
+        <SensitivityAlertBanner banners={cf.banners} className="max-w-[1640px] mx-auto mb-4" />
         <ExtensionSlot name="contact.header.banner" contactId={customer.id} />
         <IndustryHeaderAlertBridge industry={industry} className="max-w-[1640px] mx-auto mb-4" />
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] xl:grid-cols-[332px_1fr_320px] gap-4 max-w-[1640px] mx-auto">

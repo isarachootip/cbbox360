@@ -109,13 +109,19 @@ export const DynamicFieldSection: React.FC<DynamicFieldSectionProps> = ({
           {definitions.map((def) => {
             const raw = values[def.key];
             const isRedacted = Boolean(redactedFlags[def.key]?.redacted);
+            const matchedOption =
+              def.type === 'select' && typeof raw === 'string'
+                ? def.options?.find((o) => o.value === raw)?.label
+                : undefined;
             const display = isRedacted
-              ? 'จำกัดสิทธิ์การเข้าถึง (PDPA)'
-              : Array.isArray(raw)
-                ? raw.join(', ') || '—'
-                : raw !== undefined && raw !== ''
-                  ? String(raw)
-                  : '—';
+              ? 'จำกัดสิทธิ์การเข้าถึง (PDPA ม.26)'
+              : matchedOption
+                ? matchedOption
+                : Array.isArray(raw)
+                  ? raw.join(', ') || '—'
+                  : raw !== undefined && raw !== ''
+                    ? String(raw)
+                    : '—';
 
             return (
               <div key={def.key} className="p-3 rounded-xl bg-bg-subtle border border-border/80">

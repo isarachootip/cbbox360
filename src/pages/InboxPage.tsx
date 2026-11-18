@@ -8,9 +8,11 @@ import { ConversationListPane } from '../components/inbox/ConversationListPane';
 import { InboxChatHeader } from '../components/inbox/InboxChatHeader';
 import { InboxComposer } from '../components/inbox/InboxComposer';
 import { useInboxWorkspace } from '../hooks/useInboxWorkspace';
+import { useLabel } from '../../core/client/hooks/useLabel';
 
 export const InboxPage: React.FC = () => {
   const { toggleMobileSidebar, isInboxRightPanelOpen, toggleInboxRightPanel } = useLayout();
+  const { contactLabel } = useLabel();
   const ws = useInboxWorkspace();
 
   return (
@@ -131,7 +133,7 @@ export const InboxPage: React.FC = () => {
       )}
 
       {/* Mobile / Tablet CDP Drawer */}
-      {isCustomerDetailOpenDrawer(ws)}
+      {isCustomerDetailOpenDrawer(ws, contactLabel)}
 
       {ws.selectedConv && (
         <LineUserIdModal
@@ -154,7 +156,10 @@ export const InboxPage: React.FC = () => {
   );
 };
 
-function isCustomerDetailOpenDrawer(ws: ReturnType<typeof useInboxWorkspace>) {
+function isCustomerDetailOpenDrawer(
+  ws: ReturnType<typeof useInboxWorkspace>,
+  contactLabel: string
+) {
   if (!ws.isCustomerDetailOpen) return null;
   return (
     <div className="fixed inset-0 z-50 xl:hidden flex justify-end">
@@ -165,7 +170,7 @@ function isCustomerDetailOpenDrawer(ws: ReturnType<typeof useInboxWorkspace>) {
       />
       <div className="relative z-10 w-[324px] sm:w-[360px] h-full bg-white shadow-2xl flex flex-col">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between select-none">
-          <span className="font-bold text-sm text-text-primary">ข้อมูลลูกค้า (CDP)</span>
+          <span className="font-bold text-sm text-text-primary">ข้อมูล{contactLabel}</span>
           <button
             type="button"
             onClick={() => ws.setIsCustomerDetailOpen(false)}

@@ -9,6 +9,11 @@ import { useToast } from '../../context/ToastContext';
 import { useCustomer } from '../../context/CustomerContext';
 import { AiSummaryCard } from '../inbox/AiSummaryCard';
 import { CustomerSideCardFooter } from './CustomerSideCardFooter';
+import { SideCardCustomFieldsBlock } from './SideCardCustomFieldsBlock';
+import { useLabel } from '../../../core/client/hooks/useLabel';
+import { useEntitlement } from '../../../core/client/hooks/useEntitlement';
+import { useContactCustomFields } from '../../../core/client/hooks/useContactCustomFields';
+import { ExtensionSlot } from '../../../core/client/registry/ExtensionSlot';
 
 interface CustomerSideCardProps {
   customer: Customer;
@@ -26,14 +31,17 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { deals, tickets } = useCustomer();
-  const [labels, setLabels] = useState<string[]>(['จัดส่ง', 'ลูกค้าองค์กร']);
+  const { contactLabel } = useLabel();
+  const { isEntitled } = useEntitlement();
+  const cf = useContactCustomFields(customer.id);
+  const showCommercialStats = isEntitled('module:credit-sales');
 
-  const activeDeal = deals.find(
-    (d) => d.customerId === customer.id && d.stage !== 'Closed Won' && d.stage !== 'Closed Lost'
-  );
-  const activeTicket = tickets.find(
-    (t) => t.customerId === customer.id && t.status !== 'Closed'
-  );
+  const [labels, setLabels] = useState<string[]>([]);
+
+  const activeDeal = showCommercialStats
+    ? deals.find((d) => d.customerId === customer.id && d.stage !== 'Closed Won' && d.stage !== 'Closed Lost')
+    : undefined;
+  const activeTicket = tickets.find((t) => t.customerId === customer.id && t.status !== 'Closed');
 
   const handleAddLabel = (lbl: string) => {
     if (!labels.includes(lbl)) {
@@ -46,14 +54,14 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({
     <div className="w-[324px] flex-shrink-0 bg-white border-l border-border h-full overflow-y-auto custom-scrollbar flex flex-col p-4 text-ui">
       <div className="flex items-center justify-between pb-3 border-b border-divider select-none">
         <span className="text-2xs font-semibold text-text-muted tracking-[0.05em] uppercase">
-          CDP Context
+          ข้อมูล{contactLabel}
         </span>
         <button
           type="button"
           onClick={() => navigate(`/customers/${customer.id}`)}
           className="text-brand hover:text-brand-hover text-xs font-medium flex items-center gap-1 cursor-pointer"
         >
-          <span>Customer 360</span>
+          <span>{contactLabel} 360</span>
           <ExternalLink className="w-3 h-3" />
         </button>
       </div>
@@ -75,10 +83,12 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-base text-text-primary truncate">{customer.name}</div>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className="font-mono text-2xs text-brand-deep font-medium">{customer.id}</span>
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            <span className="font-mono text-2xs text-brand-deep font-medium">
+              {typeof cf.values.hn === 'string' && cf.values.hn ? cf.values.hn : customer.id}
+            </span>
             <TierBadge tier={customer.tier} size="sm" />
-            <GradeBadge grade={customer.creditGrade} size="sm" />
+            {showCommercialStats && <GradeBadge grade={customer.creditGrade} size="sm" />}
           </div>
         </div>
       </div>
@@ -93,72 +103,78 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({
             customerName={customer.name}
           />
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-text-secondary">ยอด 12 เดือน</span>
-          <span className="tabular-nums font-semibold text-text-primary">
-            ฿{customer.spend12Months.toLocaleString()}
-          </span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-text-secondary">ซื้อล่าสุด</span>
-          <span className="text-text-primary tabular-nums text-xs">
-            <span className="font-mono">{customer.lastOrderCode}</span> · {customer.lastOrderDaysAgo} วันก่อน
-          </span>
-        </div>
+        {showCommercialStats && (
+          <>
+            <div className="flex items-center justify-between">
+              <span className="text-text-secondary">ยอด 12 เดือน</span>
+              <span className="tabular-nums font-semibold text-text-primary">
+                ฿{customer.spend12Months.toLocaleString()}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-text-secondary">ซื้อล่าสุด</span>
+              <span className="text-text-primary tabular-nums text-xs">
+                <span className="font-mono">{customer.lastOrderCode}</span> · {customer.lastOrderDaysAgo} วันก่อน
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
-      <div className="py-3 border-b border-divider">
-        <div className="text-2xs font-semibold text-text-muted tracking-[0.05em] uppercase mb-2">
-          Segments
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {customer.segments.map((seg, idx) => (
-            <span
-              key={idx}
-              className="text-xs bg-bg-muted text-sidebar-text border border-border px-2.5 py-0.5 rounded-full font-normal"
+      <SideCardCustomFieldsBlock
+        contactLabel={contactLabel}
+        definitions={cf.definitions}
+        values={cf.values}
+        redactedFlags={cf.redactedFlags}
+        banners={cf.banners}
+        canEditField={cf.canEditField}
+        onSave={async (next) => {
+          const res = await cf.saveValues(next);
+          if (res.ok) showToast(`บันทึกข้อมูล${contactLabel}สำเร็จ`, 'success');
+          return res;
+        }}
+      />
+
+      <div className="py-2.5 border-b border-divider empty:hidden">
+        <ExtensionSlot name="contact.right_rail.cards" contactId={customer.id} />
+      </div>
+
+      {(activeDeal || activeTicket) && (
+        <div className="py-3 border-b border-divider space-y-2">
+          <div className="text-xs font-medium text-text-secondary">Activity ที่กำลังเปิดอยู่</div>
+          {activeDeal && (
+            <div
+              onClick={() => navigate('/pipeline')}
+              className="p-2.5 rounded-lg bg-bg-subtle border border-border hover:border-brand/40 cursor-pointer transition-all flex items-center justify-between text-xs"
             >
-              {seg}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="py-3 border-b border-divider space-y-2">
-        <div className="text-xs font-medium text-text-secondary">
-          Activity ที่กำลังเปิดอยู่
-        </div>
-        {activeDeal && (
-          <div
-            onClick={() => navigate('/pipeline')}
-            className="p-2.5 rounded-lg bg-bg-subtle border border-border hover:border-brand/40 cursor-pointer transition-all flex items-center justify-between text-xs"
-          >
-            <div>
-              <div className="text-text-secondary text-xs">Deal · {activeDeal.title}</div>
-              <div className="tabular-nums font-semibold text-text-primary mt-0.5">
-                ฿{activeDeal.value.toLocaleString()}
+              <div>
+                <div className="text-text-secondary text-xs">Deal · {activeDeal.title}</div>
+                <div className="tabular-nums font-semibold text-text-primary mt-0.5">
+                  ฿{activeDeal.value.toLocaleString()}
+                </div>
               </div>
+              <ArrowRight className="w-3.5 h-3.5 text-text-secondary" />
             </div>
-            <ArrowRight className="w-3.5 h-3.5 text-text-secondary" />
-          </div>
-        )}
-        {activeTicket && (
-          <div
-            onClick={() => navigate('/cases')}
-            className="p-2.5 rounded-lg bg-bg-subtle border border-border hover:border-brand/40 cursor-pointer transition-all flex items-center justify-between text-xs"
-          >
-            <div>
-              <div className="text-text-secondary text-xs">
-                Ticket <span className="font-mono font-medium">{activeTicket.id}</span>
+          )}
+          {activeTicket && (
+            <div
+              onClick={() => navigate('/cases')}
+              className="p-2.5 rounded-lg bg-bg-subtle border border-border hover:border-brand/40 cursor-pointer transition-all flex items-center justify-between text-xs"
+            >
+              <div>
+                <div className="text-text-secondary text-xs">
+                  Case <span className="font-mono font-medium">{activeTicket.id}</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 font-medium text-amber-600 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  <span className="tabular-nums">SLA เหลือ {activeTicket.slaFormatted}</span>
+                </div>
               </div>
-              <div className="inline-flex items-center gap-1.5 font-medium text-amber-600 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                <span className="tabular-nums">SLA เหลือ {activeTicket.slaFormatted}</span>
-              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-text-secondary" />
             </div>
-            <ArrowRight className="w-3.5 h-3.5 text-text-secondary" />
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       <CustomerSideCardFooter
         customerId={customer.id}

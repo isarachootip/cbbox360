@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, Menu } from 'lucide-react';
 import { Conversation } from '../../types';
 import { TierBadge } from '../common/TierBadge';
+import { useLabel } from '../../../core/client/hooks/useLabel';
 
 export type InboxStatusFilter = Conversation['status'];
 export type InboxTabFilter = 'Mine' | 'Unassigned' | 'All';
@@ -37,12 +38,9 @@ export const ConversationListPane: React.FC<ConversationListPaneProps> = ({
   onSelectConversation,
   onOpenMobileSidebar,
 }) => {
-  const mineCount = allConversations.filter(
-    (c) => c.tabGroup === 'Mine' && c.status === statusFilter
-  ).length;
-  const unassignedCount = allConversations.filter(
-    (c) => c.tabGroup === 'Unassigned' && c.status === statusFilter
-  ).length;
+  const { contactLabel } = useLabel();
+  const mineCount = allConversations.filter((c) => c.tabGroup === 'Mine' && c.status === statusFilter).length;
+  const unassignedCount = allConversations.filter((c) => c.tabGroup === 'Unassigned' && c.status === statusFilter).length;
   const allCount = allConversations.filter((c) => c.status === statusFilter).length;
 
   return (
@@ -86,7 +84,7 @@ export const ConversationListPane: React.FC<ConversationListPaneProps> = ({
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
           <input
             type="text"
-            placeholder="ค้นหาชื่อลูกค้า หรือข้อความ..."
+            placeholder={`ค้นหาชื่อ${contactLabel} หรือข้อความ...`}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 text-ui bg-bg-app border border-border rounded-lg focus:outline-none focus:border-brand focus:bg-white transition-all"
@@ -115,9 +113,7 @@ export const ConversationListPane: React.FC<ConversationListPaneProps> = ({
                 }`}
               >
                 <span>{tab.label}</span>
-                <span className="text-2xs font-semibold tabular-nums opacity-85">
-                  {tab.count}
-                </span>
+                <span className="text-2xs font-semibold tabular-nums opacity-85">{tab.count}</span>
               </button>
             );
           })}
@@ -127,9 +123,7 @@ export const ConversationListPane: React.FC<ConversationListPaneProps> = ({
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-divider">
         {conversations.length === 0 ? (
-          <div className="p-8 text-center text-ui text-text-secondary">
-            ไม่พบรายการสนทนาในหมวดนี้
-          </div>
+          <div className="p-8 text-center text-ui text-text-secondary">ไม่พบรายการสนทนาในหมวดนี้</div>
         ) : (
           conversations.map((conv) => {
             const isSelected = conv.id === selectedConvId;

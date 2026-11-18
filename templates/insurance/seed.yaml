@@ -1,14 +1,30 @@
 contacts:
-  - id: INS001
-    name: "วิชัย มั่นคง"
-    phone: "089-456-7890"
+  - id: C00123
+    name: "สมชาย ใจดี"
+    phone: "081-892-5678"
     customFields:
       policy_number: "POL-2026-8801"
       policy_type: "HEALTH_OPD_IPD"
       policy_expiry_date: "2027-06-30"
       assigned_agent: "วรัญญา ตัวแทนประกันชีวิต"
+  - id: C00124
+    name: "บจก. นำชัยการพิมพ์"
+    phone: "089-410-2211"
+    customFields:
+      policy_number: "POL-2026-9104"
+      policy_type: "GROUP_CORP"
+      policy_expiry_date: "2027-03-31"
+      assigned_agent: "ธนากร ที่ปรึกษาประกันกลุ่ม"
+  - id: INS001
+    name: "วิชัย มั่นคง"
+    phone: "089-456-7890"
+    customFields:
+      policy_number: "POL-2026-8899"
+      policy_type: "HEALTH_OPD_IPD"
+      policy_expiry_date: "2027-06-30"
+      assigned_agent: "วรัญญา ตัวแทนประกันชีวิต"
 policies:
-  - contactId: INS001
+  - contactId: C00123
     policyNumber: "POL-2026-8801"
     policyType: "HEALTH_OPD_IPD"
     expiryDate: "2027-06-30"

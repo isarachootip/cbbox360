@@ -8,10 +8,12 @@ import { useCustomer } from '../context/CustomerContext';
 import { useToast } from '../context/ToastContext';
 import { CreateCustomerInput } from '../types';
 import { matchesCustomerSearch } from '../domain/customer/customerSearch';
+import { useLabel } from '../../core/client/hooks/useLabel';
 
 export const CustomerListPage: React.FC = () => {
   const { customers, setSelectedCustomerId, addCustomer } = useCustomer();
   const { showToast } = useToast();
+  const { t, contactLabel, contactPluralLabel } = useLabel();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTier, setSelectedTier] = useState('all');
@@ -64,7 +66,7 @@ export const CustomerListPage: React.FC = () => {
             <span>CDP</span>
             <span>/</span>
             <span className="font-bold text-text-primary text-[15px]">
-              รายการลูกค้าทั้งหมด
+              {contactPluralLabel}
             </span>
           </div>
         }
@@ -75,7 +77,7 @@ export const CustomerListPage: React.FC = () => {
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>ลูกค้าใหม่</span>
+            <span>{t('contact.create_button', `${contactLabel}ใหม่`)}</span>
           </button>
         }
       />
@@ -87,7 +89,7 @@ export const CustomerListPage: React.FC = () => {
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs text-text-secondary font-medium">ลูกค้าในระบบทั้งหมด</div>
+              <div className="text-xs text-text-secondary font-medium">{contactLabel}ในระบบทั้งหมด</div>
               <div className="text-xl font-bold font-mono tabular-nums text-text-primary">
                 {customers.length} <span className="text-xs font-sans font-normal text-slate-500">ราย</span>
               </div>

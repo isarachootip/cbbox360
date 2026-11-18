@@ -24,6 +24,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { MenuItemConfig } from '../../types';
+import { useTenantRuntime } from '../../../core/client/providers/TenantRuntimeContext';
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Users,
@@ -72,9 +73,20 @@ export const SidebarNavSection: React.FC<SidebarNavSectionProps> = ({
   compactText = false,
 }) => {
   const location = useLocation();
+  const { labels } = useTenantRuntime();
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
   if (items.length === 0) return null;
+
+  const resolveMenuLabel = (item: MenuItemConfig): string => {
+    if (item.id === 'menu-customer360' && labels['contact.singular']) {
+      return `${labels['contact.singular']} 360`;
+    }
+    if (item.id === 'menu-cases' && labels['case.singular']) {
+      return labels['case.singular'];
+    }
+    return item.name;
+  };
 
   const isItemActive = (path: string, activeMatch?: string) => {
     if (activeMatch) {
@@ -108,6 +120,7 @@ export const SidebarNavSection: React.FC<SidebarNavSectionProps> = ({
           const resolvedPath = getResolvedPath(item);
           const active = isItemActive(resolvedPath, item.activeMatch);
           const IconComp = ICON_MAP[item.icon] || Layers;
+          const displayLabel = resolveMenuLabel(item);
 
           return (
             <NavLink
@@ -117,7 +130,7 @@ export const SidebarNavSection: React.FC<SidebarNavSectionProps> = ({
                 if (!isCollapsed) return;
                 const rect = e.currentTarget.getBoundingClientRect();
                 setTooltip({
-                  label: item.name,
+                  label: displayLabel,
                   badge: item.badge,
                   top: rect.top + rect.height / 2,
                   left: rect.right + 10,
@@ -140,7 +153,7 @@ export const SidebarNavSection: React.FC<SidebarNavSectionProps> = ({
                     active ? 'text-brand' : 'text-sidebar-label'
                   }`}
                 />
-                {!isCollapsed && <span className="truncate">{item.name}</span>}
+                {!isCollapsed && <span className="truncate">{displayLabel}</span>}
               </div>
 
               {!isCollapsed && item.badge && (

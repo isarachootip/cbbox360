@@ -9,6 +9,7 @@ import {
   loadTemplateFromFile,
   validateTemplateObject,
 } from './templateValidator.js';
+import { applyTemplateSeedContacts } from './templateSeedLoader.js';
 import { tenantRepository as defaultTenantRepo } from '../tenancy/tenantRepository.js';
 import { entitlementService as defaultEntitlements } from '../entitlements/entitlementService.js';
 import { permissionService as defaultPermissions } from '../rbac/permissionService.js';
@@ -113,6 +114,12 @@ export const createTemplateEngine = ({
       ui: { order: idx + 1, ...(f.ui || {}) },
     }));
     await customFields.applyTemplateFieldDefs(tenantId, [...contactDefs, ...caseDefs]);
+    await applyTemplateSeedContacts({
+      tenantId,
+      templateId: tpl.metadata.id,
+      customFields,
+      templatesDir,
+    });
 
     await caseConfigs.applyTemplateCaseConfigs(tenantId, {
       slaPolicies: tpl.slaPolicies,

@@ -6,6 +6,7 @@ import { BotStatusToggle } from './BotStatusToggle';
 import { AiSuggestedReplyPanel } from './AiSuggestedReplyPanel';
 import { InboxTaskComposerForm, TaskComposerDraft } from './InboxTaskComposerForm';
 import { CannedResponseQuickBar } from './CannedResponseQuickBar';
+import { useLabel } from '../../../core/client/hooks/useLabel';
 
 export type ComposerMode = 'reply' | 'note' | 'task';
 
@@ -36,6 +37,7 @@ interface InboxComposerProps {
 
 export const InboxComposer: React.FC<InboxComposerProps> = (props) => {
   const navigate = useNavigate();
+  const { contactLabel } = useLabel();
   const { conversation, customer, composerMode, inputText } = props;
 
   return (
@@ -149,8 +151,8 @@ export const InboxComposer: React.FC<InboxComposerProps> = (props) => {
               }}
               placeholder={
                 composerMode === 'reply'
-                  ? 'พิมพ์ข้อความตอบกลับลูกค้า หรือพิมพ์ / เพื่อเลือกข้อความสำเร็จรูป...'
-                  : 'เขียนโน้ตส่วนตัว (Private note สำหรับทีมภายใน ลูกค้าจะไม่เห็น)...'
+                  ? `พิมพ์ข้อความตอบกลับ${contactLabel} หรือพิมพ์ / เพื่อเลือกข้อความสำเร็จรูป...`
+                  : `เขียนโน้ตส่วนตัว (Private note สำหรับทีมภายใน ${contactLabel}จะไม่เห็น)...`
               }
               className={`w-full px-3 py-2.5 text-[14px] leading-[1.6] rounded-xl border focus:outline-none transition-all resize-none ${
                 composerMode === 'note'
