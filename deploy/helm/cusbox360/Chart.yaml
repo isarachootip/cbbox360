@@ -1,0 +1,6 @@
+apiVersion: v2
+name: cusbox360
+description: Single-Artifact Multi-Industry Omnichannel CRM & Contact Center Helm Chart
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

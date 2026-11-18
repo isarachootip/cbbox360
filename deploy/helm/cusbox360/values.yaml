@@ -1,0 +1,24 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/isarachootip/cbbox360
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3000
+
+contract:
+  # Empty = Multi-tenant Cloud mode; Set 'hospital' or 'insurance' for On-Premises pre-load
+  preloadTemplate: ""
+  tenantSlug: "default"
+  tenantName: "CusBox360 Workspace"
+  domain: ""
+  licensedEntitlements: []
+  disabledEntitlements: []
+
+secrets:
+  databaseUrl: "postgresql://cb360:changeme@postgres:5432/cb360"
+  totpEncryptionKey: "replace-with-32-byte-production-secret"
+  sysadminInitialPassword: ""

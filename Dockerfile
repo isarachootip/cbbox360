@@ -24,6 +24,7 @@ COPY modules/ ./modules/
 COPY connectors/ ./connectors/
 COPY templates/ ./templates/
 COPY scripts/ ./scripts/
+COPY deploy/scripts/ ./deploy/scripts/
 
 ENV NODE_ENV=production
 ENV PORT=3000

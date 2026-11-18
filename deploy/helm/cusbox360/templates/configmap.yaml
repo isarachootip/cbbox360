@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-cb360-config
+data:
+  NODE_ENV: "production"
+  PORT: {{ .Values.service.port | quote }}
+  CB360_PRELOAD_TEMPLATE: {{ .Values.contract.preloadTemplate | quote }}
+  CB360_PRELOAD_SLUG: {{ .Values.contract.tenantSlug | quote }}
+  CB360_PRELOAD_NAME: {{ .Values.contract.tenantName | quote }}
+  CB360_PRELOAD_DOMAIN: {{ .Values.contract.domain | quote }}
+  CB360_LICENSED_ENTITLEMENTS: {{ join "," .Values.contract.licensedEntitlements | quote }}
+  CB360_DISABLED_ENTITLEMENTS: {{ join "," .Values.contract.disabledEntitlements | quote }}

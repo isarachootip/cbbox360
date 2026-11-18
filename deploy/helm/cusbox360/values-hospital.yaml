@@ -1,0 +1,20 @@
+# On-Premises Contract Values: Hospital & Healthcare Edition
+# Deploys the EXACT same cusbox360 Docker image pre-configured for a Hospital customer.
+
+replicaCount: 2
+
+contract:
+  preloadTemplate: "hospital"
+  tenantSlug: "default"
+  tenantName: "โรงพยาบาลศูนย์การแพทย์ (On-Premises)"
+  domain: "crm.hospital.local"
+  licensedEntitlements:
+    - "module:appointment"
+    - "connector:his-fhir"
+    - "flag:ai_copilot"
+    - "flag:voice_3cx"
+    - "flag:pdpa_consent"
+  disabledEntitlements:
+    - "module:credit-sales"
+    - "module:policy"
+    - "module:claim"

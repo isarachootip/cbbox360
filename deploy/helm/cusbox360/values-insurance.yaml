@@ -1,0 +1,20 @@
+# On-Premises Contract Values: Insurance Policy & Claims Edition
+# Deploys the EXACT same cusbox360 Docker image pre-configured for an Insurance carrier/broker.
+
+replicaCount: 2
+
+contract:
+  preloadTemplate: "insurance"
+  tenantSlug: "default"
+  tenantName: "บริษัทประกันภัย (On-Premises)"
+  domain: "crm.insurer.local"
+  licensedEntitlements:
+    - "module:policy"
+    - "module:claim"
+    - "connector:insurance-core"
+    - "flag:ai_copilot"
+    - "flag:voice_3cx"
+    - "flag:pdpa_consent"
+  disabledEntitlements:
+    - "module:credit-sales"
+    - "module:appointment"

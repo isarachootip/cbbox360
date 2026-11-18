@@ -103,7 +103,12 @@ export const verifyCustomFieldWriteAccess = ({
       def.acl?.editPerm ||
       (def.sensitivity === 'pdpa_s26' ? 'contact.pdpa_s26:write' : 'contact:write');
 
-    if (!matchPermission(grantedPermissions, editPerm)) {
+    const canEdit =
+      matchPermission(grantedPermissions, editPerm) ||
+      (def.sensitivity === 'pdpa_s26' &&
+        matchPermission(grantedPermissions, 'contact.pdpa_s26:write'));
+
+    if (!canEdit) {
       forbiddenFields.push(def.key);
     }
   }

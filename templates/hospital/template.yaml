@@ -41,6 +41,7 @@ roles:
       - "contact.pii:read"
       - "contact.pdpa_s26:read"
       - "contact.pdpa_s26:write"
+      - "contact.allergy:write"
       - "appointment:read"
       - "appointment:write"
       - "case:read"

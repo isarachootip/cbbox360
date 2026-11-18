@@ -1,0 +1,46 @@
+version: '3.9'
+
+# Single-Artifact Deployment for Cloud Multi-Tenant OR On-Premises Contracted Tenant
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cb360}
+      POSTGRES_USER: ${POSTGRES_USER:-cb360}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - cb360_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cb360} -d ${POSTGRES_DB:-cb360}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  cusbox360:
+    image: ${CB360_IMAGE:-ghcr.io/isarachootip/cbbox360:latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cb360}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cb360}
+      TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY:?Set 32+ char TOTP_ENCRYPTION_KEY}
+      SYSADMIN_INITIAL_PASSWORD: ${SYSADMIN_INITIAL_PASSWORD:-}
+      # Runtime On-Prem Contract Preload (leave empty for multi-tenant SaaS mode)
+      CB360_PRELOAD_TEMPLATE: ${CB360_PRELOAD_TEMPLATE:-}
+      CB360_PRELOAD_SLUG: ${CB360_PRELOAD_SLUG:-default}
+      CB360_PRELOAD_NAME: ${CB360_PRELOAD_NAME:-}
+      CB360_PRELOAD_DOMAIN: ${CB360_PRELOAD_DOMAIN:-}
+      CB360_LICENSED_ENTITLEMENTS: ${CB360_LICENSED_ENTITLEMENTS:-}
+      CB360_DISABLED_ENTITLEMENTS: ${CB360_DISABLED_ENTITLEMENTS:-}
+
+volumes:
+  cb360_pgdata:
