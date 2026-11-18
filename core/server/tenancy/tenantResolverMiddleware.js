@@ -34,10 +34,24 @@ const extractSubdomainSlug = (hostname, baseDomains) => {
   return null;
 };
 
+const parseExtraDomains = (raw) =>
+  String(raw || '')
+    .split(',')
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean);
+
+export const DEFAULT_BASE_DOMAINS = [
+  'cbox360.online',
+  'cb360.online',
+  'cb360.co.th',
+  'cusbox360.co.th',
+  'localhost',
+];
+
 export const createTenantResolverMiddleware = ({
   tenantRepo = defaultTenantRepo,
   connectorVault = defaultConnectorVault,
-  baseDomains = ['cb360.online', 'cb360.co.th', 'cusbox360.co.th', 'localhost'],
+  baseDomains = [...DEFAULT_BASE_DOMAINS, ...parseExtraDomains(process.env.CB360_BASE_DOMAINS)],
 } = {}) => {
   return async (req, res, next) => {
     const rawHost = req.headers?.['x-forwarded-host'] || req.headers?.host || '';

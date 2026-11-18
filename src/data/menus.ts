@@ -128,6 +128,18 @@ export const initialMenuItems: MenuItemConfig[] = [
 
   // ================= ADMINISTRATION SECTION =================
   {
+    id: 'menu-tenants',
+    name: 'Tenants (องค์กร)',
+    path: '/tenants',
+    activeMatch: '/tenants',
+    icon: 'Building2',
+    section: 'ADMINISTRATION',
+    order: 9.5,
+    isSystem: true,
+    description: 'สร้างและจัดการ Online Tenants, Industry Templates และ Subdomains',
+    allowedRoles: ['sysadmin'],
+  },
+  {
     id: 'menu-users',
     name: 'User Management',
     path: '/users',

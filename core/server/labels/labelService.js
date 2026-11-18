@@ -86,9 +86,47 @@ export const createPgLabelService = ({ query = defaultDbQuery } = {}) => {
     return mem.getTenantLabels(tenantId, locale);
   };
 
+  const setTenantLabel = async (tenantId, locale, labelKey, labelValue, opts = {}) => {
+    const saved = await mem.setTenantLabel(tenantId, locale, labelKey, labelValue, opts);
+    try {
+      await query(
+        `INSERT INTO tenant_labels (tenant_id, locale, label_key, label_value, origin, is_customized, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW())
+         ON CONFLICT (tenant_id, locale, label_key) DO UPDATE SET
+           label_value = EXCLUDED.label_value,
+           origin = EXCLUDED.origin,
+           is_customized = EXCLUDED.is_customized,
+           updated_at = NOW()`,
+        [tenantId, saved.locale, labelKey, saved.labelValue, saved.origin, saved.isCustomized]
+      );
+    } catch { /* fallback */ }
+    return saved;
+  };
+
+  const applyTemplateLabels = async (tenantId, locale, labelDict = {}) => {
+    const out = await mem.applyTemplateLabels(tenantId, locale, labelDict);
+    const loc = locale || 'th';
+    for (const [labelKey, labelValue] of Object.entries(labelDict)) {
+      try {
+        await query(
+          `INSERT INTO tenant_labels (tenant_id, locale, label_key, label_value, origin, is_customized, updated_at)
+           VALUES ($1, $2, $3, $4, 'template', FALSE, NOW())
+           ON CONFLICT (tenant_id, locale, label_key) DO UPDATE SET
+             label_value = EXCLUDED.label_value,
+             updated_at = NOW()
+           WHERE NOT tenant_labels.is_customized`,
+          [tenantId, loc, labelKey, String(labelValue)]
+        );
+      } catch { /* fallback */ }
+    }
+    return out;
+  };
+
   return {
     ...mem,
     getTenantLabels,
+    setTenantLabel,
+    applyTemplateLabels,
     t: async (tenantId, key, fallback, locale = 'th') => {
       const dict = await getTenantLabels(tenantId, locale);
       return dict[key] || (await mem.t(tenantId, key, fallback, locale));

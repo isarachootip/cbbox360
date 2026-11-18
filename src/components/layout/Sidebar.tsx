@@ -10,12 +10,13 @@ import { UserRole } from '../../types';
 import { SidebarNavSection } from './SidebarNavSection';
 import { SidebarUserMenu } from './SidebarUserMenu';
 import { DemoBusinessSwitcher } from './DemoBusinessSwitcher';
+import { TenantWorkspaceSwitcher } from './TenantWorkspaceSwitcher';
 
 export const Sidebar: React.FC = () => {
   const { selectedCustomerId } = useCustomer();
   const { currentUser } = useAuth();
   const { getMenusByRole } = useMenu();
-  const { branding } = useTenantRuntime();
+  const { branding, templateId, activeOverrideSlug } = useTenantRuntime();
   const {
     isMobileSidebarOpen,
     closeMobileSidebar,
@@ -108,8 +109,11 @@ export const Sidebar: React.FC = () => {
             </button>
           </div>
 
-          {/* Demo Multi-Business Quick Switcher (hidden automatically when Production Locked) */}
-          <DemoBusinessSwitcher isCollapsed={isSidebarCollapsed} />
+          {/* Online Multi-Tenant Workspace Switcher (sysadmin) + Legacy Demo Switcher */}
+          <TenantWorkspaceSwitcher isCollapsed={isSidebarCollapsed} />
+          {!templateId && !activeOverrideSlug && (
+            <DemoBusinessSwitcher isCollapsed={isSidebarCollapsed} />
+          )}
 
           {/* Primary Navigation Sections */}
           <div className="flex flex-col gap-4">

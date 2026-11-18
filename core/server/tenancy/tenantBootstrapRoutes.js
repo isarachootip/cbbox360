@@ -48,6 +48,7 @@ export const createTenantBootstrapRouter = ({
       tenantId,
       tenantSlug: tenant?.slug || tenantId,
       tenantName: tenant?.name || 'CusBox360',
+      templateId: tenant?.templateId || null,
       branding: settings.branding,
     });
   });
@@ -67,7 +68,12 @@ export const createTenantBootstrapRouter = ({
 
     return res.status(200).json({
       success: true,
-      tenant: { id: tenantId, slug: tenant?.slug || tenantId, name: tenant?.name || 'CusBox360' },
+      tenant: {
+        id: tenantId,
+        slug: tenant?.slug || tenantId,
+        name: tenant?.name || 'CusBox360',
+        templateId: tenant?.templateId || null,
+      },
       branding: settings.branding,
       entitlements: entitlementMap,
       permissions: grantedPerms,

@@ -19,6 +19,7 @@ registerBuiltInClientModules();
 import { AppLayout } from './components/layout/AppLayout';
 import { ForceChangePasswordCard } from './components/auth/ForceChangePasswordCard';
 import { LoginPage } from './pages/LoginPage';
+import { TenantManagementPage } from './pages/TenantManagementPage';
 import { UserManagementPage } from './pages/UserManagementPage';
 import { MenuManagementPage } from './pages/MenuManagementPage';
 import { CustomerListPage } from './pages/CustomerListPage';
@@ -97,6 +98,7 @@ export const App: React.FC = () => {
                             </EntitledRoute>
                           }
                         />
+                        <Route path="tenants" element={<TenantManagementPage />} />
                         <Route path="users" element={<UserManagementPage />} />
                         <Route path="menus" element={<MenuManagementPage />} />
                         
@@ -107,6 +109,7 @@ export const App: React.FC = () => {
                         <Route path="settings" element={<SettingsPage />} />
                         <Route path="settings/bot" element={<SettingsPage />} />
                         <Route path="settings/canned-responses" element={<CannedResponsesPage />} />
+                        <Route path="settings/tenants" element={<TenantManagementPage />} />
                         <Route path="settings/users" element={<UserManagementPage />} />
                         <Route path="settings/menus" element={<MenuManagementPage />} />
                         <Route path="settings/connectors" element={<ConnectorsPage />} />

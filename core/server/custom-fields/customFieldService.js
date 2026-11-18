@@ -18,7 +18,7 @@ const normalizeIndexRecord = (def, rawVal) => {
   return { valueText: text, valueNum: null, valueDate: null };
 };
 
-export const createInMemoryCustomFieldService = () => {
+export function createInMemoryCustomFieldService() {
   const defsStore = new Map(); // key: `${tenantId}::${entityType}::${fieldKey}`
   const valuesStore = new Map(); // key: `${tenantId}::${entityType}::${entityId}`
   const indexStore = new Map(); // key: `${tenantId}::${entityType}::${entityId}::${fieldKey}`
@@ -159,4 +159,7 @@ export const createInMemoryCustomFieldService = () => {
   };
 };
 
-export const customFieldService = createInMemoryCustomFieldService();
+export { createPgCustomFieldService } from './pgCustomFieldService.js';
+import { createPgCustomFieldService as makePgCustomFieldService } from './pgCustomFieldService.js';
+
+export const customFieldService = makePgCustomFieldService();

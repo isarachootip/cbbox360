@@ -2,11 +2,18 @@
  * templateAdminRoutes.js — REST Admin API for Tenant Provisioning & Template Validate/Import/Export.
  */
 import { Router } from 'express';
+import { z } from 'zod';
 import { parse as parseYaml } from 'yaml';
 import { validateTemplateObject } from './templateValidator.js';
 import { templateEngine as defaultEngine } from './templateApplier.js';
 import { exportTenantTemplateYaml } from './templateExporter.js';
 import { tenantRepository as defaultTenantRepo } from '../tenancy/tenantRepository.js';
+
+const patchTenantSchema = z.object({
+  name: z.string().trim().min(1).max(120).optional(),
+  status: z.enum(['active', 'suspended']).optional(),
+  domain: z.string().trim().min(3).max(255).optional(),
+});
 
 export const createTemplateAdminRouter = ({
   requireAuth,
@@ -32,6 +39,28 @@ export const createTemplateAdminRouter = ({
     }
   });
 
+  router.get('/admin/tenants', ...guard, async (_req, res) => {
+    try {
+      const rows = await tenantRepo.listTenants();
+      const enriched = await Promise.all(
+        rows.map(async (t) => {
+          const [domains, settings] = await Promise.all([
+            tenantRepo.listDomainsByTenant ? tenantRepo.listDomainsByTenant(t.id) : [],
+            tenantRepo.getTenantSettings(t.id),
+          ]);
+          return {
+            ...t,
+            domains,
+            branding: settings.branding,
+          };
+        })
+      );
+      return res.status(200).json({ success: true, tenants: enriched });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   router.post('/admin/tenants', ...guard, async (req, res) => {
     try {
       const { slug, name, template, domain } = req.body || {};
@@ -39,12 +68,40 @@ export const createTemplateAdminRouter = ({
         slug,
         name,
         templateName: template,
-        domain,
+        domain: domain ? String(domain).trim() : undefined,
       });
-      return res.status(201).json({ success: true, ...created });
+      const domains = tenantRepo.listDomainsByTenant
+        ? await tenantRepo.listDomainsByTenant(created.tenant.id)
+        : domain
+          ? [String(domain).trim().toLowerCase()]
+          : [];
+      return res.status(201).json({ success: true, ...created, domains });
     } catch (err) {
       return res.status(400).json({ success: false, error: err.message });
     }
+  });
+
+  router.patch('/admin/tenants/:slug', ...guard, async (req, res) => {
+    const parsed = patchTenantSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'INVALID_TENANT_PATCH' });
+    }
+    const existing = await tenantRepo.findBySlug(String(req.params.slug));
+    if (!existing) {
+      return res.status(404).json({ success: false, error: 'TENANT_NOT_FOUND' });
+    }
+    const updated = await tenantRepo.upsertTenant({
+      ...existing,
+      ...(parsed.data.name ? { name: parsed.data.name } : {}),
+      ...(parsed.data.status ? { status: parsed.data.status } : {}),
+    });
+    if (parsed.data.domain) {
+      await tenantRepo.bindDomain(parsed.data.domain, updated.id, true);
+    }
+    const domains = tenantRepo.listDomainsByTenant
+      ? await tenantRepo.listDomainsByTenant(updated.id)
+      : [];
+    return res.status(200).json({ success: true, tenant: updated, domains });
   });
 
   router.post('/admin/tenants/:slug/template/import', ...guard, async (req, res) => {

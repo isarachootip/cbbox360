@@ -21,6 +21,7 @@ import {
   Bookmark,
   Sparkles,
   FolderKanban,
+  Building2,
 } from 'lucide-react';
 import { MenuItemConfig } from '../../types';
 
@@ -45,6 +46,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Bookmark,
   Sparkles,
   FolderKanban,
+  Building2,
 };
 
 interface SidebarNavSectionProps {

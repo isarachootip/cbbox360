@@ -99,8 +99,44 @@ export const createPgPermissionService = ({ query = defaultDbQuery } = {}) => {
     return mem.getRolePermissions(tenantId, roleKey);
   };
 
+  const upsertRole = async (tenantId, input) => {
+    const saved = await mem.upsertRole(tenantId, input);
+    try {
+      const sql =
+        input.origin === 'template'
+          ? `INSERT INTO tenant_roles (tenant_id, role_key, name, permissions, is_system, origin, is_customized)
+             VALUES ($1, $2, $3, $4::jsonb, $5, 'template', FALSE)
+             ON CONFLICT (tenant_id, role_key) DO UPDATE SET
+               name = EXCLUDED.name,
+               permissions = EXCLUDED.permissions
+             WHERE NOT tenant_roles.is_customized`
+          : `INSERT INTO tenant_roles (tenant_id, role_key, name, permissions, is_system, origin, is_customized)
+             VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7)
+             ON CONFLICT (tenant_id, role_key) DO UPDATE SET
+               name = EXCLUDED.name,
+               permissions = EXCLUDED.permissions,
+               origin = EXCLUDED.origin,
+               is_customized = EXCLUDED.is_customized`;
+      const params =
+        input.origin === 'template'
+          ? [tenantId, saved.roleKey, saved.name, JSON.stringify(saved.permissions), saved.isSystem]
+          : [
+              tenantId,
+              saved.roleKey,
+              saved.name,
+              JSON.stringify(saved.permissions),
+              saved.isSystem,
+              saved.origin,
+              saved.isCustomized,
+            ];
+      await query(sql, params);
+    } catch { /* fallback */ }
+    return saved;
+  };
+
   return {
     ...mem,
+    upsertRole,
     getRolePermissions,
     hasPermission: async (tenantId, roleKey, perm) =>
       matchPermission(await getRolePermissions(tenantId, roleKey), perm),

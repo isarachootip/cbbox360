@@ -158,11 +158,30 @@ export const createPgEntitlementService = ({ query = defaultDbQuery } = {}) => {
     return next();
   };
 
+  const applyTemplateEntitlements = async (tenantId, entitlementMap) => {
+    const out = await mem.applyTemplateEntitlements(tenantId, entitlementMap);
+    for (const [featureKey, enabled] of Object.entries(entitlementMap || {})) {
+      try {
+        await query(
+          `INSERT INTO tenant_entitlements (tenant_id, feature_key, enabled, limits_json, origin, is_customized, updated_at)
+           VALUES ($1, $2, $3, '{}'::jsonb, 'template', FALSE, NOW())
+           ON CONFLICT (tenant_id, feature_key) DO UPDATE SET
+             enabled = EXCLUDED.enabled,
+             updated_at = NOW()
+           WHERE NOT tenant_entitlements.is_customized
+             AND tenant_entitlements.origin = 'template'`,
+          [tenantId, featureKey, Boolean(enabled)]
+        );
+      } catch { /* fallback */ }
+    }
+    return out;
+  };
+
   return {
     isEnabled,
     getEntitlementMap,
     setEntitlement,
-    applyTemplateEntitlements: mem.applyTemplateEntitlements,
+    applyTemplateEntitlements,
     requireEntitlement,
   };
 };

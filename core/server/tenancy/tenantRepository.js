@@ -4,6 +4,7 @@
  */
 import { query as defaultDbQuery } from '../../../db.js';
 import { DEFAULT_TENANT_ID } from './tenantContext.js';
+import { createPgTenantOperations, rowToTenant } from './pgTenantQueries.js';
 
 export const DEFAULT_BRANDING = {
   appName: 'CusBox360',
@@ -65,12 +66,20 @@ export const createInMemoryTenantRepository = () => {
       return Array.from(tenants.values());
     },
 
+    async listDomainsByTenant(tenantId) {
+      const out = [];
+      for (const [host, tid] of domains.entries()) {
+        if (tid === tenantId) out.push(host);
+      }
+      return out;
+    },
+
     async upsertTenant(input) {
       const existing = tenants.get(input.id);
       const record = {
         id: input.id,
-        slug: String(input.slug || input.id).toLowerCase(),
-        name: input.name || input.id,
+        slug: String(input.slug || existing?.slug || input.id).toLowerCase(),
+        name: input.name || existing?.name || input.id,
         status: input.status || existing?.status || 'active',
         templateId: input.templateId ?? existing?.templateId ?? null,
         templateVersion: input.templateVersion ?? existing?.templateVersion ?? '1.0.0',
@@ -127,16 +136,7 @@ export const createInMemoryTenantRepository = () => {
 
 export const createPgTenantRepository = ({ query = defaultDbQuery } = {}) => {
   const fallback = createInMemoryTenantRepository();
-  const rowToTenant = (r) => ({
-    id: r.id,
-    slug: r.slug,
-    name: r.name,
-    status: r.status,
-    templateId: r.template_id,
-    templateVersion: r.template_version,
-    isolationMode: r.isolation_mode,
-    dbDsnEncrypted: r.db_dsn_encrypted,
-  });
+  const pgOps = createPgTenantOperations({ query, fallback, normalizeHost });
 
   return {
     async findById(id) {
@@ -164,12 +164,23 @@ export const createPgTenantRepository = ({ query = defaultDbQuery } = {}) => {
       } catch { /* fallback */ }
       return fallback.findByDomain(host);
     },
-    listTenants: () => fallback.listTenants(),
-    upsertTenant: (input) => fallback.upsertTenant(input),
-    bindDomain: (hostname, tenantId, isPrimary) => fallback.bindDomain(hostname, tenantId, isPrimary),
-    getTenantSettings: (tenantId) => fallback.getTenantSettings(tenantId),
-    updateTenantSettings: (tenantId, patch, opts) => fallback.updateTenantSettings(tenantId, patch, opts),
-    applyTemplateSettingsDefaults: (tenantId, defs) => fallback.applyTemplateSettingsDefaults(tenantId, defs),
+    listTenants: pgOps.listTenants,
+    listDomainsByTenant: pgOps.listDomainsByTenant,
+    upsertTenant: pgOps.upsertTenant,
+    bindDomain: pgOps.bindDomain,
+    getTenantSettings: pgOps.getTenantSettings,
+    async updateTenantSettings(tenantId, patch, opts) {
+      const current = await pgOps.getTenantSettings(tenantId);
+      await fallback.updateTenantSettings(tenantId, current, { markCustomized: false });
+      const saved = await fallback.updateTenantSettings(tenantId, patch, opts);
+      return pgOps.persistSettings(saved);
+    },
+    async applyTemplateSettingsDefaults(tenantId, defs) {
+      const current = await pgOps.getTenantSettings(tenantId);
+      await fallback.updateTenantSettings(tenantId, current, { markCustomized: false });
+      const saved = await fallback.applyTemplateSettingsDefaults(tenantId, defs);
+      return pgOps.persistSettings(saved);
+    },
   };
 };
 
