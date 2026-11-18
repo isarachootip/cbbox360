@@ -13,6 +13,7 @@ import { permissionService } from '../rbac/permissionService.js';
 import { labelService } from '../labels/labelService.js';
 import { customFieldService } from '../custom-fields/customFieldService.js';
 import { caseConfigService } from '../cases/caseConfigService.js';
+import { loadTemplateSeedBundle } from '../template-engine/templateSeedLoader.js';
 
 const brandingPatchSchema = z.object({
   branding: z
@@ -99,6 +100,20 @@ export const createTenantBootstrapRouter = ({
       return res.status(200).json({ success: true, settings: updated });
     }
   );
+
+  router.get('/tenant/seed-workspace', requireAuth, async (req, res) => {
+    const tenantId = getCurrentTenantId();
+    const tenant = req.tenant || (await tenantRepo.findById(tenantId));
+    const bundle = loadTemplateSeedBundle(tenant?.templateId);
+    return res.status(200).json({
+      success: true,
+      tenantId,
+      templateId: tenant?.templateId || null,
+      tickets: bundle.tickets,
+      timelineEvents: bundle.timelineEvents,
+      deals: bundle.deals,
+    });
+  });
 
   return router;
 };

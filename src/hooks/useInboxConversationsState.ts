@@ -1,41 +1,47 @@
 import { useEffect, useState } from 'react';
 import type { Conversation } from '../types';
 import { mockConversations } from '../data/conversations';
-
-const formatCurrentTime = (): string => {
-  const now = new Date();
-  return `${now.getHours().toString().padStart(2, '0')}:${now
-    .getMinutes()
-    .toString()
-    .padStart(2, '0')}`;
-};
+import { useTenantRuntime } from '../../core/client/providers/TenantRuntimeContext';
+import {
+  appendOptimisticMessage,
+  applyMessageDeliveryOutcome,
+  formatCurrentChatTime,
+} from '../domain/inbox/conversationStateOps';
 
 export const useInboxConversationsState = () => {
+  const { tenantId, isLoaded } = useTenantRuntime();
+  const isDefaultTenant = tenantId === 'default';
   const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
 
   useEffect(() => {
+    if (!isDefaultTenant) {
+      setConversations([]);
+    } else {
+      setConversations(mockConversations);
+    }
+
     const fetchLiveConversations = async () => {
       try {
-        const res = await fetch('/api/conversations');
+        const res = await fetch('/api/conversations', { credentials: 'include' });
         if (res.ok) {
           const json: { data?: Conversation[] } = await res.json();
-          if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
-            setConversations(json.data);
+          if (Array.isArray(json?.data)) {
+            if (isDefaultTenant && json.data.length === 0) {
+              setConversations(mockConversations);
+            } else {
+              setConversations(json.data);
+            }
           }
         }
       } catch {
-        // Fallback to local mock data when offline
+        // Fallback to local mock data only on default tenant when offline
       }
     };
 
     void fetchLiveConversations();
     const interval = setInterval(fetchLiveConversations, 2500);
     return () => clearInterval(interval);
-  }, []);
-
-  const updateConversationStatus = (convId: string, status: Conversation['status']) => {
-    setConversations((prev) => prev.map((c) => (c.id === convId ? { ...c, status } : c)));
-  };
+  }, [tenantId, isLoaded, isDefaultTenant]);
 
   const markMessageOutcome = (
     convId: string,
@@ -43,25 +49,7 @@ export const useInboxConversationsState = () => {
     ok: boolean,
     opts?: { serverId?: string; isPrivate?: boolean; error?: string }
   ) => {
-    setConversations((prev) =>
-      prev.map((c) => {
-        if (c.id !== convId) return c;
-        return {
-          ...c,
-          isBotActive: opts?.isPrivate ? c.isBotActive : ok ? false : c.isBotActive,
-          messages: c.messages.map((m) =>
-            m.id === messageId
-              ? {
-                  ...m,
-                  id: opts?.serverId || m.id,
-                  deliveryStatus: ok ? 'delivered' : 'failed',
-                  failureReason: ok ? undefined : opts?.error || 'LINE Push delivery failed',
-                }
-              : m
-          ),
-        };
-      })
-    );
+    setConversations((prev) => applyMessageDeliveryOutcome(prev, convId, messageId, ok, opts));
   };
 
   const addMessageToConversation = async (
@@ -69,37 +57,14 @@ export const useInboxConversationsState = () => {
     text: string,
     isPrivate: boolean = false
   ): Promise<{ success: boolean; lineDelivery?: { success: boolean; error?: string } }> => {
-    const timeStr = formatCurrentTime();
+    const timeStr = formatCurrentChatTime();
     const tempMsgId = `m-${Date.now()}`;
-
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === convId
-          ? {
-              ...c,
-              lastMessagePreview: isPrivate ? c.lastMessagePreview : text,
-              time: timeStr,
-              isBotActive: isPrivate ? c.isBotActive : false,
-              messages: [
-                ...c.messages,
-                {
-                  id: tempMsgId,
-                  sender: isPrivate ? 'note' : 'agent',
-                  authorName: 'วิภา ส.',
-                  text,
-                  time: timeStr,
-                  isPrivateNote: isPrivate,
-                  deliveryStatus: 'delivered',
-                },
-              ],
-            }
-          : c
-      )
-    );
+    setConversations((prev) => appendOptimisticMessage(prev, convId, tempMsgId, text, timeStr, isPrivate));
 
     try {
       const res = await fetch(`/api/conversations/${convId}/messages`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, isPrivate, authorName: 'วิภา ส.' }),
       });
@@ -134,6 +99,7 @@ export const useInboxConversationsState = () => {
     try {
       await fetch(`/api/conversations/${convId}/bot-status`, {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isBotActive }),
       });
@@ -149,6 +115,7 @@ export const useInboxConversationsState = () => {
     try {
       const res = await fetch(`/api/conversations/${convId}/line-user`, {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lineUserId: lineUserId.trim() }),
       });
@@ -170,18 +137,16 @@ export const useInboxConversationsState = () => {
           ? {
               ...c,
               messages: c.messages.map((m) =>
-                m.id === messageId
-                  ? { ...m, deliveryStatus: 'sending', failureReason: undefined }
-                  : m
+                m.id === messageId ? { ...m, deliveryStatus: 'sending', failureReason: undefined } : m
               ),
             }
           : c
       )
     );
-
     try {
       const res = await fetch(`/api/conversations/${convId}/messages`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, isPrivate: false, authorName: 'วิภา ส.' }),
       });
@@ -194,15 +159,17 @@ export const useInboxConversationsState = () => {
         markMessageOutcome(convId, messageId, false, { error: `HTTP ${res.status}` });
       }
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : 'เชื่อมต่อล้มเหลว';
-      markMessageOutcome(convId, messageId, false, { error: errorMsg });
+      markMessageOutcome(convId, messageId, false, {
+        error: err instanceof Error ? err.message : 'เชื่อมต่อล้มเหลว',
+      });
     }
   };
 
   return {
     conversations,
     setConversations,
-    updateConversationStatus,
+    updateConversationStatus: (convId: string, status: Conversation['status']) =>
+      setConversations((prev) => prev.map((c) => (c.id === convId ? { ...c, status } : c))),
     addMessageToConversation,
     toggleBotStatus,
     updateConversationLineUserId,

@@ -105,10 +105,11 @@ export const customerRecordSchema: z.ZodType<Customer> = z.object({
 
 export const loadStoredCustomers = (
   storage: KeyValueStorage | null,
-  seedCustomers: readonly Customer[]
+  seedCustomers: readonly Customer[],
+  storageKey: string = CUSTOMERS_STORAGE_KEY
 ): Customer[] => {
   if (!storage) return [...seedCustomers];
-  const raw = storage.getItem(CUSTOMERS_STORAGE_KEY);
+  const raw = storage.getItem(storageKey);
   if (!raw) return [...seedCustomers];
 
   try {
@@ -133,11 +134,12 @@ export const loadStoredCustomers = (
 
 export const saveStoredCustomers = (
   storage: KeyValueStorage | null,
-  customers: readonly Customer[]
+  customers: readonly Customer[],
+  storageKey: string = CUSTOMERS_STORAGE_KEY
 ): void => {
   if (!storage) return;
   try {
-    storage.setItem(CUSTOMERS_STORAGE_KEY, JSON.stringify(customers));
+    storage.setItem(storageKey, JSON.stringify(customers));
   } catch (err) {
     console.error('Failed to persist customers to storage', err);
   }

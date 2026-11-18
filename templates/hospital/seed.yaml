@@ -1,43 +1,155 @@
 contacts:
-  - id: C00123
-    name: "สมชาย ใจดี"
-    phone: "081-892-5678"
+  - id: HN001
+    name: "กานดา สุขสวัสดิ์"
+    nickname: "กานต์"
+    tier: "PLATINUM"
+    phone: "081-942-3310"
+    email: "kanda.s@medpatient.th"
+    birthday: "14 มี.ค. 1984"
+    customerSince: "ม.ค. 2023"
+    segments: ["OPD ประจำ", "ศูนย์โรคหัวใจ"]
+    nextBestAction:
+      description: "เตือนงดน้ำและอาหาร 8 ชม. ก่อนตรวจเลือดและคลื่นหัวใจ"
+      actionLabel: "ส่งคำแนะนำก่อนนัด"
     customFields:
       hn: "HN-6904812"
       drug_allergies: ["Penicillin", "Ibuprofen"]
       treatment_right: "PRIVATE_INSURANCE"
       preferred_department: "ศูนย์อายุรกรรมหัวใจ"
       preferred_doctor: "นพ. กิตติพงศ์ วงศ์เวช"
-  - id: C00124
-    name: "บจก. นำชัยการพิมพ์ (สวัสดิการพนักงาน)"
-    phone: "089-410-2211"
+  - id: HN002
+    name: "ประเสริฐ วัฒนากุล"
+    nickname: "เสริฐ"
+    tier: "GOLD"
+    phone: "089-615-8820"
+    email: "prasert.w@medpatient.th"
+    birthday: "22 ส.ค. 1978"
+    customerSince: "มิ.ย. 2024"
+    segments: ["สิทธิประกันสังคม", "ศัลยกรรมกระดูก"]
+    nextBestAction:
+      description: "ตรวจสอบเอกสารส่งตัวสิทธิประกันสังคมก่อนวันนัดผ่าตัด"
+      actionLabel: "ยืนยันสิทธิการรักษา"
     customFields:
       hn: "HN-6905109"
       drug_allergies: []
       treatment_right: "SSO"
-      preferred_department: "ศูนย์ตรวจสุขภาพอาชีวอนามัย"
-      preferred_doctor: "พญ. ศศิธร เลิศเวช"
-  - id: C00125
-    name: "พิม ชนิดา"
+      preferred_department: "ศูนย์กระดูกและข้อ"
+      preferred_doctor: "นพ. ธีรภัทร ดำรงเวช"
+  - id: HN003
+    name: "พิมพ์ชนก อารีย์"
+    nickname: "พิม"
+    tier: "SILVER"
     phone: "086-771-9045"
+    email: "pimchanok.a@medpatient.th"
+    birthday: "9 พ.ย. 1995"
+    customerSince: "ก.พ. 2025"
+    segments: ["ตรวจสุขภาพประจำปี"]
+    nextBestAction:
+      description: "แจ้งผลตรวจสุขภาพประจำปีและนัดฟังผลกับแพทย์"
+      actionLabel: "นัดฟังผลตรวจ"
     customFields:
       hn: "HN-6906224"
       drug_allergies: ["Aspirin"]
       treatment_right: "UCS"
       preferred_department: "แผนกอายุรกรรมทั่วไป"
-      preferred_doctor: "นพ. วรพล สุขสันต์"
-  - id: P00101
-    name: "ประเสริฐ สุขใจ"
-    phone: "081-555-0199"
-    customFields:
-      hn: "HN-6904800"
-      drug_allergies: ["Sulfa"]
-      treatment_right: "SELF_PAY"
-      preferred_department: "ศูนย์กระดูกและข้อ"
-      preferred_doctor: "นพ. ธีรภัทร ดำรงเวช"
-appointments:
-  - contactId: C00123
-    hn: "HN-6904812"
-    department: "ศูนย์อายุรกรรมหัวใจ"
-    doctorName: "นพ. กิตติพงศ์ วงศ์เวช"
-    scheduledAt: "2026-12-01T09:30:00Z"
+      preferred_doctor: "พญ. ศศิธร เลิศเวช"
+
+conversations:
+  - id: hconv-1
+    customerId: HN001
+    customerName: "กานดา สุขสวัสดิ์"
+    customerTier: "PLATINUM"
+    channel: "LINE"
+    channelAccount: "Hospital Official"
+    time: "10:42"
+    lastMessagePreview: "ขอเลื่อนนัดตรวจคลื่นหัวใจกับ นพ.กิตติพงศ์ เป็นวันศุกร์เช้าได้ไหมคะ"
+    label: "นัดหมายแพทย์"
+    unreadCount: 1
+    status: "Open"
+    assignedTo: "พยาบาลคัดกรอง"
+    team: "Appointment Center"
+    tabGroup: "Mine"
+    messages:
+      - id: hm-1
+        sender: "customer"
+        text: "สวัสดีค่ะ กานดา สุขสวัสดิ์ HN-6904812 ค่ะ"
+        time: "10:39"
+      - id: hm-2
+        sender: "customer"
+        text: "ขอเลื่อนนัดตรวจคลื่นหัวใจกับ นพ.กิตติพงศ์ เป็นวันศุกร์เช้าได้ไหมคะ"
+        time: "10:42"
+      - id: hm-3
+        sender: "note"
+        authorName: "พยาบาลคัดกรอง"
+        text: "ผู้ป่วยมีประวัติแพ้ยา Penicillin และ Ibuprofen กรุณาระบุในใบนัดแพทย์ทุกครั้ง"
+        time: "10:43"
+        isPrivateNote: true
+  - id: hconv-2
+    customerId: HN002
+    customerName: "ประเสริฐ วัฒนากุล"
+    customerTier: "GOLD"
+    channel: "LINE"
+    channelAccount: "Hospital Official"
+    time: "09:55"
+    lastMessagePreview: "ใช้สิทธิประกันสังคมผ่าตัดส่องกล้องเข่าต้องเตรียมใบส่งตัวไหมครับ"
+    label: "สิทธิการรักษา"
+    unreadCount: 0
+    status: "Open"
+    assignedTo: "เจ้าหน้าที่สิทธิประโยชน์"
+    team: "Medical Billing"
+    tabGroup: "Mine"
+    messages:
+      - id: hm-201
+        sender: "customer"
+        text: "ใช้สิทธิประกันสังคมผ่าตัดส่องกล้องเข่าต้องเตรียมใบส่งตัวไหมครับ"
+        time: "09:55"
+  - id: hconv-3
+    customerId: HN003
+    customerName: "พิมพ์ชนก อารีย์"
+    customerTier: "SILVER"
+    channel: "Facebook"
+    channelAccount: "Hospital Clinic Page"
+    time: "09:18"
+    lastMessagePreview: "สอบถามผลตรวจเลือดเมื่อวานออกหรือยังคะ"
+    label: "สอบถามผลตรวจ"
+    unreadCount: 2
+    status: "Open"
+    assignedTo: "พยาบาลคัดกรอง"
+    team: "Nursing Triage"
+    tabGroup: "Unassigned"
+    messages:
+      - id: hm-301
+        sender: "customer"
+        text: "สอบถามผลตรวจเลือดเมื่อวานออกหรือยังคะ"
+        time: "09:18"
+
+tickets:
+  - id: "HN-CASE-101"
+    customerId: "HN001"
+    customerName: "กานดา สุขสวัสดิ์"
+    title: "ขอเลื่อนนัดตรวจ EKG ศูนย์หัวใจ (นพ. กิตติพงศ์)"
+    category: "นัดหมาย"
+    channel: "LINE"
+    priority: "High"
+    status: "Open"
+    assignee: "ศูนย์นัดหมายแพทย์"
+    slaRemainingMinutes: 25
+    slaFormatted: "00:25 ชม."
+    createdAt: "วันนี้ 10:42"
+    activityLogs:
+      - time: "10:42"
+        author: "ระบบเวชระเบียน"
+        text: "รับคำขอเลื่อนนัดจาก LINE Official (HN-6904812)"
+        type: "system"
+
+timelineEvents:
+  - id: "htl-1"
+    type: "แชท"
+    iconCode: "LN"
+    colorScheme: "green"
+    title: "ผู้ป่วยติดต่อเลื่อนนัดตรวจคลื่นหัวใจ (EKG)"
+    time: "10:42"
+    detail: "คุณกานดา (HN-6904812) แจ้งขอเลื่อนคิวพบ นพ. กิตติพงศ์ เป็นวันศุกร์ช่วงเช้า"
+    meta: ["LINE Official", "ศูนย์อายุรกรรมหัวใจ"]
+    linkText: "เปิดห้องแชท"
+    linkRoute: "/inbox"

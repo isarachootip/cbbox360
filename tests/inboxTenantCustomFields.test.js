@@ -67,8 +67,8 @@ describe('Inbox Contact Custom Fields — Hospital Seed, HN Uniqueness & PDPA s.
 
     const srv = await startServer(app);
     try {
-      // 1. Doctor / Sysadmin sees full C00123 patient fields + danger allergy banner from seed.yaml
-      const docRes = await fetch(`${srv.url}/api/contacts/C00123/custom-fields`, {
+      // 1. Doctor / Sysadmin sees full HN001 patient fields + danger allergy banner from seed.yaml
+      const docRes = await fetch(`${srv.url}/api/contacts/HN001/custom-fields`, {
         headers: { 'X-Forwarded-Host': 'hospital.cb360.online', 'x-test-role': 'doctor' },
       });
       expect(docRes.status).toBe(200);
@@ -83,7 +83,7 @@ describe('Inbox Contact Custom Fields — Hospital Seed, HN Uniqueness & PDPA s.
       expect(docBody.banners[0].text).toContain('Penicillin');
 
       // 2. Admission agent (no contact.pdpa_s26:read) gets redacted allergy + PDPA notice banner
-      const agentRes = await fetch(`${srv.url}/api/contacts/C00123/custom-fields`, {
+      const agentRes = await fetch(`${srv.url}/api/contacts/HN001/custom-fields`, {
         headers: { 'X-Forwarded-Host': 'hospital.cb360.online', 'x-test-role': 'admission_agent' },
       });
       const agentBody = await agentRes.json();

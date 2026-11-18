@@ -121,7 +121,7 @@ export const InboxPage: React.FC = () => {
       </div>
 
       {/* Collapsible Desktop CDP Right Panel */}
-      {isInboxRightPanelOpen && (
+      {isInboxRightPanelOpen && ws.conversations.length > 0 && (
         <div className="hidden xl:block h-full">
           <CustomerSideCard
             customer={ws.currentCustomer}

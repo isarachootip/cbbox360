@@ -59,8 +59,9 @@ describe('SQL Migration Runner & TenantDbManager (Phase 2 - PR-01)', () => {
       '001_tenant_control_plane',
       '002_custom_fields_and_rls',
       '003_entity_custom_field_values',
+      '004_tenant_scoped_customers_and_chats',
     ]);
-    expect(mockDb.applied.size).toBe(3);
+    expect(mockDb.applied.size).toBe(4);
 
     const secondRun = await runMigrations({
       db: mockDb,
@@ -72,6 +73,7 @@ describe('SQL Migration Runner & TenantDbManager (Phase 2 - PR-01)', () => {
       '001_tenant_control_plane',
       '002_custom_fields_and_rls',
       '003_entity_custom_field_values',
+      '004_tenant_scoped_customers_and_chats',
     ]);
   });
 
@@ -85,9 +87,9 @@ describe('SQL Migration Runner & TenantDbManager (Phase 2 - PR-01)', () => {
       migrationsDir: CORE_MIGRATIONS_DIR,
     });
 
-    expect(rolledBack.rolledBack).toBe('003_entity_custom_field_values');
-    expect(mockDb.applied.has('core:003_entity_custom_field_values')).toBe(false);
-    expect(mockDb.applied.has('core:002_custom_fields_and_rls')).toBe(true);
+    expect(rolledBack.rolledBack).toBe('004_tenant_scoped_customers_and_chats');
+    expect(mockDb.applied.has('core:004_tenant_scoped_customers_and_chats')).toBe(false);
+    expect(mockDb.applied.has('core:003_entity_custom_field_values')).toBe(true);
     expect(mockDb.applied.has('core:001_tenant_control_plane')).toBe(true);
   });
 

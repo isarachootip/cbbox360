@@ -1,32 +1,106 @@
 contacts:
-  - id: C00123
-    name: "สมชาย ใจดี"
-    phone: "081-892-5678"
+  - id: INS001
+    name: "วิชัย มั่นคง"
+    nickname: "ชัย"
+    tier: "PLATINUM"
+    phone: "089-456-7890"
+    email: "wichai.m@insured.th"
+    birthday: "3 พ.ค. 1982"
+    customerSince: "เม.ย. 2022"
+    segments: ["ประกันสุขภาพเหมาจ่าย", "VIP Policyholder"]
+    nextBestAction:
+      description: "แจ้งเตือนต่ออายุกรมธรรม์ล่วงหน้า 30 วันพร้อมส่วนลดประวัติดี"
+      actionLabel: "ส่งใบแจ้งต่ออายุ"
     customFields:
       policy_number: "POL-2026-8801"
       policy_type: "HEALTH_OPD_IPD"
       policy_expiry_date: "2027-06-30"
       assigned_agent: "วรัญญา ตัวแทนประกันชีวิต"
-  - id: C00124
-    name: "บจก. นำชัยการพิมพ์"
-    phone: "089-410-2211"
+  - id: INS002
+    name: "รัตนา เจริญทรัพย์"
+    nickname: "รัตน์"
+    tier: "GOLD"
+    phone: "082-334-9910"
+    email: "rattana.c@insured.th"
+    birthday: "19 ต.ค. 1990"
+    customerSince: "ก.ย. 2024"
+    segments: ["ประกันรถยนต์ชั้น 1"]
+    nextBestAction:
+      description: "ติดตามเอกสารใบเสร็จค่ารักษาพยาบาลเพิ่มเติมสำหรับเคสเคลม"
+      actionLabel: "ติดตามเอกสารเคลม"
     customFields:
       policy_number: "POL-2026-9104"
-      policy_type: "GROUP_CORP"
+      policy_type: "MOTOR_CLASS_1"
       policy_expiry_date: "2027-03-31"
-      assigned_agent: "ธนากร ที่ปรึกษาประกันกลุ่ม"
-  - id: INS001
-    name: "วิชัย มั่นคง"
-    phone: "089-456-7890"
-    customFields:
-      policy_number: "POL-2026-8899"
-      policy_type: "HEALTH_OPD_IPD"
-      policy_expiry_date: "2027-06-30"
-      assigned_agent: "วรัญญา ตัวแทนประกันชีวิต"
-policies:
-  - contactId: C00123
-    policyNumber: "POL-2026-8801"
-    policyType: "HEALTH_OPD_IPD"
-    expiryDate: "2027-06-30"
-    agentName: "วรัญญา ตัวแทนประกันชีวิต"
-    sumInsured: 1500000
+      assigned_agent: "ธนากร ที่ปรึกษาประกันภัย"
+
+conversations:
+  - id: iconv-1
+    customerId: INS001
+    customerName: "วิชัย มั่นคง"
+    customerTier: "PLATINUM"
+    channel: "LINE"
+    channelAccount: "InsureCare Official"
+    time: "11:10"
+    lastMessagePreview: "ส่งใบรับรองแพทย์และใบเสร็จเคลม OPD กรมธรรม์ POL-2026-8801 ครับ"
+    label: "เคลมสินไหม"
+    unreadCount: 1
+    status: "Open"
+    assignedTo: "ฝ่ายสินไหมทดแทน"
+    team: "Claims Assessment"
+    tabGroup: "Mine"
+    messages:
+      - id: im-1
+        sender: "customer"
+        text: "ส่งใบรับรองแพทย์และใบเสร็จเคลม OPD กรมธรรม์ POL-2026-8801 ครับ"
+        time: "11:10"
+  - id: iconv-2
+    customerId: INS002
+    customerName: "รัตนา เจริญทรัพย์"
+    customerTier: "GOLD"
+    channel: "Facebook"
+    channelAccount: "InsureCare Page"
+    time: "09:40"
+    lastMessagePreview: "ต้องการชำระเบี้ยต่ออายุกรมธรรม์รถยนต์ชั้น 1 ค่ะ"
+    label: "ต่ออายุกรมธรรม์"
+    unreadCount: 0
+    status: "Open"
+    assignedTo: "ฝ่ายบริการผู้เอาประกัน"
+    team: "Policy Service"
+    tabGroup: "Mine"
+    messages:
+      - id: im-201
+        sender: "customer"
+        text: "ต้องการชำระเบี้ยต่ออายุกรมธรรม์รถยนต์ชั้น 1 ค่ะ"
+        time: "09:40"
+
+tickets:
+  - id: "CLM-2026-401"
+    customerId: "INS001"
+    customerName: "วิชัย มั่นคง"
+    title: "พิจารณาเคลมค่ารักษาพยาบาล OPD (POL-2026-8801)"
+    category: "เคลม"
+    channel: "LINE"
+    priority: "High"
+    status: "Open"
+    assignee: "ฝ่ายสินไหมทดแทน"
+    slaRemainingMinutes: 90
+    slaFormatted: "01:30 ชม."
+    createdAt: "วันนี้ 11:10"
+    activityLogs:
+      - time: "11:10"
+        author: "ระบบรับเคลม"
+        text: "รับเอกสารใบเสร็จและใบรับรองแพทย์จากผู้เอาประกัน"
+        type: "system"
+
+timelineEvents:
+  - id: "itl-1"
+    type: "แชท"
+    iconCode: "LN"
+    colorScheme: "blue"
+    title: "ผู้เอาประกันยื่นเอกสารเคลมสินไหม OPD"
+    time: "11:10"
+    detail: "คุณวิชัย (POL-2026-8801) ส่งเอกสารเคลมผ่าน LINE Official"
+    meta: ["LINE Official", "Claims"]
+    linkText: "เปิดห้องแชท"
+    linkRoute: "/inbox"

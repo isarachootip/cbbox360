@@ -2,9 +2,11 @@ import { query } from '../../db.js';
 import { getThaiTime } from '../utils/formatters.js';
 import { fetchLineProfile, sendLineReply, sendLinePush } from '../services/lineService.js';
 import { matchBotReply } from '../services/botEngineService.js';
+import { getCurrentTenantId } from '../../core/server/tenancy/tenantContext.js';
 
 export const handleLineWebhook = async (req, res) => {
   const channelId = req.params.channelId || '2011580063';
+  const tenantId = getCurrentTenantId();
   const events = req.body?.events || [];
 
   console.log(`[LINE Webhook] Received ${events.length} event(s) for channel: ${channelId}`);
@@ -23,10 +25,10 @@ export const handleLineWebhook = async (req, res) => {
       const customerName = profile?.displayName || 'ลูกค้า LINE (ใหม่)';
       const customerAvatar = profile?.pictureUrl || null;
 
-      // Find existing conversation
+      // Find existing conversation scoped to current tenant
       const existResult = await query(
-        `SELECT * FROM conversations WHERE line_user_id = $1 OR customer_id = $1 LIMIT 1`,
-        [userId]
+        `SELECT * FROM conversations WHERE tenant_id = $1 AND (line_user_id = $2 OR customer_id = $2) LIMIT 1`,
+        [tenantId, userId]
       );
 
       const newMsgId = `m-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -39,8 +41,8 @@ export const handleLineWebhook = async (req, res) => {
 
         // Insert new message
         await query(
-          `INSERT INTO messages (id, conversation_id, sender, text, time) VALUES ($1,$2,'customer',$3,$4)`,
-          [newMsgId, conv.id, text, timeStr]
+          `INSERT INTO messages (tenant_id, id, conversation_id, sender, text, time) VALUES ($1,$2,$3,'customer',$4,$5)`,
+          [tenantId, newMsgId, conv.id, text, timeStr]
         );
 
         // Update conversation with last_reply_token
@@ -55,8 +57,8 @@ export const handleLineWebhook = async (req, res) => {
             last_reply_token = $5,
             last_reply_token_time = NOW(),
             updated_at = NOW()
-           WHERE id = $6`,
-          [text, timeStr, profile?.displayName || null, profile?.pictureUrl || null, evt.replyToken || null, conv.id]
+           WHERE tenant_id = $6 AND id = $7`,
+          [text, timeStr, profile?.displayName || null, profile?.pictureUrl || null, evt.replyToken || null, tenantId, conv.id]
         );
       } else {
         // New conversation
@@ -65,14 +67,14 @@ export const handleLineWebhook = async (req, res) => {
         const custId = userId || `C-LINE-${Date.now()}`;
 
         await query(
-          `INSERT INTO conversations (id, customer_id, customer_name, customer_avatar, customer_tier, channel, channel_account, time, last_message_preview, label, unread_count, status, assigned_to, team, tab_group, line_user_id, last_reply_token, last_reply_token_time)
-           VALUES ($1,$2,$3,$4,'MEMBER','LINE','cb360 Official',$5,$6,'LINE Live',1,'Open','วิภา ส.','Customer Care','Mine',$7,$8,NOW())`,
-          [convId, custId, customerName, customerAvatar, timeStr, text, userId, evt.replyToken || null]
+          `INSERT INTO conversations (tenant_id, id, customer_id, customer_name, customer_avatar, customer_tier, channel, channel_account, time, last_message_preview, label, unread_count, status, assigned_to, team, tab_group, line_user_id, last_reply_token, last_reply_token_time)
+           VALUES ($1,$2,$3,$4,$5,'MEMBER','LINE','cb360 Official',$6,$7,'LINE Live',1,'Open','วิภา ส.','Customer Care','Mine',$8,$9,NOW())`,
+          [tenantId, convId, custId, customerName, customerAvatar, timeStr, text, userId, evt.replyToken || null]
         );
 
         await query(
-          `INSERT INTO messages (id, conversation_id, sender, text, time) VALUES ($1,$2,'customer',$3,$4)`,
-          [newMsgId, convId, text, timeStr]
+          `INSERT INTO messages (tenant_id, id, conversation_id, sender, text, time) VALUES ($1,$2,$3,'customer',$4,$5)`,
+          [tenantId, newMsgId, convId, text, timeStr]
         );
       }
 

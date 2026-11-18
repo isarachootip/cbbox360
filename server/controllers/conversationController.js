@@ -1,41 +1,49 @@
 import { query } from '../../db.js';
-import { getThaiTime, rowToConversation, rowToMessage } from '../utils/formatters.js';
+import { getThaiTime } from '../utils/formatters.js';
 import { sendLinePush, sendLineReply } from '../services/lineService.js';
+import { getCurrentTenantId } from '../../core/server/tenancy/tenantContext.js';
+import { conversationRepository, createInMemoryConversationStore } from '../repositories/conversationRepository.js';
+import { applyTemplateSeedContacts } from '../../core/server/template-engine/templateSeedLoader.js';
 
-export const getConversations = async (req, res) => {
-  try {
-    const convResult = await query(
-      `SELECT * FROM conversations ORDER BY updated_at DESC`
-    );
-    const msgResult = await query(`SELECT * FROM messages ORDER BY created_at ASC`);
+export { createInMemoryConversationStore };
 
-    const msgMap = {};
-    for (const msg of msgResult.rows) {
-      if (!msgMap[msg.conversation_id]) msgMap[msg.conversation_id] = [];
-      msgMap[msg.conversation_id].push(rowToMessage(msg));
+export const createConversationHandlers = ({ store = conversationRepository } = {}) => ({
+  getConversations: async (req, res) => {
+    try {
+      const tenantId = getCurrentTenantId();
+      let data = await store.listByTenant(tenantId);
+      if (data.length === 0 && req?.tenant?.templateId && tenantId !== 'default') {
+        await applyTemplateSeedContacts({
+          tenantId,
+          templateId: req.tenant.templateId,
+          convStore: store,
+        });
+        data = await store.listByTenant(tenantId);
+      }
+      return res.status(200).json({ status: 'success', data, count: data.length });
+    } catch (err) {
+      console.error('[GET /api/conversations Error]:', err.message);
+      return res.status(500).json({ error: 'Database error', detail: err.message });
     }
+  },
+});
 
-    const data = convResult.rows.map((row) =>
-      rowToConversation(row, msgMap[row.id] || [])
-    );
-
-    return res.status(200).json({ status: 'success', data, count: data.length });
-  } catch (err) {
-    console.error('[GET /api/conversations Error]:', err.message);
-    return res.status(500).json({ error: 'Database error', detail: err.message });
-  }
-};
+export const getConversations = createConversationHandlers().getConversations;
 
 export const sendMessage = async (req, res) => {
   const { id } = req.params;
   const { text, isPrivate, authorName } = req.body;
+  const tenantId = getCurrentTenantId();
 
   if (!text?.trim()) {
     return res.status(400).json({ error: 'Message text is required' });
   }
 
   try {
-    const convResult = await query(`SELECT * FROM conversations WHERE id = $1`, [id]);
+    const convResult = await query(
+      `SELECT * FROM conversations WHERE tenant_id = $1 AND id = $2`,
+      [tenantId, id]
+    );
     if (convResult.rows.length === 0) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
@@ -46,21 +54,16 @@ export const sendMessage = async (req, res) => {
     const sender = isPrivate ? 'note' : 'agent';
     const author = authorName || 'วิภา ส.';
 
-    // Push / Reply to LINE if real user
     let lineDelivery = { success: true };
     let deliveryStatus = 'delivered';
     let failureReason = null;
 
     if (!isPrivate && conv.channel === 'LINE') {
       if (!conv.line_user_id) {
-        lineDelivery = {
-          success: false,
-          error: 'ห้องแชทนี้ยังไม่ได้ระบุ LINE User ID (ไม่สามารถส่งข้อความเข้า LINE ได้)',
-        };
-        deliveryStatus = 'failed';
         failureReason = 'ห้องแชทนี้ยังไม่ได้ระบุ LINE User ID (ไม่สามารถส่งข้อความเข้า LINE ได้)';
+        lineDelivery = { success: false, error: failureReason };
+        deliveryStatus = 'failed';
       } else {
-        // Priority 1: Check if there is a fresh replyToken within 50 seconds (Free & Instant)
         let replySuccess = false;
         const nowMs = Date.now();
         const tokenTime = conv.last_reply_token_time ? new Date(conv.last_reply_token_time).getTime() : 0;
@@ -70,12 +73,10 @@ export const sendMessage = async (req, res) => {
           replySuccess = await sendLineReply(conv.last_reply_token, text.trim());
           if (replySuccess) {
             lineDelivery = { success: true, method: 'reply' };
-            deliveryStatus = 'delivered';
-            await query(`UPDATE conversations SET last_reply_token = NULL WHERE id = $1`, [id]);
+            await query(`UPDATE conversations SET last_reply_token = NULL WHERE tenant_id = $1 AND id = $2`, [tenantId, id]);
           }
         }
 
-        // Priority 2: Fallback to sendLinePush if reply token was not used or failed
         if (!replySuccess) {
           lineDelivery = await sendLinePush(conv.line_user_id, text.trim());
           if (!lineDelivery || !lineDelivery.success) {
@@ -87,33 +88,30 @@ export const sendMessage = async (req, res) => {
     }
 
     await query(
-      `INSERT INTO messages (id, conversation_id, sender, author_name, text, time, is_private_note, delivery_status, failure_reason)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-      [newMsgId, id, sender, author, text.trim(), timeStr, !!isPrivate, deliveryStatus, failureReason]
+      `INSERT INTO messages (tenant_id, id, conversation_id, sender, author_name, text, time, is_private_note, delivery_status, failure_reason)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      [tenantId, newMsgId, id, sender, author, text.trim(), timeStr, !!isPrivate, deliveryStatus, failureReason]
     );
 
     if (!isPrivate) {
-      // Auto-pause bot when agent takes over and sends message
       await query(
-        `UPDATE conversations SET last_message_preview=$1, time=$2, is_bot_active=FALSE, updated_at=NOW() WHERE id=$3`,
-        [text.trim(), timeStr, id]
+        `UPDATE conversations SET last_message_preview=$1, time=$2, is_bot_active=FALSE, updated_at=NOW() WHERE tenant_id=$3 AND id=$4`,
+        [text.trim(), timeStr, tenantId, id]
       );
     }
 
-    const newMsg = {
-      id: newMsgId,
-      sender,
-      authorName: author,
-      text: text.trim(),
-      time: timeStr,
-      isPrivateNote: !!isPrivate,
-      deliveryStatus,
-      failureReason,
-    };
-
     return res.status(200).json({
       status: 'success',
-      message: newMsg,
+      message: {
+        id: newMsgId,
+        sender,
+        authorName: author,
+        text: text.trim(),
+        time: timeStr,
+        isPrivateNote: !!isPrivate,
+        deliveryStatus,
+        failureReason,
+      },
       lineDelivery,
       isBotActive: false,
     });
@@ -126,6 +124,7 @@ export const sendMessage = async (req, res) => {
 export const toggleBotStatus = async (req, res) => {
   const { id } = req.params;
   const { isBotActive } = req.body;
+  const tenantId = getCurrentTenantId();
 
   if (typeof isBotActive !== 'boolean') {
     return res.status(400).json({ error: 'isBotActive boolean is required' });
@@ -133,13 +132,12 @@ export const toggleBotStatus = async (req, res) => {
 
   try {
     const result = await query(
-      `UPDATE conversations SET is_bot_active = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
-      [isBotActive, id]
+      `UPDATE conversations SET is_bot_active = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3 RETURNING *`,
+      [isBotActive, tenantId, id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
-
     return res.status(200).json({
       status: 'success',
       isBotActive: result.rows[0].is_bot_active,
@@ -154,6 +152,7 @@ export const toggleBotStatus = async (req, res) => {
 export const updateLineUserId = async (req, res) => {
   const { id } = req.params;
   const { lineUserId } = req.body;
+  const tenantId = getCurrentTenantId();
 
   if (!lineUserId || !lineUserId.trim()) {
     return res.status(400).json({ error: 'lineUserId string is required' });
@@ -161,13 +160,12 @@ export const updateLineUserId = async (req, res) => {
 
   try {
     const result = await query(
-      `UPDATE conversations SET line_user_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
-      [lineUserId.trim(), id]
+      `UPDATE conversations SET line_user_id = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3 RETURNING *`,
+      [lineUserId.trim(), tenantId, id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
-
     return res.status(200).json({
       status: 'success',
       lineUserId: result.rows[0].line_user_id,

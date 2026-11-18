@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { customerRepository } from '../repositories/customerRepository.js';
 import { writeAuditLog } from '../services/auditService.js';
+import { customFieldService as defaultCustomFields } from '../../core/server/custom-fields/customFieldService.js';
+import { applyTemplateSeedContacts } from '../../core/server/template-engine/templateSeedLoader.js';
 
 const contactPersonSchema = z.object({
   id: z.string(),
@@ -101,10 +103,19 @@ export const serverCustomerSchema = z.object({
   }),
 });
 
-export const createCustomerController = ({ repo, audit }) => ({
-  async listCustomers(_req, res) {
+export const createCustomerController = ({ repo, audit, customFields = defaultCustomFields }) => ({
+  async listCustomers(req, res) {
     try {
-      const rows = await repo.listAll();
+      let rows = await repo.listAll();
+      if (rows.length === 0 && req?.tenant?.templateId && req.tenant.id !== 'default') {
+        await applyTemplateSeedContacts({
+          tenantId: req.tenant.id,
+          templateId: req.tenant.templateId,
+          customerRepo: repo,
+          customFields,
+        });
+        rows = await repo.listAll();
+      }
       return res.status(200).json({ success: true, customers: rows });
     } catch (err) {
       console.error('[Customer List Error]:', err.message);

@@ -115,7 +115,7 @@ export const App: React.FC = () => {
                         <Route path="settings/connectors" element={<ConnectorsPage />} />
 
                         {/* Catch all */}
-                        <Route path="*" element={<Navigate to="/customers/C00123" replace />} />
+                        <Route path="*" element={<Navigate to="/customers" replace />} />
                       </Route>
                         </Routes>
                       </TypographyProvider>

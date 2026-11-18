@@ -16,6 +16,8 @@ import { permissionService as defaultPermissions } from '../rbac/permissionServi
 import { labelService as defaultLabels } from '../labels/labelService.js';
 import { customFieldService as defaultCustomFields } from '../custom-fields/customFieldService.js';
 import { caseConfigService as defaultCaseConfigs } from '../cases/caseConfigService.js';
+import { customerRepository as defaultCustomerRepo } from '../../../server/repositories/customerRepository.js';
+import { conversationRepository as defaultConvStore } from '../../../server/repositories/conversationRepository.js';
 
 const buildEntitlementMapFromTemplate = (ent = {}) => {
   const out = {};
@@ -33,6 +35,8 @@ export const createTemplateEngine = ({
   labels = defaultLabels,
   customFields = defaultCustomFields,
   caseConfigs = defaultCaseConfigs,
+  customerRepo = defaultCustomerRepo,
+  convStore = defaultConvStore,
 } = {}) => {
   const listAvailableTemplates = () => {
     if (!fs.existsSync(templatesDir)) return [];
@@ -118,6 +122,8 @@ export const createTemplateEngine = ({
       tenantId,
       templateId: tpl.metadata.id,
       customFields,
+      customerRepo,
+      convStore,
       templatesDir,
     });
 

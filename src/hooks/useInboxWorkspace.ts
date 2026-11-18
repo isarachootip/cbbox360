@@ -12,6 +12,8 @@ import { useIndustryProfile } from './useIndustryProfile';
 import { templateToIndustryKind } from '../domain/industry/industryVariables';
 import { buildInboxCustomerVariables } from '../domain/templates/variableReplacer';
 import { updateAiUsageLog } from '../services/aiAssistantApi';
+import { EMPTY_CONVERSATION } from '../domain/inbox/conversationStateOps';
+import { EMPTY_TENANT_CONTACT } from '../domain/customer/customerSubEntityOps';
 
 const createInitialTaskDraft = (): TaskComposerDraft => ({
   title: '',
@@ -53,8 +55,12 @@ export function useInboxWorkspace() {
   const [activeAiSelection, setActiveAiSelection] = useState<{ logId?: string; originalText: string } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const selectedConv = conversations.find((c) => c.id === selectedConvId) || conversations[0];
-  const currentCustomer = customers.find((c) => c.id === selectedConv.customerId) || customers[0];
+  const selectedConv =
+    conversations.find((c) => c.id === selectedConvId) || conversations[0] || EMPTY_CONVERSATION;
+  const currentCustomer =
+    customers.find((c) => c.id === selectedConv.customerId) ||
+    customers[0] ||
+    EMPTY_TENANT_CONTACT;
   const { state: templateState } = useBusinessTemplateState();
   const industry = useIndustryProfile(
     currentCustomer.id,
