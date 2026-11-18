@@ -16,7 +16,7 @@ export const Sidebar: React.FC = () => {
   const { selectedCustomerId } = useCustomer();
   const { currentUser } = useAuth();
   const { getMenusByRole } = useMenu();
-  const { branding, templateId, activeOverrideSlug } = useTenantRuntime();
+  const { branding, templateId, activeOverrideSlug, isControlPlane } = useTenantRuntime();
   const {
     isMobileSidebarOpen,
     closeMobileSidebar,
@@ -109,9 +109,9 @@ export const Sidebar: React.FC = () => {
             </button>
           </div>
 
-          {/* Online Multi-Tenant Workspace Switcher (sysadmin) + Legacy Demo Switcher */}
-          <TenantWorkspaceSwitcher isCollapsed={isSidebarCollapsed} />
-          {!templateId && !activeOverrideSlug && (
+          {/* Platform Control Plane Switcher ONLY on base provider domain (hidden 100% on customer subdomains) */}
+          {isControlPlane && <TenantWorkspaceSwitcher isCollapsed={isSidebarCollapsed} />}
+          {isControlPlane && !templateId && !activeOverrideSlug && (
             <DemoBusinessSwitcher isCollapsed={isSidebarCollapsed} />
           )}
 

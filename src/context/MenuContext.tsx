@@ -34,7 +34,7 @@ const MENUS_STORAGE_KEY = 'cb360_menus_config';
 
 export const MenuProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { state: templateState, setMenuOverride } = useBusinessTemplateState();
-  const { isLoaded, isEntitled, templateId } = useTenantRuntime();
+  const { isLoaded, isEntitled, templateId, isControlPlane } = useTenantRuntime();
   const [menus, setMenus] = useState<MenuItemConfig[]>(() => {
     try {
       const saved = localStorage.getItem(MENUS_STORAGE_KEY);
@@ -131,8 +131,12 @@ export const MenuProvider: React.FC<{ children: React.ReactNode }> = ({ children
       presets: businessTemplates,
       overrides: templateState.menuOverrides,
     });
-    if (!isLoaded) return base;
-    return base.filter((m) => (m.id === 'menu-credit' ? isEntitled('module:credit-sales') : true));
+    if (!isLoaded) return base.filter((m) => m.id !== 'menu-tenants');
+    return base.filter((m) => {
+      if (m.id === 'menu-tenants') return isControlPlane;
+      if (m.id === 'menu-credit') return isEntitled('module:credit-sales');
+      return true;
+    });
   };
 
   const hasRoleAccess = (path: string, role?: UserRole): boolean => {

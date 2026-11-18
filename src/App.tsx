@@ -11,7 +11,7 @@ import { BotProvider } from './context/BotContext';
 import { LayoutProvider } from './context/LayoutContext';
 import { TypographyProvider } from './context/TypographyContext';
 import { BusinessTemplateProvider } from './context/BusinessTemplateContext';
-import { TenantRuntimeProvider } from '../core/client/providers/TenantRuntimeContext';
+import { TenantRuntimeProvider, useTenantRuntime } from '../core/client/providers/TenantRuntimeContext';
 import { EntitledRoute } from '../core/client/registry/EntitledRoute';
 import { registerBuiltInClientModules } from '../modules/clientBootstrap';
 
@@ -59,6 +59,12 @@ const ProtectedLayout: React.FC = () => {
   return <AppLayout />;
 };
 
+const ControlPlaneRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+  const { isLoaded, isControlPlane } = useTenantRuntime();
+  if (isLoaded && !isControlPlane) return <Navigate to="/customers" replace />;
+  return children;
+};
+
 export const App: React.FC = () => {
   return (
     <ToastProvider>
@@ -98,7 +104,7 @@ export const App: React.FC = () => {
                             </EntitledRoute>
                           }
                         />
-                        <Route path="tenants" element={<TenantManagementPage />} />
+                        <Route path="tenants" element={<ControlPlaneRoute><TenantManagementPage /></ControlPlaneRoute>} />
                         <Route path="users" element={<UserManagementPage />} />
                         <Route path="menus" element={<MenuManagementPage />} />
                         
@@ -109,7 +115,7 @@ export const App: React.FC = () => {
                         <Route path="settings" element={<SettingsPage />} />
                         <Route path="settings/bot" element={<SettingsPage />} />
                         <Route path="settings/canned-responses" element={<CannedResponsesPage />} />
-                        <Route path="settings/tenants" element={<TenantManagementPage />} />
+                        <Route path="settings/tenants" element={<ControlPlaneRoute><TenantManagementPage /></ControlPlaneRoute>} />
                         <Route path="settings/users" element={<UserManagementPage />} />
                         <Route path="settings/menus" element={<MenuManagementPage />} />
                         <Route path="settings/connectors" element={<ConnectorsPage />} />

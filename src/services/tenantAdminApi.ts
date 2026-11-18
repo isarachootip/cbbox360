@@ -25,6 +25,8 @@ export interface CreateTenantPayload {
   name: string;
   template: string;
   domain?: string;
+  adminUsername?: string;
+  adminPassword?: string;
 }
 
 export const suggestSubdomainBase = (): string => {

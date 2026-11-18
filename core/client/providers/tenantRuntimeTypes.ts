@@ -55,6 +55,7 @@ export interface TenantRuntimeState {
   tenantSlug: string;
   tenantName: string;
   templateId: string | null;
+  isControlPlane: boolean;
   branding: TenantBranding;
   entitlements: Record<string, boolean>;
   labels: Record<string, string>;

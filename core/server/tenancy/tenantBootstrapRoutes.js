@@ -1,8 +1,5 @@
 /**
  * tenantBootstrapRoutes.js — Runtime White-Label Branding & Authenticated Tenant Bootstrap APIs.
- * - GET /api/public/branding: Unauthenticated white-label config resolved by Host / Subdomain.
- * - GET /api/tenant/bootstrap: Authenticated bundle of entitlements, labels, permissions, and field definitions.
- * - PATCH /api/tenant/settings: Tenant admin white-label / config customization (marks customized_paths).
  */
 import { Router } from 'express';
 import { z } from 'zod';
@@ -37,8 +34,15 @@ export const createTenantBootstrapRouter = ({
   labels = labelService,
   customFields = customFieldService,
   caseConfigs = caseConfigService,
+  deploymentMode = process.env.CB360_DEPLOYMENT_MODE || 'multi_tenant',
 }) => {
   const router = Router();
+
+  const resolveControlPlaneFlag = (req) => {
+    const mode = req.deploymentMode || deploymentMode;
+    if (mode === 'single_tenant') return false;
+    return req.isControlPlaneHost !== undefined ? Boolean(req.isControlPlaneHost) : true;
+  };
 
   router.get('/public/branding', async (req, res) => {
     const tenantId = getCurrentTenantId();
@@ -50,6 +54,8 @@ export const createTenantBootstrapRouter = ({
       tenantSlug: tenant?.slug || tenantId,
       tenantName: tenant?.name || 'CusBox360',
       templateId: tenant?.templateId || null,
+      isControlPlane: resolveControlPlaneFlag(req),
+      deploymentMode: req.deploymentMode || deploymentMode,
       branding: settings.branding,
     });
   });
@@ -69,6 +75,8 @@ export const createTenantBootstrapRouter = ({
 
     return res.status(200).json({
       success: true,
+      isControlPlane: resolveControlPlaneFlag(req),
+      deploymentMode: req.deploymentMode || deploymentMode,
       tenant: {
         id: tenantId,
         slug: tenant?.slug || tenantId,

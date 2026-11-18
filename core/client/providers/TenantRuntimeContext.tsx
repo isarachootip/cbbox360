@@ -23,6 +23,7 @@ const DEFAULT_RUNTIME: TenantRuntimeState = {
   tenantSlug: 'default',
   tenantName: 'CusBox360',
   templateId: null,
+  isControlPlane: false,
   branding: {
     appName: 'CusBox360',
     logoUrl: '/logo-full-transparent.png',
@@ -78,6 +79,10 @@ export const TenantRuntimeProvider: React.FC<{ children: React.ReactNode }> = ({
       const publicRes = await fetch('/api/public/branding');
       if (publicRes.ok) {
         const pub = await publicRes.json();
+        if (pub?.isControlPlane === false) {
+          setTenantSlugOverride(null);
+          setActiveOverrideSlug(null);
+        }
         if (pub?.branding) {
           applyCssBrandTokens(pub.branding);
           setRuntime((prev) => ({
@@ -86,6 +91,7 @@ export const TenantRuntimeProvider: React.FC<{ children: React.ReactNode }> = ({
             tenantSlug: pub.tenantSlug || prev.tenantSlug,
             tenantName: pub.tenantName || prev.tenantName,
             templateId: pub.templateId ?? prev.templateId,
+            isControlPlane: Boolean(pub.isControlPlane),
             branding: { ...prev.branding, ...pub.branding },
           }));
         }
@@ -95,6 +101,10 @@ export const TenantRuntimeProvider: React.FC<{ children: React.ReactNode }> = ({
         const bootRes = await fetch('/api/tenant/bootstrap', { credentials: 'include' });
         if (bootRes.ok) {
           const boot = await bootRes.json();
+          if (boot?.isControlPlane === false) {
+            setTenantSlugOverride(null);
+            setActiveOverrideSlug(null);
+          }
           if (boot?.branding) applyCssBrandTokens(boot.branding);
           setRuntime((prev) => ({
             ...prev,
@@ -102,6 +112,7 @@ export const TenantRuntimeProvider: React.FC<{ children: React.ReactNode }> = ({
             tenantSlug: boot.tenant?.slug || prev.tenantSlug,
             tenantName: boot.tenant?.name || prev.tenantName,
             templateId: boot.tenant?.templateId ?? prev.templateId,
+            isControlPlane: Boolean(boot.isControlPlane),
             branding: boot.branding ? { ...prev.branding, ...boot.branding } : prev.branding,
             entitlements: boot.entitlements || {},
             labels: boot.labels || {},
