@@ -1,0 +1,16 @@
+contacts:
+  - id: INS001
+    name: "วิชัย มั่นคง"
+    phone: "089-456-7890"
+    customFields:
+      policy_number: "POL-2026-8801"
+      policy_type: "HEALTH_OPD_IPD"
+      policy_expiry_date: "2027-06-30"
+      assigned_agent: "วรัญญา ตัวแทนประกันชีวิต"
+policies:
+  - contactId: INS001
+    policyNumber: "POL-2026-8801"
+    policyType: "HEALTH_OPD_IPD"
+    expiryDate: "2027-06-30"
+    agentName: "วรัญญา ตัวแทนประกันชีวิต"
+    sumInsured: 1500000

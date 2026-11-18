@@ -44,6 +44,12 @@ export interface TenantFieldDefinition {
   };
 }
 
+export interface TenantCaseCategory {
+  slug: string;
+  name: string;
+  defaultQueue?: string;
+}
+
 export interface TenantRuntimeState {
   tenantId: string;
   tenantSlug: string;
@@ -53,6 +59,7 @@ export interface TenantRuntimeState {
   labels: Record<string, string>;
   permissions: string[];
   contactFieldDefs: TenantFieldDefinition[];
+  caseCategories: TenantCaseCategory[];
   isLoaded: boolean;
 }
 
@@ -75,6 +82,7 @@ const DEFAULT_RUNTIME: TenantRuntimeState = {
   labels: {},
   permissions: DEFAULT_ROLE_PERMISSIONS.sysadmin,
   contactFieldDefs: [],
+  caseCategories: [],
   isLoaded: false,
 };
 
@@ -152,6 +160,7 @@ export const TenantRuntimeProvider: React.FC<{ children: React.ReactNode }> = ({
             labels: boot.labels || prev.labels,
             permissions: boot.permissions || DEFAULT_ROLE_PERMISSIONS[currentUser.role] || [],
             contactFieldDefs: boot.contactFieldDefs || [],
+            caseCategories: boot.caseCategories || [],
             isLoaded: true,
           }));
           return;

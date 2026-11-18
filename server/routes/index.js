@@ -16,6 +16,7 @@ import { requireAuth, requireRole } from '../services/authContainer.js';
 import { bindActor } from '../middlewares/bindActor.js';
 import { createTenantBootstrapRouter } from '../../core/server/tenancy/tenantBootstrapRoutes.js';
 import { createCustomFieldRouter } from '../../core/server/custom-fields/customFieldRoutes.js';
+import { createTemplateAdminRouter } from '../../core/server/template-engine/templateAdminRoutes.js';
 import { createServerModuleRegistry } from '../../core/server/registry/serverModuleRegistry.js';
 import { registerBuiltInServerModules } from '../../modules/serverBootstrap.js';
 
@@ -39,8 +40,9 @@ router.use('/', createTenantBootstrapRouter({ requireAuth }));
 router.use('/auth', authRoutes);
 router.use('/webhooks', webhookRoutes);
 
-// Core dynamic custom fields & pluggable module registry routes
+// Core dynamic custom fields, template admin engine & pluggable module registry routes
 router.use('/', createCustomFieldRouter({ requireAuth }));
+router.use('/', createTemplateAdminRouter({ requireAuth, requireRole }));
 router.use('/', serverModuleRegistry.buildApiRouter());
 
 // Everything below requires a logged-in session

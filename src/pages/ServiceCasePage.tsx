@@ -9,11 +9,13 @@ import { NewTicketModal, NewTicketPayload } from '../components/service/NewTicke
 import { useCustomer } from '../context/CustomerContext';
 import { useToast } from '../context/ToastContext';
 import { useLayout } from '../context/LayoutContext';
+import { useTenantRuntime } from '../../core/client/providers/TenantRuntimeContext';
 
 export const ServiceCasePage: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { isServiceRightPanelOpen, toggleServiceRightPanel } = useLayout();
+  const { caseCategories } = useTenantRuntime();
   const {
     tickets,
     customers,
@@ -94,13 +96,22 @@ export const ServiceCasePage: React.FC = () => {
               className="text-xs font-semibold px-3 py-1.5 bg-bg-subtle border border-border rounded-lg text-text-primary focus:outline-none focus:border-brand cursor-pointer"
             >
               <option value="ทั้งหมด">หมวด: ทั้งหมด</option>
-              <option value="Complaint">Complaint (ร้องเรียน)</option>
-              <option value="Inquiry">Inquiry (สอบถาม)</option>
-              <option value="Claim">Claim (เคลม)</option>
-              <option value="Request">Request (คำร้องขอ)</option>
-              <option value="Billing">Billing (บิล/ใบเสร็จ)</option>
-              <option value="Credit">Credit (สินเชื่อ)</option>
-              <option value="DSR">DSR (PDPA)</option>
+              {(caseCategories.length > 0
+                ? caseCategories.map((c) => ({ value: c.name, label: c.name }))
+                : [
+                    { value: 'Complaint', label: 'Complaint (ร้องเรียน)' },
+                    { value: 'Inquiry', label: 'Inquiry (สอบถาม)' },
+                    { value: 'Claim', label: 'Claim (เคลม)' },
+                    { value: 'Request', label: 'Request (คำร้องขอ)' },
+                    { value: 'Billing', label: 'Billing (บิล/ใบเสร็จ)' },
+                    { value: 'Credit', label: 'Credit (สินเชื่อ)' },
+                    { value: 'DSR', label: 'DSR (PDPA)' },
+                  ]
+              ).map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
         }

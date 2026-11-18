@@ -1,0 +1,173 @@
+apiVersion: cb360.io/v1
+kind: IndustryTemplate
+metadata:
+  id: insurance
+  version: 1.0.0
+  industry: insurance
+  name: Insurance Policy & Claims Contact Center
+  thaiTitle: ธุรกิจประกันภัย ประกันชีวิต และบริหารสินไหมทดแทน
+  description: เทมเพลตมาตรฐานสำหรับบริษัทประกันและโบรกเกอร์ รองรับเลขกรมธรรม์ วันหมดอายุ ตัวแทนดูแล รับแจ้งเคลม (FNOL) และการต่ออายุ
+
+entitlements:
+  modules:
+    - policy
+    - claim
+  connectors:
+    - insurance-core
+  flags:
+    - ai_copilot
+    - voice_3cx
+    - pdpa_consent
+
+brandingDefaults:
+  primaryColor: "#1D4ED8"
+  accentColor: "#1E40AF"
+
+labels:
+  th:
+    contact.singular: "ผู้เอาประกัน"
+    contact.plural: "ทะเบียนผู้เอาประกัน"
+    contact.create_button: "เพิ่มผู้เอาประกันใหม่"
+    contact.code_label: "เลขที่กรมธรรม์หลัก"
+    case.singular: "เคสบริการกรมธรรม์"
+    case.plural: "รายการเคสสินไหมและบริการ"
+    tab.policies: "กรมธรรม์"
+    tab.claims: "ประวัติเคลมสินไหม"
+
+roles:
+  - key: claim_officer
+    name: "เจ้าหน้าที่พิจารณาสินไหมทดแทน (Claim Adjuster)"
+    permissions:
+      - "contact:read"
+      - "contact.pii:read"
+      - "contact.pdpa_s26:read"
+      - "policy:read"
+      - "claim:read"
+      - "claim:write"
+      - "claim:approve"
+      - "case:read"
+      - "case:write"
+  - key: underwriter
+    name: "เจ้าหน้าที่พิจารณารับประกันภัย (Underwriter)"
+    permissions:
+      - "contact:read"
+      - "contact:write"
+      - "contact.pii:read"
+      - "contact.pdpa_s26:read"
+      - "contact.pdpa_s26:write"
+      - "policy:read"
+      - "policy:write"
+      - "case:read"
+  - key: insurance_agent
+    name: "เจ้าหน้าที่บริการผู้เอาประกัน / ตัวแทน"
+    permissions:
+      - "contact:read"
+      - "contact:write"
+      - "policy:read"
+      - "claim:read"
+      - "claim:write"
+      - "case:read"
+      - "case:write"
+      - "inbox:read"
+      - "inbox:write"
+
+customFields:
+  contact:
+    - key: policy_number
+      label: "เลขกรมธรรม์"
+      type: text
+      isIndexed: true
+      validation:
+        required: true
+        unique: true
+        regex: "^[A-Za-z0-9-]{4,30}$"
+        regexError: "เลขกรมธรรม์ต้องเป็นตัวอักษรหรือตัวเลข 4-30 ตัว"
+      ui:
+        group: "ข้อมูลกรมธรรม์"
+        order: 1
+        showInList: true
+        variableKey: "policy_number"
+    - key: policy_type
+      label: "ประเภทกรมธรรม์"
+      type: select
+      isIndexed: true
+      options:
+        - value: "HEALTH_OPD_IPD"
+          label: "ประกันสุขภาพเหมาจ่าย (OPD/IPD)"
+        - value: "LIFE_SAVING"
+          label: "ประกันชีวิตและสะสมทรัพย์"
+        - value: "MOTOR_CLASS_1"
+          label: "ประกันภัยรถยนต์ชั้น 1"
+        - value: "PA"
+          label: "ประกันอุบัติเหตุส่วนบุคคล (PA)"
+      ui:
+        group: "ข้อมูลกรมธรรม์"
+        order: 2
+    - key: policy_expiry_date
+      label: "วันหมดอายุกรมธรรม์"
+      type: date
+      isIndexed: true
+      validation:
+        required: true
+      ui:
+        group: "ข้อมูลกรมธรรม์"
+        order: 3
+        variableKey: "policy_expiry"
+    - key: assigned_agent
+      label: "ตัวแทนผู้ดูแล"
+      type: text
+      isIndexed: true
+      ui:
+        group: "ช่องทางตัวแทน"
+        order: 4
+        variableKey: "agent_name"
+
+slaPolicies:
+  - slug: claim_fasttrack
+    name: "รับแจ้งเคลมด่วนและข้อร้องเรียน คปภ."
+    firstResponseMinutes: 15
+    resolutionMinutes: 180
+    escalationMinutesBeforeBreach: 20
+  - slug: insurance_standard
+    name: "บริการต่ออายุและแก้ไขข้อมูลสลักหลังกรมธรรม์"
+    firstResponseMinutes: 60
+    resolutionMinutes: 480
+    escalationMinutesBeforeBreach: 60
+
+caseCategories:
+  - slug: claim
+    name: "เคลม"
+    slaPolicySlug: claim_fasttrack
+    defaultQueue: "Claims FNOL Desk"
+    requiredFields: ["policy_number"]
+  - slug: renewal
+    name: "ต่ออายุ"
+    slaPolicySlug: insurance_standard
+    defaultQueue: "Policy Renewal Team"
+    requiredFields: ["policy_number"]
+  - slug: endorsement
+    name: "แก้ไขข้อมูล"
+    slaPolicySlug: insurance_standard
+    defaultQueue: "Policy Endorsement"
+  - slug: complaint
+    name: "ร้องเรียน"
+    slaPolicySlug: claim_fasttrack
+    defaultQueue: "Compliance & OIC Desk"
+
+workflows:
+  - id: wf_ins_claim_intake
+    name: "ส่งต่อทีมสินไหมอัตโนมัติเมื่อเปิดเคสเคลม"
+    trigger: "case.created"
+    conditions:
+      - field: "category_slug"
+        operator: "eq"
+        value: "claim"
+    actions:
+      - type: "assign_queue"
+        value: "Claims FNOL Desk"
+      - type: "set_priority"
+        value: "high"
+
+omnichannelPresets:
+  ivrGreeting: "สวัสดีค่ะ ศูนย์บริการผู้เอาประกันภัย กด 1 แจ้งอุบัติเหตุและเคลมสินไหม กด 2 ต่ออายุกรมธรรม์ กด 3 แก้ไขข้อมูลผู้รับผลประโยชน์"
+  agentCallScript: "สวัสดีค่ะ ขออนุญาตทราบเลขกรมธรรม์หรือหมายเลขบัตรประชาชนเพื่อตรวจสอบความคุ้มครองให้นะคะ"

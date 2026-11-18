@@ -1,0 +1,62 @@
+apiVersion: cb360.io/v1
+kind: IndustryTemplate
+metadata:
+  id: ecommerce
+  version: 1.0.0
+  industry: ecommerce
+  name: Omnichannel E-Commerce & Order Tracking
+  thaiTitle: ร้านค้าออนไลน์และติดตามคำสั่งซื้อครบวงจร
+  description: เทมเพลตสำหรับธุรกิจ E-Commerce เชื่อมต่อสถานะคำสั่งซื้อ เลขพัสดุ และการคืนสินค้าโดยไม่ต้องแก้ไข Core
+
+entitlements:
+  modules:
+    - order-tracking
+  connectors: []
+  flags:
+    - ai_copilot
+    - pdpa_consent
+
+brandingDefaults:
+  primaryColor: "#EA580C"
+  accentColor: "#C2410C"
+
+labels:
+  th:
+    contact.singular: "ผู้ซื้อ"
+    contact.plural: "รายชื่อผู้ซื้อ"
+    contact.create_button: "เพิ่มผู้ซื้อใหม่"
+    case.singular: "เคสคำสั่งซื้อ"
+
+customFields:
+  contact:
+    - key: marketplace_member_id
+      label: "รหัสสมาชิกช่องทางออนไลน์"
+      type: text
+      isIndexed: true
+      ui:
+        group: "ช่องทางร้านค้า"
+        order: 1
+
+slaPolicies:
+  - slug: ecom_fast
+    name: "ติดตามพัสดุและคืนสินค้า"
+    firstResponseMinutes: 15
+    resolutionMinutes: 240
+
+caseCategories:
+  - slug: shipping_status
+    name: "ติดตามสถานะจัดส่งพัสดุ"
+    slaPolicySlug: ecom_fast
+    defaultQueue: "Fulfillment Care"
+  - slug: return_refund
+    name: "ขอเปลี่ยน/คืนสินค้าและคืนเงิน"
+    slaPolicySlug: ecom_fast
+    defaultQueue: "Returns Team"
+  - slug: payment_issue
+    name: "แจ้งปัญหาชำระเงิน/สลิป"
+    slaPolicySlug: ecom_fast
+    defaultQueue: "Order Verification"
+  - slug: complaint
+    name: "ร้องเรียนร้านค้า"
+    slaPolicySlug: ecom_fast
+    defaultQueue: "Escalation"

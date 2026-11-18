@@ -1,0 +1,184 @@
+apiVersion: cb360.io/v1
+kind: IndustryTemplate
+metadata:
+  id: hospital
+  version: 1.0.0
+  industry: healthcare
+  name: Hospital & Healthcare Contact Center
+  thaiTitle: โรงพยาบาลและศูนย์การแพทย์ครบวงจร
+  description: เทมเพลตมาตรฐานสำหรับโรงพยาบาลและคลินิก รองรับ HN, ประวัติแพ้ยา (PDPA ม.26), สิทธิการรักษา, นัดหมายแพทย์ และการเชื่อมต่อ HIS
+
+entitlements:
+  modules:
+    - appointment
+  connectors:
+    - his-fhir
+  flags:
+    - ai_copilot
+    - voice_3cx
+    - pdpa_consent
+
+brandingDefaults:
+  primaryColor: "#059669"
+  accentColor: "#047857"
+
+labels:
+  th:
+    contact.singular: "ผู้ป่วย"
+    contact.plural: "ทะเบียนผู้ป่วย"
+    contact.create_button: "ลงทะเบียนผู้ป่วยใหม่"
+    contact.code_label: "เลขประจำตัวผู้ป่วย (HN)"
+    case.singular: "เคสบริการผู้ป่วย"
+    case.plural: "รายการเคสผู้ป่วย"
+    tab.appointments: "นัดหมายแพทย์"
+
+roles:
+  - key: doctor
+    name: "แพทย์ผู้รักษา (Doctor)"
+    permissions:
+      - "contact:read"
+      - "contact:write"
+      - "contact.pii:read"
+      - "contact.pdpa_s26:read"
+      - "contact.pdpa_s26:write"
+      - "appointment:read"
+      - "appointment:write"
+      - "case:read"
+      - "case:write"
+  - key: nurse
+    name: "พยาบาลคัดกรอง (Nurse)"
+    permissions:
+      - "contact:read"
+      - "contact.pii:read"
+      - "contact.pdpa_s26:read"
+      - "contact.allergy:write"
+      - "appointment:read"
+      - "appointment:write"
+      - "case:read"
+      - "case:write"
+  - key: admission_agent
+    name: "เจ้าหน้าที่นัดหมายและเวชระเบียน"
+    permissions:
+      - "contact:read"
+      - "contact:write"
+      - "appointment:read"
+      - "appointment:write"
+      - "case:read"
+      - "case:write"
+      - "inbox:read"
+      - "inbox:write"
+
+customFields:
+  contact:
+    - key: hn
+      label: "เลขประจำตัวผู้ป่วย (HN)"
+      type: text
+      isIndexed: true
+      validation:
+        required: true
+        unique: true
+        regex: "^[A-Za-z0-9-]{3,20}$"
+        regexError: "HN ต้องเป็นตัวอักษรหรือตัวเลข 3-20 ตัว"
+      ui:
+        group: "เวชระเบียน"
+        order: 1
+        showInList: true
+        variableKey: "hn_number"
+    - key: drug_allergies
+      label: "ประวัติการแพ้ยา"
+      type: tags
+      sensitivity: pdpa_s26
+      acl:
+        viewPerm: "contact.pdpa_s26:read"
+        editPerm: "contact.allergy:write"
+        redactMode: "flag_only"
+      ui:
+        group: "ความปลอดภัยทางคลินิก"
+        order: 2
+        alertBanner:
+          whenNonEmpty: true
+          severity: danger
+          prefix: "แพ้ยา:"
+          redactedMessage: "มีข้อมูลแพ้ยา (จำกัดสิทธิ์ตาม PDPA ม.26 โปรดติดต่อแพทย์/พยาบาล)"
+    - key: treatment_right
+      label: "สิทธิการรักษา"
+      type: select
+      isIndexed: true
+      options:
+        - value: "SELF_PAY"
+          label: "ชำระเงินเอง"
+        - value: "PRIVATE_INSURANCE"
+          label: "ประกันสุขภาพเอกชน (OPD/IPD)"
+        - value: "SSO"
+          label: "สิทธิประกันสังคม"
+        - value: "UCS"
+          label: "สิทธิหลักประกันสุขภาพแห่งชาติ (บัตรทอง)"
+      ui:
+        group: "สิทธิการรักษา"
+        order: 3
+    - key: preferred_department
+      label: "แผนก / คลินิกประจำ"
+      type: text
+      isIndexed: true
+      ui:
+        group: "การดูแลรักษา"
+        order: 4
+        variableKey: "department"
+    - key: preferred_doctor
+      label: "แพทย์ประจำตัว"
+      type: text
+      ui:
+        group: "การดูแลรักษา"
+        order: 5
+        variableKey: "doctor_name"
+
+slaPolicies:
+  - slug: medical_urgent
+    name: "เคสฉุกเฉินและข้อร้องเรียนผู้ป่วย"
+    firstResponseMinutes: 15
+    resolutionMinutes: 120
+    escalationMinutesBeforeBreach: 15
+  - slug: hospital_standard
+    name: "นัดหมายแพทย์ ผลตรวจ และการเงินทั่วไป"
+    firstResponseMinutes: 30
+    resolutionMinutes: 240
+    escalationMinutesBeforeBreach: 30
+
+caseCategories:
+  - slug: appointment
+    name: "นัดหมาย"
+    slaPolicySlug: hospital_standard
+    defaultQueue: "Appointment Center"
+    requiredFields: ["hn"]
+  - slug: lab_inquiry
+    name: "สอบถามผลตรวจ"
+    slaPolicySlug: hospital_standard
+    defaultQueue: "Nursing Triage"
+    requiredFields: ["hn"]
+  - slug: complaint
+    name: "ร้องเรียน"
+    slaPolicySlug: medical_urgent
+    defaultQueue: "Patient Relations"
+  - slug: billing
+    name: "การเงิน"
+    slaPolicySlug: hospital_standard
+    defaultQueue: "Medical Billing & Insurance"
+
+workflows:
+  - id: wf_hosp_complaint_urgent
+    name: "ยกระดับความสำคัญทันทีเมื่อผู้ป่วยเปิดเคสร้องเรียน"
+    trigger: "case.created"
+    conditions:
+      - field: "category_slug"
+        operator: "eq"
+        value: "complaint"
+    actions:
+      - type: "set_priority"
+        value: "urgent"
+      - type: "notify_role"
+        role: "supervisor"
+        message: "พบเคสร้องเรียนผู้ป่วยใหม่ ต้องตอบกลับภายใน 15 นาที"
+
+omnichannelPresets:
+  ivrGreeting: "สวัสดีค่ะ โรงพยาบาลยินดีให้บริการ กด 1 นัดหมายแพทย์ กด 2 สอบถามผลตรวจและสิทธิการรักษา กด 0 ติดต่อพยาบาลคัดกรอง"
+  agentCallScript: "สวัสดีค่ะ ขออนุญาตทวนชื่อ-นามสกุล และหมายเลข HN หรือวันเดือนปีเกิดเพื่อตรวจสอบเวชระเบียนนะคะ"

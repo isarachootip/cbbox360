@@ -1,0 +1,16 @@
+contacts:
+  - id: P00101
+    name: "สมชาย ใจดี"
+    phone: "081-892-5678"
+    customFields:
+      hn: "HN-6904812"
+      drug_allergies: ["Penicillin", "Ibuprofen"]
+      treatment_right: "PRIVATE_INSURANCE"
+      preferred_department: "ศูนย์อายุรกรรมหัวใจ"
+      preferred_doctor: "นพ. กิตติพงศ์ วงศ์เวช"
+appointments:
+  - contactId: P00101
+    hn: "HN-6904812"
+    department: "ศูนย์อายุรกรรมหัวใจ"
+    doctorName: "นพ. กิตติพงศ์ วงศ์เวช"
+    scheduledAt: "2026-12-01T09:30:00Z"

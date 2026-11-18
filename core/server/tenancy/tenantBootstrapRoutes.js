@@ -12,6 +12,7 @@ import { entitlementService } from '../entitlements/entitlementService.js';
 import { permissionService } from '../rbac/permissionService.js';
 import { labelService } from '../labels/labelService.js';
 import { customFieldService } from '../custom-fields/customFieldService.js';
+import { caseConfigService } from '../cases/caseConfigService.js';
 
 const brandingPatchSchema = z.object({
   branding: z
@@ -34,6 +35,7 @@ export const createTenantBootstrapRouter = ({
   permissions = permissionService,
   labels = labelService,
   customFields = customFieldService,
+  caseConfigs = caseConfigService,
 }) => {
   const router = Router();
 
@@ -53,13 +55,15 @@ export const createTenantBootstrapRouter = ({
   router.get('/tenant/bootstrap', requireAuth, async (req, res) => {
     const tenantId = getCurrentTenantId();
     const tenant = req.tenant || (await tenantRepo.findById(tenantId));
-    const [settings, entitlementMap, grantedPerms, labelMap, contactFieldDefs] = await Promise.all([
-      tenantRepo.getTenantSettings(tenantId),
-      entitlements.getEntitlementMap(tenantId),
-      permissions.getRolePermissions(tenantId, req.user?.role),
-      labels.getTenantLabels(tenantId, 'th'),
-      customFields.listFieldDefs(tenantId, 'contact'),
-    ]);
+    const [settings, entitlementMap, grantedPerms, labelMap, contactFieldDefs, caseCategories] =
+      await Promise.all([
+        tenantRepo.getTenantSettings(tenantId),
+        entitlements.getEntitlementMap(tenantId),
+        permissions.getRolePermissions(tenantId, req.user?.role),
+        labels.getTenantLabels(tenantId, 'th'),
+        customFields.listFieldDefs(tenantId, 'contact'),
+        caseConfigs.listCategories(tenantId),
+      ]);
 
     return res.status(200).json({
       success: true,
@@ -69,6 +73,7 @@ export const createTenantBootstrapRouter = ({
       permissions: grantedPerms,
       labels: labelMap,
       contactFieldDefs,
+      caseCategories,
     });
   });
 

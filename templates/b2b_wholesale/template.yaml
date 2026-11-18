@@ -1,0 +1,62 @@
+apiVersion: cb360.io/v1
+kind: IndustryTemplate
+metadata:
+  id: b2b_wholesale
+  version: 1.0.0
+  industry: wholesale
+  name: B2B Wholesale & Credit Control
+  thaiTitle: ธุรกิจค้าส่ง B2B และบริหารวงเงินสินเชื่อการค้า
+  description: เทมเพลตมาตรฐานสำหรับธุรกิจค้าส่งและโรงงานที่ใช้ระบบวงเงินเครดิตเทอมและ Aging ลูกหนี้
+
+entitlements:
+  modules:
+    - credit-sales
+  connectors: []
+  flags:
+    - ai_copilot
+    - voice_3cx
+    - pdpa_consent
+
+brandingDefaults:
+  primaryColor: "#1F6FD1"
+  accentColor: "#1558B0"
+
+labels:
+  th:
+    contact.singular: "ลูกค้า"
+    contact.plural: "รายชื่อลูกค้า"
+    contact.create_button: "ลูกค้าใหม่"
+    case.singular: "Ticket"
+
+customFields:
+  contact:
+    - key: credit_term_days
+      label: "เครดิตเทอม (วัน)"
+      type: number
+      ui:
+        group: "ข้อมูลการค้า"
+        order: 1
+
+slaPolicies:
+  - slug: b2b_standard
+    name: "บริการลูกค้าองค์กร B2B"
+    firstResponseMinutes: 60
+    resolutionMinutes: 480
+
+caseCategories:
+  - slug: inquiry
+    name: "สอบถามใบเสนอราคา/สินค้า"
+    slaPolicySlug: b2b_standard
+    defaultQueue: "B2B Sales Support"
+  - slug: credit
+    name: "ขออนุมัติวงเงินสินเชื่อ"
+    slaPolicySlug: b2b_standard
+    defaultQueue: "Credit Control"
+  - slug: billing
+    name: "ใบกำกับภาษีและวางบิล"
+    slaPolicySlug: b2b_standard
+    defaultQueue: "Accounting"
+  - slug: complaint
+    name: "ร้องเรียนบริการ"
+    slaPolicySlug: b2b_standard
+    defaultQueue: "Supervisor Desk"

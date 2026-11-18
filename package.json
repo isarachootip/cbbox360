@@ -8,6 +8,7 @@
     "build": "tsc && vite build",
     "start": "node server.js",
     "migrate": "node migrate.js",
+    "cb360": "node scripts/cb360.js",
     "preview": "vite preview",
     "test": "vitest run"
   },

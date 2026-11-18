@@ -22,6 +22,8 @@ COPY shared/ ./shared/
 COPY core/ ./core/
 COPY modules/ ./modules/
 COPY connectors/ ./connectors/
+COPY templates/ ./templates/
+COPY scripts/ ./scripts/
 
 ENV NODE_ENV=production
 ENV PORT=3000
