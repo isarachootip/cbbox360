@@ -1,62 +1,98 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Users, Award, DollarSign } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { CustomerFilters } from '../components/customer-list/CustomerFilters';
 import { CustomerTable } from '../components/customer-list/CustomerTable';
+import { CustomerKpiRow } from '../components/customer-list/CustomerKpiRow';
 import { NewCustomerModal } from '../components/customer-list/NewCustomerModal';
 import { useCustomer } from '../context/CustomerContext';
 import { useToast } from '../context/ToastContext';
 import { CreateCustomerInput } from '../types';
 import { matchesCustomerSearch } from '../domain/customer/customerSearch';
 import { useLabel } from '../../core/client/hooks/useLabel';
+import { useEntitlement } from '../../core/client/hooks/useEntitlement';
+import { useContactListCustomFields } from '../../core/client/hooks/useContactListCustomFields';
 
 export const CustomerListPage: React.FC = () => {
-  const { customers, setSelectedCustomerId, addCustomer } = useCustomer();
+  const { customers, tickets, setSelectedCustomerId, addCustomer } = useCustomer();
   const { showToast } = useToast();
-  const { t, contactLabel, contactPluralLabel } = useLabel();
+  const { t, contactLabel, contactPluralLabel, caseLabel } = useLabel();
+  const { isEntitled } = useEntitlement();
+  const isCommercialB2B = isEntitled('module:credit-sales');
+
+  const customerIds = useMemo(() => customers.map((c) => c.id), [customers]);
+  const cfBatch = useContactListCustomFields(customerIds);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTier, setSelectedTier] = useState('all');
-  const [selectedGrade, setSelectedGrade] = useState('all');
+  const [selectedSecondaryFilter, setSelectedSecondaryFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const listFieldDefs = useMemo(
+    () => cfBatch.definitions.filter((d) => d.ui?.showInList !== false).slice(0, 5),
+    [cfBatch.definitions]
+  );
+
+  const primaryUniqueDef = useMemo(
+    () => cfBatch.definitions.find((d) => d.validation?.unique),
+    [cfBatch.definitions]
+  );
+  const dynamicSelectDef = useMemo(
+    () => cfBatch.definitions.find((d) => d.type === 'select'),
+    [cfBatch.definitions]
+  );
+
+  const matchesCustomFieldQuery = (customerId: string, q: string): boolean => {
+    const trimmed = q.trim().toLowerCase();
+    if (!trimmed) return true;
+    const vals = cfBatch.records[customerId]?.values;
+    if (!vals) return false;
+    return Object.values(vals).some((v) =>
+      Array.isArray(v)
+        ? v.some((item) => String(item).toLowerCase().includes(trimmed))
+        : String(v ?? '').toLowerCase().includes(trimmed)
+    );
+  };
 
   const filteredCustomers = useMemo(() => {
     return customers.filter((c) => {
-      const matchesSearch = matchesCustomerSearch(c, searchQuery);
+      const matchesSearch =
+        matchesCustomerSearch(c, searchQuery) || matchesCustomFieldQuery(c.id, searchQuery);
       const matchesTier = selectedTier === 'all' || c.tier === selectedTier;
-      const matchesGrade = selectedGrade === 'all' || c.creditGrade === selectedGrade;
+      const matchesSecondary =
+        selectedSecondaryFilter === 'all'
+          ? true
+          : isCommercialB2B
+            ? c.creditGrade === selectedSecondaryFilter
+            : dynamicSelectDef
+              ? String(cfBatch.records[c.id]?.values?.[dynamicSelectDef.key] || '') ===
+                selectedSecondaryFilter
+              : true;
 
-      return matchesSearch && matchesTier && matchesGrade;
+      return matchesSearch && matchesTier && matchesSecondary;
     });
-  }, [customers, searchQuery, selectedTier, selectedGrade]);
+  }, [
+    customers,
+    searchQuery,
+    selectedTier,
+    selectedSecondaryFilter,
+    isCommercialB2B,
+    dynamicSelectDef,
+    cfBatch.records,
+  ]);
 
   const handleResetFilters = () => {
     setSearchQuery('');
     setSelectedTier('all');
-    setSelectedGrade('all');
+    setSelectedSecondaryFilter('all');
   };
 
   const handleCreateCustomer = (data: CreateCustomerInput) => {
     const created = addCustomer(data);
-    const visibleWithFilters =
-      matchesCustomerSearch(created, searchQuery) &&
-      (selectedTier === 'all' || created.tier === selectedTier) &&
-      (selectedGrade === 'all' || created.creditGrade === selectedGrade);
-    if (!visibleWithFilters) {
-      handleResetFilters();
-    }
-    showToast(`บันทึกข้อมูลลูกค้า "${created.name}" เรียบร้อยแล้ว (${created.id})`, 'success');
+    handleResetFilters();
+    showToast(`บันทึกข้อมูล${contactLabel} "${created.name}" เรียบร้อยแล้ว (${created.id})`, 'success');
     return created;
   };
-
-  const totalLTV = useMemo(
-    () => customers.reduce((sum, c) => sum + c.lifetimeValue, 0),
-    [customers]
-  );
-  const vipCount = useMemo(
-    () => customers.filter((c) => c.tier === 'PLATINUM' || c.tier === 'GOLD').length,
-    [customers]
-  );
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-bg-app">
@@ -65,9 +101,7 @@ export const CustomerListPage: React.FC = () => {
           <div className="flex items-center gap-2 text-text-secondary text-[13.5px]">
             <span>CDP</span>
             <span>/</span>
-            <span className="font-bold text-text-primary text-[15px]">
-              {contactPluralLabel}
-            </span>
+            <span className="font-bold text-text-primary text-[15px]">{contactPluralLabel}</span>
           </div>
         }
         actionButton={
@@ -83,59 +117,39 @@ export const CustomerListPage: React.FC = () => {
       />
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5 space-y-4 max-w-[1640px] w-full mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-          <div className="bg-white border border-border rounded-card p-4 shadow-card flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-brand-tint text-brand flex items-center justify-center flex-shrink-0">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs text-text-secondary font-medium">{contactLabel}ในระบบทั้งหมด</div>
-              <div className="text-xl font-bold font-mono tabular-nums text-text-primary">
-                {customers.length} <span className="text-xs font-sans font-normal text-slate-500">ราย</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border border-border rounded-card p-4 shadow-card flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
-              <Award className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs text-text-secondary font-medium">กลุ่ม VIP (Gold / Platinum)</div>
-              <div className="text-xl font-bold font-mono tabular-nums text-text-primary">
-                {vipCount} <span className="text-xs font-sans font-normal text-slate-500">ราย</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border border-border rounded-card p-4 shadow-card flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
-              <DollarSign className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs text-text-secondary font-medium">มูลค่าซื้อสะสมรวม (Total LTV)</div>
-              <div className="text-xl font-bold font-mono tabular-nums text-text-primary">
-                ฿{(totalLTV / 1_000_000).toFixed(2)}M
-              </div>
-            </div>
-          </div>
-        </div>
+        <CustomerKpiRow
+          customers={customers}
+          tickets={tickets}
+          contactLabel={contactLabel}
+          caseLabel={caseLabel}
+          isCommercialB2B={isCommercialB2B}
+          definitions={cfBatch.definitions}
+          records={cfBatch.records}
+        />
 
         <CustomerFilters
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           selectedTier={selectedTier}
           onTierChange={setSelectedTier}
-          selectedGrade={selectedGrade}
-          onGradeChange={setSelectedGrade}
-          onReset={handleResetFilters}
-          filteredCount={filteredCustomers.length}
+          selectedSecondaryFilter={selectedSecondaryFilter}
+          onSecondaryFilterChange={setSelectedSecondaryFilter}
+          contactLabel={contactLabel}
+          isCommercialB2B={isCommercialB2B}
+          primaryUniqueLabel={primaryUniqueDef?.label}
+          dynamicSelectField={dynamicSelectDef}
           totalCount={customers.length}
+          filteredCount={filteredCustomers.length}
+          onReset={handleResetFilters}
         />
 
         <CustomerTable
           customers={filteredCustomers}
-          onSelectCustomer={(customer) => setSelectedCustomerId(customer.id)}
+          contactLabel={contactLabel}
+          isCommercialB2B={isCommercialB2B}
+          listFieldDefs={listFieldDefs}
+          customFieldRecords={cfBatch.records}
+          onSelectCustomer={(c) => setSelectedCustomerId(c.id)}
         />
       </div>
 

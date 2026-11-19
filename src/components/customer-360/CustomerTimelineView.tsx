@@ -43,13 +43,20 @@ export const CustomerTimelineView: React.FC<CustomerTimelineViewProps> = ({
   const [timelineFilter, setTimelineFilter] = useState<string>('ทั้งหมด');
 
   const moduleTabs = clientModuleRegistry.getContactTabs(isEntitled, hasPermission);
+  const isCommercialB2B = isEntitled('module:credit-sales');
+  const showB2BContactsTab = isCommercialB2B || customer.customerType === 'CORPORATE';
 
   const tabDefinitions: { key: string; label: string }[] = [
     { key: 'Timeline', label: 'Timeline' },
-    { key: 'Service', label: 'Service' },
-    { key: 'Contacts', label: `ผู้ติดต่อ (${(customer.contacts || []).length})` },
-    { key: 'Addresses', label: `ที่อยู่ & พิกัด (${(customer.addresses || []).length})` },
-    { key: 'Segments', label: 'Segments' },
+    { key: 'Service', label: t('case.singular', 'Service') },
+    ...(showB2BContactsTab
+      ? [{ key: 'Contacts', label: `ผู้ติดต่อ (${(customer.contacts || []).length})` }]
+      : []),
+    {
+      key: 'Addresses',
+      label: `${t('tab.addresses', isCommercialB2B ? 'ที่อยู่ & พิกัด' : 'ที่อยู่ติดต่อ')} (${(customer.addresses || []).length})`,
+    },
+    { key: 'Segments', label: `กลุ่ม${contactLabel}` },
     ...(cf.definitions.length > 0
       ? [{ key: 'CustomFields', label: t('tab.custom_fields', `ข้อมูล${contactLabel}`) }]
       : []),

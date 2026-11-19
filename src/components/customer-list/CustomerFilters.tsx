@@ -1,14 +1,18 @@
 import React from 'react';
 import { Search, Filter, RotateCcw } from 'lucide-react';
-import { TierType, CreditGrade } from '../../types';
+import { TenantFieldDefinition } from '../../../core/client/providers/TenantRuntimeContext';
 
 interface CustomerFiltersProps {
   searchQuery: string;
   onSearchChange: (val: string) => void;
   selectedTier: string;
   onTierChange: (val: string) => void;
-  selectedGrade: string;
-  onGradeChange: (val: string) => void;
+  selectedSecondaryFilter: string;
+  onSecondaryFilterChange: (val: string) => void;
+  contactLabel: string;
+  isCommercialB2B: boolean;
+  primaryUniqueLabel?: string;
+  dynamicSelectField?: TenantFieldDefinition;
   totalCount: number;
   filteredCount: number;
   onReset: () => void;
@@ -35,36 +39,51 @@ export const CustomerFilters: React.FC<CustomerFiltersProps> = ({
   onSearchChange,
   selectedTier,
   onTierChange,
-  selectedGrade,
-  onGradeChange,
+  selectedSecondaryFilter,
+  onSecondaryFilterChange,
+  contactLabel,
+  isCommercialB2B,
+  primaryUniqueLabel,
+  dynamicSelectField,
   totalCount,
   filteredCount,
   onReset,
 }) => {
-  const isFiltered = searchQuery.trim() !== '' || selectedTier !== 'all' || selectedGrade !== 'all';
+  const isFiltered =
+    searchQuery.trim() !== '' || selectedTier !== 'all' || selectedSecondaryFilter !== 'all';
+
+  const placeholder = primaryUniqueLabel
+    ? `ค้นหา ชื่อ${contactLabel}, ${primaryUniqueLabel}, เบอร์โทรศัพท์...`
+    : `ค้นหา ชื่อ${contactLabel}, ชื่อเล่น, รหัส, เบอร์โทรศัพท์...`;
+
+  const secondaryOptions = isCommercialB2B
+    ? GRADES
+    : dynamicSelectField?.options
+      ? [
+          { label: `ทุก${dynamicSelectField.label}`, value: 'all' },
+          ...dynamicSelectField.options.map((o) => ({ label: o.label, value: o.value })),
+        ]
+      : null;
 
   return (
     <div className="bg-white border border-border rounded-xl p-3 sm:p-4 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 select-none">
-      {/* Search Input */}
       <div className="relative flex-1 max-w-md">
         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
         <input
           type="text"
-          placeholder="ค้นหา ชื่อ นามสกุล, ชื่อเล่น, ผู้ติดต่อ, รหัสลูกค้า, เบอร์โทรศัพท์..."
+          placeholder={placeholder}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full pl-9 pr-3.5 py-1.5 text-xs bg-bg-app border border-border rounded-lg focus:outline-none focus:border-brand focus:bg-white transition-all text-text-primary placeholder:text-text-placeholder"
         />
       </div>
 
-      {/* Filter Dropdowns and Actions */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1.5 text-xs text-text-secondary font-medium mr-1 hidden sm:flex">
+        <div className="items-center gap-1.5 text-xs text-text-secondary font-medium mr-1 hidden sm:flex">
           <Filter className="w-3.5 h-3.5" />
           <span>ตัวกรอง:</span>
         </div>
 
-        {/* Tier Filter */}
         <select
           value={selectedTier}
           onChange={(e) => onTierChange(e.target.value)}
@@ -77,22 +96,23 @@ export const CustomerFilters: React.FC<CustomerFiltersProps> = ({
           ))}
         </select>
 
-        {/* Credit Grade Filter */}
-        <select
-          value={selectedGrade}
-          onChange={(e) => onGradeChange(e.target.value)}
-          className="px-2.5 py-1.5 text-xs bg-bg-app border border-border rounded-lg text-text-primary focus:outline-none focus:border-brand transition-colors cursor-pointer"
-        >
-          {GRADES.map((g) => (
-            <option key={g.value} value={g.value}>
-              {g.label}
-            </option>
-          ))}
-        </select>
+        {secondaryOptions && (
+          <select
+            value={selectedSecondaryFilter}
+            onChange={(e) => onSecondaryFilterChange(e.target.value)}
+            className="px-2.5 py-1.5 text-xs bg-bg-app border border-border rounded-lg text-text-primary focus:outline-none focus:border-brand transition-colors cursor-pointer"
+          >
+            {secondaryOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        )}
 
-        {/* Reset Filter Button */}
         {isFiltered && (
           <button
+            type="button"
             onClick={onReset}
             className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-text-secondary hover:text-brand hover:bg-brand-tint rounded-lg transition-colors cursor-pointer"
             title="ล้างตัวกรอง"
@@ -102,7 +122,6 @@ export const CustomerFilters: React.FC<CustomerFiltersProps> = ({
           </button>
         )}
 
-        {/* Results Counter */}
         <div className="text-xs text-text-secondary ml-auto md:ml-2 font-medium">
           แสดง <span className="font-bold text-text-primary">{filteredCount}</span> จาก {totalCount} ราย
         </div>

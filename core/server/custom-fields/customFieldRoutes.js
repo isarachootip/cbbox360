@@ -18,23 +18,10 @@ export const createCustomFieldRouter = ({
 }) => {
   const router = Router();
 
-  router.get('/custom-fields/:entityType/definitions', requireAuth, async (req, res) => {
-    const tenantId = getCurrentTenantId();
-    const defs = await cfService.listFieldDefs(tenantId, String(req.params.entityType));
-    return res.status(200).json({ success: true, definitions: defs });
-  });
-
-  router.get('/contacts/:contactId/custom-fields', requireAuth, async (req, res) => {
-    const tenantId = getCurrentTenantId();
-    const contactId = String(req.params.contactId);
-    let [defs, rawValues, grantedPermissions] = await Promise.all([
-      cfService.listFieldDefs(tenantId, 'contact'),
-      cfService.getEntityFields(tenantId, 'contact', contactId),
-      permService.getRolePermissions(tenantId, req.user?.role),
-    ]);
-
-    if (defs.length > 0 && (!rawValues || Object.keys(rawValues).length === 0) && req.tenant?.templateId) {
-      const seedMatch = loadTemplateSeedContacts(req.tenant.templateId).find(
+  const resolveOrSeedContactValues = async (tenantId, templateId, contactId, defs) => {
+    let rawValues = await cfService.getEntityFields(tenantId, 'contact', contactId);
+    if (defs.length > 0 && (!rawValues || Object.keys(rawValues).length === 0) && templateId) {
+      const seedMatch = loadTemplateSeedContacts(templateId).find(
         (c) => String(c.id).toLowerCase() === contactId.toLowerCase()
       );
       if (seedMatch?.customFields) {
@@ -47,6 +34,55 @@ export const createCustomFieldRouter = ({
         if (seeded.ok) rawValues = seeded.values;
       }
     }
+    return rawValues || {};
+  };
+
+  router.get('/custom-fields/:entityType/definitions', requireAuth, async (req, res) => {
+    const tenantId = getCurrentTenantId();
+    const defs = await cfService.listFieldDefs(tenantId, String(req.params.entityType));
+    return res.status(200).json({ success: true, definitions: defs });
+  });
+
+  router.get('/contacts/custom-fields', requireAuth, async (req, res) => {
+    const tenantId = getCurrentTenantId();
+    const ids = String(req.query.ids || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 200);
+
+    const [defs, grantedPermissions] = await Promise.all([
+      cfService.listFieldDefs(tenantId, 'contact'),
+      permService.getRolePermissions(tenantId, req.user?.role),
+    ]);
+
+    const records = {};
+    for (const id of ids) {
+      const rawValues = await resolveOrSeedContactValues(tenantId, req.tenant?.templateId, id, defs);
+      const redacted = await redactCustomFields({ defs, values: rawValues, grantedPermissions });
+      records[id] = {
+        values: redacted.values,
+        redactedFlags: redacted.redactedFlags,
+        banners: redacted.banners,
+      };
+    }
+
+    return res.status(200).json({ success: true, definitions: defs, records });
+  });
+
+  router.get('/contacts/:contactId/custom-fields', requireAuth, async (req, res) => {
+    const tenantId = getCurrentTenantId();
+    const contactId = String(req.params.contactId);
+    const [defs, grantedPermissions] = await Promise.all([
+      cfService.listFieldDefs(tenantId, 'contact'),
+      permService.getRolePermissions(tenantId, req.user?.role),
+    ]);
+    const rawValues = await resolveOrSeedContactValues(
+      tenantId,
+      req.tenant?.templateId,
+      contactId,
+      defs
+    );
 
     const redacted = await redactCustomFields({
       defs,

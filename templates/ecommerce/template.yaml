@@ -36,6 +36,23 @@ customFields:
       ui:
         group: "ช่องทางร้านค้า"
         order: 1
+        showInList: true
+    - key: preferred_courier
+      label: "ขนส่งที่เลือกใช้ประจำ"
+      type: select
+      options:
+        - value: "FLASH"
+          label: "Flash Express"
+        - value: "KERRY"
+          label: "Kerry Express"
+        - value: "THPOST"
+          label: "ไปรษณีย์ไทย (EMS)"
+        - value: "JT"
+          label: "J&T Express"
+      ui:
+        group: "ช่องทางร้านค้า"
+        order: 2
+        showInList: true
 
 slaPolicies:
   - slug: ecom_fast

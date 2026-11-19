@@ -33,6 +33,7 @@ labels:
     case.plural: "รายการเคสสินไหมและบริการ"
     tab.policies: "กรมธรรม์"
     tab.claims: "ประวัติเคลมสินไหม"
+    tab.addresses: "ที่อยู่จัดส่งกรมธรรม์"
 
 roles:
   - key: claim_officer
@@ -103,6 +104,7 @@ customFields:
       ui:
         group: "ข้อมูลกรมธรรม์"
         order: 2
+        showInList: true
     - key: policy_expiry_date
       label: "วันหมดอายุกรมธรรม์"
       type: date
@@ -112,6 +114,7 @@ customFields:
       ui:
         group: "ข้อมูลกรมธรรม์"
         order: 3
+        showInList: true
         variableKey: "policy_expiry"
     - key: assigned_agent
       label: "ตัวแทนผู้ดูแล"
@@ -120,6 +123,7 @@ customFields:
       ui:
         group: "ช่องทางตัวแทน"
         order: 4
+        showInList: true
         variableKey: "agent_name"
 
 slaPolicies:

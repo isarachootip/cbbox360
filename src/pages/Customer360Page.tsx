@@ -50,12 +50,12 @@ export const Customer360Page: React.FC = () => {
   const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
   const [isEditCustomerModalOpen, setIsEditCustomerModalOpen] = useState(false);
 
-  const customerDeal =
-    deals.find(
-      (d) => d.customerId === customer.id && d.stage !== 'Closed Won' && d.stage !== 'Closed Lost'
-    ) || deals[0];
-  const customerTicket =
-    tickets.find((t) => t.customerId === customer.id && t.status !== 'Closed') || tickets[1];
+  const customerDeal = deals.find(
+    (d) => d.customerId === customer.id && d.stage !== 'Closed Won' && d.stage !== 'Closed Lost'
+  );
+  const customerTicket = tickets.find(
+    (t) => t.customerId === customer.id && t.status !== 'Closed'
+  );
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-bg-app">

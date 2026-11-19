@@ -106,6 +106,25 @@ describe('Inbox Contact Custom Fields — Hospital Seed, HN Uniqueness & PDPA s.
       expect(dupRes.status).toBe(400);
       const dupBody = await dupRes.json();
       expect(dupBody.error).toBe('DUPLICATE_CUSTOM_FIELD');
+
+      // 4. Batch directory endpoint GET /api/contacts/custom-fields?ids=HN001,HN002,HN003
+      const batchDoc = await fetch(`${srv.url}/api/contacts/custom-fields?ids=HN001,HN002,HN003`, {
+        headers: { 'X-Forwarded-Host': 'hospital.cb360.online', 'x-test-role': 'doctor' },
+      });
+      expect(batchDoc.status).toBe(200);
+      const batchDocBody = await batchDoc.json();
+      expect(batchDocBody.records.HN001.values.hn).toBe('HN-6904812');
+      expect(batchDocBody.records.HN002.values.treatment_right).toBe('SSO');
+
+      const batchAgent = await fetch(`${srv.url}/api/contacts/custom-fields?ids=HN001,HN002`, {
+        headers: { 'X-Forwarded-Host': 'hospital.cb360.online', 'x-test-role': 'admission_agent' },
+      });
+      const batchAgentBody = await batchAgent.json();
+      expect(batchAgentBody.records.HN001.values.drug_allergies).toBeUndefined();
+      expect(batchAgentBody.records.HN001.redactedFlags.drug_allergies).toEqual({
+        redacted: true,
+        hasValue: true,
+      });
     } finally {
       await srv.close();
     }

@@ -31,6 +31,7 @@ labels:
     case.singular: "เคสบริการผู้ป่วย"
     case.plural: "รายการเคสผู้ป่วย"
     tab.appointments: "นัดหมายแพทย์"
+    tab.addresses: "ที่อยู่ผู้ป่วย"
 
 roles:
   - key: doctor
@@ -96,6 +97,7 @@ customFields:
       ui:
         group: "ความปลอดภัยทางคลินิก"
         order: 2
+        showInList: true
         alertBanner:
           whenNonEmpty: true
           severity: danger
@@ -117,6 +119,7 @@ customFields:
       ui:
         group: "สิทธิการรักษา"
         order: 3
+        showInList: true
     - key: preferred_department
       label: "แผนก / คลินิกประจำ"
       type: text
@@ -124,6 +127,7 @@ customFields:
       ui:
         group: "การดูแลรักษา"
         order: 4
+        showInList: true
         variableKey: "department"
     - key: preferred_doctor
       label: "แพทย์ประจำตัว"
@@ -131,6 +135,7 @@ customFields:
       ui:
         group: "การดูแลรักษา"
         order: 5
+        showInList: true
         variableKey: "doctor_name"
 
 slaPolicies:
