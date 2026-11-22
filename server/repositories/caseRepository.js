@@ -13,6 +13,13 @@ const mapRowToCase = (row) => ({
   description: row.description || '',
   category: row.category || 'Inquiry',
   systemName: row.system_name || '',
+  serviceMode: row.service_mode || 'Remote',
+  assetSerial: row.asset_serial || '',
+  siteLocation: row.site_location || '',
+  reporterName: row.reporter_name || '',
+  reporterPhone: row.reporter_phone || '',
+  rootCause: row.root_cause || '',
+  resolutionSummary: row.resolution_summary || '',
   priority: row.priority || 'Normal',
   channel: row.channel || 'LINE',
   status: row.status || 'Open',
@@ -32,7 +39,7 @@ const mapRowToCase = (row) => ({
 });
 
 export const createInMemoryCaseRepository = () => {
-  const store = new Map(); // key: `${tenantId}::${upperId}`
+  const store = new Map();
   const makeKey = (tenantId, id) => `${tenantId || DEFAULT_TENANT_ID}::${String(id).toUpperCase()}`;
 
   return {
@@ -57,6 +64,7 @@ export const createInMemoryCaseRepository = () => {
     async upsert(record, explicitTenantId) {
       const tid = explicitTenantId || getCurrentTenantId();
       const normalized = {
+        serviceMode: 'Remote',
         ...record,
         activityLogs: Array.isArray(record.activityLogs) ? record.activityLogs : [],
       };
@@ -68,10 +76,7 @@ export const createInMemoryCaseRepository = () => {
       const tid = explicitTenantId || getCurrentTenantId();
       const existing = store.get(makeKey(tid, caseId));
       if (!existing) return null;
-      const updated = {
-        ...existing,
-        activityLogs: [...(existing.activityLogs || []), logEntry],
-      };
+      const updated = { ...existing, activityLogs: [...(existing.activityLogs || []), logEntry] };
       store.set(makeKey(tid, caseId), updated);
       return updated;
     },
@@ -127,37 +132,35 @@ export const createPgCaseRepository = ({ query = defaultDbQuery } = {}) => {
         await query(
           `INSERT INTO service_cases (
              tenant_id, id, customer_id, customer_name, customer_tier,
-             title, description, category, system_name, priority,
-             channel, status, assignee, conversation_id,
-             external_ticket_id, external_system, external_url,
+             title, description, category, system_name, service_mode,
+             asset_serial, site_location, reporter_name, reporter_phone,
+             root_cause, resolution_summary, priority, channel, status,
+             assignee, conversation_id, external_ticket_id, external_system, external_url,
              sla_hours_left, sla_formatted, sla_status, sla_target_note,
              order_ref, order_amount, activity_logs, created_at_label, created_at, updated_at
            ) VALUES (
-             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24::jsonb,$25,NOW(),NOW()
+             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31::jsonb,$32,NOW(),NOW()
            )
            ON CONFLICT (tenant_id, id) DO UPDATE SET
-             customer_name = EXCLUDED.customer_name,
-             title = EXCLUDED.title,
-             description = EXCLUDED.description,
-             category = EXCLUDED.category,
-             system_name = EXCLUDED.system_name,
-             priority = EXCLUDED.priority,
-             status = EXCLUDED.status,
-             assignee = EXCLUDED.assignee,
-             external_ticket_id = EXCLUDED.external_ticket_id,
-             external_system = EXCLUDED.external_system,
-             external_url = EXCLUDED.external_url,
-             sla_hours_left = EXCLUDED.sla_hours_left,
-             sla_formatted = EXCLUDED.sla_formatted,
-             sla_status = EXCLUDED.sla_status,
-             sla_target_note = EXCLUDED.sla_target_note,
-             activity_logs = EXCLUDED.activity_logs,
+             customer_name = EXCLUDED.customer_name, title = EXCLUDED.title,
+             description = EXCLUDED.description, category = EXCLUDED.category,
+             system_name = EXCLUDED.system_name, service_mode = EXCLUDED.service_mode,
+             asset_serial = EXCLUDED.asset_serial, site_location = EXCLUDED.site_location,
+             reporter_name = EXCLUDED.reporter_name, reporter_phone = EXCLUDED.reporter_phone,
+             root_cause = EXCLUDED.root_cause, resolution_summary = EXCLUDED.resolution_summary,
+             priority = EXCLUDED.priority, status = EXCLUDED.status, assignee = EXCLUDED.assignee,
+             external_ticket_id = EXCLUDED.external_ticket_id, external_system = EXCLUDED.external_system,
+             external_url = EXCLUDED.external_url, sla_hours_left = EXCLUDED.sla_hours_left,
+             sla_formatted = EXCLUDED.sla_formatted, sla_status = EXCLUDED.sla_status,
+             sla_target_note = EXCLUDED.sla_target_note, activity_logs = EXCLUDED.activity_logs,
              updated_at = NOW()`,
           [
             tid, saved.id, saved.customerId, saved.customerName, saved.customerTier || 'MEMBER',
             saved.title, saved.description || '', saved.category || 'Inquiry', saved.systemName || '',
-            saved.priority || 'Normal', saved.channel || 'LINE', saved.status || 'Open',
-            saved.assignee || 'Unassigned', saved.conversationId || null,
+            saved.serviceMode || 'Remote', saved.assetSerial || '', saved.siteLocation || '',
+            saved.reporterName || '', saved.reporterPhone || '', saved.rootCause || '',
+            saved.resolutionSummary || '', saved.priority || 'Normal', saved.channel || 'LINE',
+            saved.status || 'Open', saved.assignee || 'Unassigned', saved.conversationId || null,
             saved.externalTicketId || null, saved.externalSystem || null, saved.externalUrl || null,
             saved.slaHoursLeft ?? 4, saved.slaFormatted || '4 ชม.', saved.slaStatus || 'normal',
             saved.slaTargetNote || null, saved.orderRef || null, saved.orderAmount ?? null,
@@ -172,11 +175,7 @@ export const createPgCaseRepository = ({ query = defaultDbQuery } = {}) => {
       const tid = explicitTenantId || getCurrentTenantId();
       const existing = await this.findById(caseId, tid);
       if (!existing) return null;
-      const updated = {
-        ...existing,
-        activityLogs: [...(existing.activityLogs || []), logEntry],
-      };
-      return this.upsert(updated, tid);
+      return this.upsert({ ...existing, activityLogs: [...(existing.activityLogs || []), logEntry] }, tid);
     },
   };
 };

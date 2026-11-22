@@ -63,9 +63,9 @@ export const TicketTable: React.FC<TicketTableProps> = ({
                     </td>
                     <td className="px-4 py-3 max-w-[280px]">
                       <div className="font-medium text-sm text-text-primary truncate">{t.title}</div>
-                      {t.systemName && (
+                      {(t.systemName || t.serviceMode || t.assetSerial) && (
                         <div className="text-xs text-text-secondary truncate mt-0.5">
-                          ระบบ: {t.systemName}
+                          {[t.serviceMode, t.systemName, t.assetSerial ? `S/N: ${t.assetSerial}` : ''].filter(Boolean).join(' · ')}
                         </div>
                       )}
                     </td>

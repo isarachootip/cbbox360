@@ -62,8 +62,9 @@ describe('SQL Migration Runner & TenantDbManager (Phase 2 - PR-01)', () => {
       '004_tenant_scoped_customers_and_chats',
       '005_tenant_scoped_users',
       '006_tenant_scoped_cases',
+      '007_case_field_service_fields',
     ]);
-    expect(mockDb.applied.size).toBe(6);
+    expect(mockDb.applied.size).toBe(7);
 
     const secondRun = await runMigrations({
       db: mockDb,
@@ -78,6 +79,7 @@ describe('SQL Migration Runner & TenantDbManager (Phase 2 - PR-01)', () => {
       '004_tenant_scoped_customers_and_chats',
       '005_tenant_scoped_users',
       '006_tenant_scoped_cases',
+      '007_case_field_service_fields',
     ]);
   });
 
@@ -91,9 +93,9 @@ describe('SQL Migration Runner & TenantDbManager (Phase 2 - PR-01)', () => {
       migrationsDir: CORE_MIGRATIONS_DIR,
     });
 
-    expect(rolledBack.rolledBack).toBe('006_tenant_scoped_cases');
-    expect(mockDb.applied.has('core:006_tenant_scoped_cases')).toBe(false);
-    expect(mockDb.applied.has('core:005_tenant_scoped_users')).toBe(true);
+    expect(rolledBack.rolledBack).toBe('007_case_field_service_fields');
+    expect(mockDb.applied.has('core:007_case_field_service_fields')).toBe(false);
+    expect(mockDb.applied.has('core:006_tenant_scoped_cases')).toBe(true);
     expect(mockDb.applied.has('core:001_tenant_control_plane')).toBe(true);
   });
 

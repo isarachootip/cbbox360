@@ -34,6 +34,11 @@ describe('Tenant-isolated Service Case Repository & Controller', () => {
             title: 'ระบบ ERP ออกใบแจ้งหนี้ไม่ได้ ขึ้น Error 500',
             category: 'ระบบล่ม / ใช้งานไม่ได้',
             systemName: 'ERP Billing',
+            serviceMode: 'On-site',
+            assetSerial: 'SRV-BKK-09',
+            siteLocation: 'สนง.ใหญ่ สาทร',
+            reporterName: 'คุณธนกฤต',
+            reporterPhone: '081-222-3344',
             priority: 'Critical',
             channel: 'LINE',
             externalTicketId: 'HD-90412',
@@ -45,6 +50,8 @@ describe('Tenant-isolated Service Case Repository & Controller', () => {
     expect(resA.statusCode).toBe(201);
     const createdId = resA.body.case.id;
     expect(resA.body.case.externalTicketId).toBe('HD-90412');
+    expect(resA.body.case.serviceMode).toBe('On-site');
+    expect(resA.body.case.assetSerial).toBe('SRV-BKK-09');
     expect(resA.body.case.slaFormatted).toBe('2 ชม.');
 
     // Tenant B must see ZERO cases from Tenant A
@@ -62,15 +69,24 @@ describe('Tenant-isolated Service Case Repository & Controller', () => {
         {
           user: { displayName: 'วิศวกร L2' },
           params: { id: createdId },
-          body: { status: 'In Progress', externalTicketId: 'HD-90412-REV' },
+          body: {
+            status: 'In Progress',
+            assignee: 'กฤษณะ (L2)',
+            rootCause: 'DB connection pool เต็ม',
+            resolutionSummary: 'เพิ่ม pool size และรีสตาร์ท worker',
+            externalTicketId: 'HD-90412-REV',
+          },
         },
         patchRes
       );
     });
     expect(patchRes.statusCode).toBe(200);
     expect(patchRes.body.case.status).toBe('In Progress');
+    expect(patchRes.body.case.assignee).toBe('กฤษณะ (L2)');
+    expect(patchRes.body.case.rootCause).toBe('DB connection pool เต็ม');
+    expect(patchRes.body.case.resolutionSummary).toBe('เพิ่ม pool size และรีสตาร์ท worker');
     expect(patchRes.body.case.externalTicketId).toBe('HD-90412-REV');
-    expect(patchRes.body.case.activityLogs.length).toBeGreaterThanOrEqual(3);
+    expect(patchRes.body.case.activityLogs.length).toBeGreaterThanOrEqual(4);
 
     const logRes = mockRes();
     await runWithTenantContext({ tenantId: 'tnt_support_a' }, async () => {

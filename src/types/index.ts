@@ -237,6 +237,7 @@ export interface TierChangeLog {
 
 export type TicketStatus = 'Open' | 'In Progress' | 'Pending' | 'Waiting' | 'Resolved' | 'Closed';
 export type TicketPriority = 'Critical' | 'High' | 'Normal' | 'Low';
+export type ServiceMode = 'Remote' | 'On-site' | 'In-Center';
 
 export interface Ticket {
   id: string; // "TK-2310" or "CS-4001"
@@ -247,6 +248,13 @@ export interface Ticket {
   description?: string;
   category: string;
   systemName?: string;
+  serviceMode?: ServiceMode;
+  assetSerial?: string;
+  siteLocation?: string;
+  reporterName?: string;
+  reporterPhone?: string;
+  rootCause?: string;
+  resolutionSummary?: string;
   priority?: TicketPriority;
   channel: ChannelType;
   status: TicketStatus;

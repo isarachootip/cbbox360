@@ -2,71 +2,41 @@
  * caseController.js — Zod-validated tenant-scoped Service Case CRUD & Activity Log handlers.
  */
 import crypto from 'crypto';
-import { z } from 'zod';
 import { caseRepository as defaultCaseRepo } from '../repositories/caseRepository.js';
 import { getCurrentTenantId } from '../../core/server/tenancy/tenantContext.js';
-
-const CASE_STATUSES = ['Open', 'In Progress', 'Pending', 'Waiting', 'Resolved', 'Closed'];
-const CASE_PRIORITIES = ['Critical', 'High', 'Normal', 'Low'];
-
-const createCaseSchema = z.object({
-  id: z.string().trim().min(2).max(40).optional(),
-  customerId: z.string().trim().min(1).max(60),
-  customerName: z.string().trim().min(1).max(160),
-  customerTier: z.enum(['MEMBER', 'SILVER', 'GOLD', 'PLATINUM']).default('MEMBER'),
-  title: z.string().trim().min(2).max(240),
-  description: z.string().trim().max(2000).optional().default(''),
-  category: z.string().trim().min(1).max(120).default('Inquiry'),
-  systemName: z.string().trim().max(120).optional().default(''),
-  priority: z.enum(CASE_PRIORITIES).optional().default('Normal'),
-  channel: z.string().trim().min(1).max(40).default('LINE'),
-  status: z.enum(CASE_STATUSES).optional().default('Open'),
-  assignee: z.string().trim().max(120).optional(),
-  conversationId: z.string().trim().max(80).optional(),
-  externalTicketId: z.string().trim().max(80).optional(),
-  externalSystem: z.string().trim().max(60).optional(),
-  externalUrl: z.string().trim().max(300).optional(),
-  slaHoursLeft: z.number().optional(),
-  slaFormatted: z.string().trim().max(60).optional(),
-  slaStatus: z.enum(['normal', 'warning', 'danger']).optional(),
-  slaTargetNote: z.string().trim().max(240).optional(),
-});
-
-const patchCaseSchema = z.object({
-  title: z.string().trim().min(2).max(240).optional(),
-  description: z.string().trim().max(2000).optional(),
-  category: z.string().trim().min(1).max(120).optional(),
-  systemName: z.string().trim().max(120).optional(),
-  priority: z.enum(CASE_PRIORITIES).optional(),
-  status: z.enum(CASE_STATUSES).optional(),
-  assignee: z.string().trim().min(1).max(120).optional(),
-  externalTicketId: z.string().trim().max(80).nullable().optional(),
-  externalSystem: z.string().trim().max(60).nullable().optional(),
-  externalUrl: z.string().trim().max(300).nullable().optional(),
-  slaStatus: z.enum(['normal', 'warning', 'danger']).optional(),
-});
-
-const addLogSchema = z.object({
-  text: z.string().trim().min(1).max(1500),
-  author: z.string().trim().max(120).optional(),
-  type: z.enum(['system', 'workflow', 'agent']).optional().default('agent'),
-});
+import {
+  addLogSchema,
+  createCaseSchema,
+  defaultSlaByPriority,
+  patchCaseSchema,
+} from '../utils/caseSchemas.js';
 
 const formatNowTime = () => {
   const now = new Date();
-  const hh = String(now.getHours()).padStart(2, '0');
-  const mm = String(now.getMinutes()).padStart(2, '0');
-  return `${hh}:${mm}`;
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 };
 
-const defaultSlaByPriority = (priority) => {
-  if (priority === 'Critical') {
-    return { slaHoursLeft: 2, slaFormatted: '2 ชม.', slaStatus: 'warning', slaTargetNote: 'Critical: ตอบใน 15 นาที · แก้ไขใน 2 ชม.' };
+const buildPatchSystemLogs = (existing, patch, actor) => {
+  const logs = [];
+  const time = formatNowTime();
+  if (patch.status && patch.status !== existing.status) {
+    logs.push({ time, author: actor, text: `เปลี่ยนสถานะเคสจาก ${existing.status} เป็น ${patch.status}`, type: 'system' });
   }
-  if (priority === 'High') {
-    return { slaHoursLeft: 4, slaFormatted: '4 ชม.', slaStatus: 'normal', slaTargetNote: 'High: ตอบใน 30 นาที · แก้ไขใน 4 ชม.' };
+  if (patch.assignee && patch.assignee !== existing.assignee) {
+    logs.push({ time, author: actor, text: `มอบหมายผู้รับผิดชอบจาก ${existing.assignee} เป็น ${patch.assignee}`, type: 'system' });
   }
-  return { slaHoursLeft: 8, slaFormatted: '8 ชม.', slaStatus: 'normal', slaTargetNote: 'Standard: ตอบใน 1 ชม. · แก้ไขใน 1 วันทำการ' };
+  if (patch.resolutionSummary && patch.resolutionSummary !== existing.resolutionSummary) {
+    logs.push({ time, author: actor, text: `บันทึกสรุปวิธีแก้ไข: ${patch.resolutionSummary}`, type: 'agent' });
+  }
+  if (patch.externalTicketId !== undefined && patch.externalTicketId !== existing.externalTicketId) {
+    logs.push({
+      time,
+      author: actor,
+      text: patch.externalTicketId ? `เชื่อมเลขอ้างอิง Helpdesk ภายนอก: ${patch.externalTicketId}` : 'ยกเลิกเลขอ้างอิง Helpdesk ภายนอก',
+      type: 'system',
+    });
+  }
+  return logs;
 };
 
 export const createCaseController = ({ caseRepo = defaultCaseRepo } = {}) => ({
@@ -95,8 +65,7 @@ export const createCaseController = ({ caseRepo = defaultCaseRepo } = {}) => ({
       const input = parsed.data;
       const slaDefaults = defaultSlaByPriority(input.priority);
       const actor = req.user?.displayName || req.user?.username || 'ระบบ';
-      const generatedId =
-        input.id || `CS-${crypto.randomInt(1000, 9999)}`;
+      const generatedId = input.id || `CS-${crypto.randomInt(1000, 9999)}`;
 
       const record = {
         ...slaDefaults,
@@ -108,12 +77,11 @@ export const createCaseController = ({ caseRepo = defaultCaseRepo } = {}) => ({
           {
             time: formatNowTime(),
             author: actor,
-            text: `เปิดเคสใหม่ (${input.category}${input.systemName ? ` · ${input.systemName}` : ''}): ${input.title}`,
+            text: `เปิดเคสใหม่ (${input.category}${input.systemName ? ` · ${input.systemName}` : ''} · ${input.serviceMode}): ${input.title}`,
             type: 'system',
           },
         ],
       };
-
       const saved = await caseRepo.upsert(record, tenantId);
       return res.status(201).json({ case: saved });
     } catch {
@@ -134,26 +102,7 @@ export const createCaseController = ({ caseRepo = defaultCaseRepo } = {}) => ({
 
       const patch = parsed.data;
       const actor = req.user?.displayName || req.user?.username || 'ระบบ';
-      const nextLogs = [...(existing.activityLogs || [])];
-
-      if (patch.status && patch.status !== existing.status) {
-        nextLogs.push({
-          time: formatNowTime(),
-          author: actor,
-          text: `เปลี่ยนสถานะเคสจาก ${existing.status} เป็น ${patch.status}`,
-          type: 'system',
-        });
-      }
-      if (patch.externalTicketId !== undefined && patch.externalTicketId !== existing.externalTicketId) {
-        nextLogs.push({
-          time: formatNowTime(),
-          author: actor,
-          text: patch.externalTicketId
-            ? `เชื่อมเลขอ้างอิง Helpdesk ภายนอก: ${patch.externalTicketId}`
-            : 'ยกเลิกเลขอ้างอิง Helpdesk ภายนอก',
-          type: 'system',
-        });
-      }
+      const addedLogs = buildPatchSystemLogs(existing, patch, actor);
 
       const updated = await caseRepo.upsert(
         {
@@ -162,7 +111,7 @@ export const createCaseController = ({ caseRepo = defaultCaseRepo } = {}) => ({
           externalTicketId: patch.externalTicketId === null ? undefined : (patch.externalTicketId ?? existing.externalTicketId),
           externalSystem: patch.externalSystem === null ? undefined : (patch.externalSystem ?? existing.externalSystem),
           externalUrl: patch.externalUrl === null ? undefined : (patch.externalUrl ?? existing.externalUrl),
-          activityLogs: nextLogs,
+          activityLogs: [...(existing.activityLogs || []), ...addedLogs],
         },
         tenantId
       );

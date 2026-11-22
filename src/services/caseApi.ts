@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { Ticket, TicketPriority, TicketStatus } from '../types';
+import type { ServiceMode, Ticket, TicketPriority, TicketStatus } from '../types';
 
 const activityLogSchema = z.object({
   time: z.string(),
@@ -17,6 +17,13 @@ const ticketRecordSchema = z.object({
   description: z.string().optional(),
   category: z.string(),
   systemName: z.string().optional(),
+  serviceMode: z.enum(['Remote', 'On-site', 'In-Center']).optional(),
+  assetSerial: z.string().optional(),
+  siteLocation: z.string().optional(),
+  reporterName: z.string().optional(),
+  reporterPhone: z.string().optional(),
+  rootCause: z.string().optional(),
+  resolutionSummary: z.string().optional(),
   priority: z.enum(['Critical', 'High', 'Normal', 'Low']).optional(),
   channel: z.enum(['LINE', 'Facebook', '3CX', 'Email', 'Web form']).catch('LINE'),
   status: z.enum(['Open', 'In Progress', 'Pending', 'Waiting', 'Resolved', 'Closed']).catch('Open'),
@@ -40,6 +47,13 @@ export interface CasePatchInput {
   priority?: TicketPriority;
   assignee?: string;
   systemName?: string;
+  serviceMode?: ServiceMode;
+  assetSerial?: string;
+  siteLocation?: string;
+  reporterName?: string;
+  reporterPhone?: string;
+  rootCause?: string;
+  resolutionSummary?: string;
   description?: string;
   category?: string;
   externalTicketId?: string | null;

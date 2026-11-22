@@ -1,4 +1,4 @@
-import type { Ticket, TicketPriority, TicketStatus } from '../../types';
+import type { ServiceMode, Ticket, TicketPriority, TicketStatus } from '../../types';
 
 export interface CaseKpis {
   openCount: number;
@@ -20,6 +20,12 @@ export const CASE_PRIORITY_OPTIONS: { value: TicketPriority; label: string }[] =
   { value: 'High', label: 'High (ด่วน)' },
   { value: 'Normal', label: 'Normal (ปกติ)' },
   { value: 'Low', label: 'Low (ไม่ด่วน)' },
+];
+
+export const SERVICE_MODE_OPTIONS: { value: ServiceMode; label: string }[] = [
+  { value: 'Remote', label: 'Remote (รีโมตตรวจสอบ)' },
+  { value: 'On-site', label: 'On-site (ช่างเข้าหน้างาน)' },
+  { value: 'In-Center', label: 'In-Center (รับเครื่องเข้าศูนย์)' },
 ];
 
 export const getPriorityIndicator = (priority: TicketPriority = 'Normal') => {
@@ -63,6 +69,10 @@ export const matchesCaseSearch = (ticket: Ticket, rawQuery: string): boolean => 
     ticket.customerName,
     ticket.category,
     ticket.systemName || '',
+    ticket.serviceMode || '',
+    ticket.assetSerial || '',
+    ticket.siteLocation || '',
+    ticket.reporterName || '',
     ticket.externalTicketId || '',
     ticket.assignee,
   ];

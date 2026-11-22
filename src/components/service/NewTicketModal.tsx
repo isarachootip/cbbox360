@@ -1,25 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { ChannelType, Customer, Ticket, TicketPriority, TierType } from '../../types';
+import { ChannelType, Customer, TicketPriority } from '../../types';
 import { Modal } from '../common/Modal';
 import { useTenantRuntime } from '../../../core/client/providers/TenantRuntimeContext';
+import { useAuth } from '../../context/AuthContext';
 import { CASE_PRIORITY_OPTIONS } from '../../domain/cases/caseMetrics';
+import {
+  CASE_CHANNEL_OPTIONS,
+  CaseFieldServiceInputs,
+  EMPTY_FIELD_SERVICE,
+  FALLBACK_CASE_CATEGORIES,
+  FieldServiceValues,
+  NewTicketPayload,
+} from './CaseFieldServiceInputs';
 
-export interface NewTicketPayload {
-  customerId: string;
-  customerName: string;
-  customerTier: TierType;
-  title: string;
-  description?: string;
-  category: string;
-  systemName?: string;
-  priority: TicketPriority;
-  channel: ChannelType;
-  status: Ticket['status'];
-  slaFormatted: string;
-  assignee: string;
-  conversationId?: string;
-  externalTicketId?: string;
-}
+export type { NewTicketPayload };
 
 interface NewTicketModalProps {
   isOpen: boolean;
@@ -33,24 +27,6 @@ interface NewTicketModalProps {
   onCreate: (payload: NewTicketPayload) => void;
 }
 
-const FALLBACK_CATEGORIES = [
-  'แจ้งปัญหา / Error ระบบงาน',
-  'ระบบล่ม / ใช้งานไม่ได้',
-  'สอบถามการใช้งานระบบ (How-to)',
-  'แจ้งซ่อม / ตรวจเช็คอุปกรณ์',
-  'Complaint',
-  'Inquiry',
-  'Request',
-];
-
-const CHANNELS: { value: ChannelType; label: string }[] = [
-  { value: 'LINE', label: 'LINE' },
-  { value: 'Facebook', label: 'Facebook' },
-  { value: '3CX', label: '3CX (โทรศัพท์)' },
-  { value: 'Email', label: 'Email' },
-  { value: 'Web form', label: 'Web form' },
-];
-
 export const NewTicketModal: React.FC<NewTicketModalProps> = ({
   isOpen,
   customers,
@@ -63,8 +39,12 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
   onCreate,
 }) => {
   const { caseCategories } = useTenantRuntime();
+  const { users } = useAuth();
+  const activeAssignees = Array.from(
+    new Set([defaultAssignee, ...users.filter((u) => u.status === 'active').map((u) => u.name)].filter(Boolean))
+  );
   const categoryOptions =
-    caseCategories.length > 0 ? caseCategories.map((c) => c.name) : FALLBACK_CATEGORIES;
+    caseCategories.length > 0 ? caseCategories.map((c) => c.name) : FALLBACK_CASE_CATEGORIES;
 
   const defaultCust = customers[0];
   const [customerId, setCustomerId] = useState<string>(initialCustomerId || defaultCust?.id || '');
@@ -74,7 +54,9 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
   const [systemName, setSystemName] = useState<string>('');
   const [priority, setPriority] = useState<TicketPriority>('Normal');
   const [channel, setChannel] = useState<ChannelType>(initialChannel);
+  const [assignee, setAssignee] = useState<string>(defaultAssignee);
   const [externalTicketId, setExternalTicketId] = useState<string>('');
+  const [fieldService, setFieldService] = useState<FieldServiceValues>(EMPTY_FIELD_SERVICE);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -82,16 +64,17 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
     setChannel(initialChannel);
     setTitle(initialTitle);
     setCategory(categoryOptions[0] || 'Inquiry');
+    setAssignee(defaultAssignee);
     setDescription('');
     setSystemName('');
     setPriority('Normal');
     setExternalTicketId('');
-  }, [isOpen, initialCustomerId, initialChannel, initialTitle]);
+    setFieldService(EMPTY_FIELD_SERVICE);
+  }, [isOpen, initialCustomerId, initialChannel, initialTitle, defaultAssignee]);
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!title.trim()) return;
-
     const matchedCust = customers.find((c) => c.id === customerId) || defaultCust;
     if (!matchedCust) return;
 
@@ -103,11 +86,16 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
       description: description.trim() || undefined,
       category,
       systemName: systemName.trim() || undefined,
+      serviceMode: fieldService.serviceMode,
+      assetSerial: fieldService.assetSerial.trim() || undefined,
+      siteLocation: fieldService.siteLocation.trim() || undefined,
+      reporterName: fieldService.reporterName.trim() || undefined,
+      reporterPhone: fieldService.reporterPhone.trim() || undefined,
       priority,
       channel,
       status: 'Open',
       slaFormatted: priority === 'Critical' ? '2 ชม.' : priority === 'High' ? '4 ชม.' : '8 ชม.',
-      assignee: defaultAssignee,
+      assignee: assignee || defaultAssignee,
       conversationId,
       externalTicketId: externalTicketId.trim() || undefined,
     });
@@ -120,23 +108,25 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
       title="เปิดเคสบริการ / แจ้งปัญหาใหม่"
       footer={
         <>
-          <button type="button" onClick={onClose} className="px-4 py-2 border border-border rounded-lg text-xs font-medium hover:bg-white cursor-pointer">
-            ยกเลิก
-          </button>
-          <button type="button" onClick={() => handleSubmit()} className="px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer">
-            เปิด Case
-          </button>
+          <button type="button" onClick={onClose} className="px-4 py-2 border border-border rounded-lg text-xs font-medium hover:bg-white cursor-pointer">ยกเลิก</button>
+          <button type="button" onClick={() => handleSubmit()} className="px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer">เปิด Case</button>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-3 text-[13px]">
-        <div>
-          <label className="block text-xs text-text-secondary font-semibold mb-1">ลูกค้า / ผู้แจ้ง *</label>
-          <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white font-medium">
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>{c.name} ({c.id}) · {c.tier}</option>
-            ))}
-          </select>
+      <form onSubmit={handleSubmit} className="space-y-3 text-[13px] max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
+        <div className="grid grid-cols-2 gap-2.5">
+          <div>
+            <label className="block text-xs text-text-secondary font-semibold mb-1">ลูกค้า / องค์กร *</label>
+            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="w-full px-2.5 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white font-medium text-xs">
+              {customers.map((c) => (<option key={c.id} value={c.id}>{c.name} ({c.id})</option>))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-text-secondary font-semibold mb-1">ผู้รับผิดชอบ (Assignee)</label>
+            <select value={assignee} onChange={(e) => setAssignee(e.target.value)} className="w-full px-2.5 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white text-xs">
+              {activeAssignees.map((name) => (<option key={name} value={name}>{name}</option>))}
+            </select>
+          </div>
         </div>
 
         <div>
@@ -144,48 +134,44 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
           <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="เช่น ระบบ ERP ออกใบแจ้งหนี้ไม่ได้ หรือเครื่องพิมพ์ขึ้น Error" className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand" />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2.5">
           <div>
             <label className="block text-xs text-text-secondary font-semibold mb-1">หมวดเคส</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white">
-              {categoryOptions.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
+            <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-2.5 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white text-xs">
+              {categoryOptions.map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
             </select>
           </div>
           <div>
             <label className="block text-xs text-text-secondary font-semibold mb-1">ระดับความเร่งด่วน</label>
-            <select value={priority} onChange={(e) => setPriority(e.target.value as TicketPriority)} className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white">
-              {CASE_PRIORITY_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
+            <select value={priority} onChange={(e) => setPriority(e.target.value as TicketPriority)} className="w-full px-2.5 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white text-xs">
+              {CASE_PRIORITY_OPTIONS.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
             </select>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2.5">
           <div>
             <label className="block text-xs text-text-secondary font-semibold mb-1">ระบบงาน / อุปกรณ์</label>
-            <input type="text" value={systemName} onChange={(e) => setSystemName(e.target.value)} placeholder="เช่น ERP Billing, POS, Scanner" className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand" />
+            <input type="text" value={systemName} onChange={(e) => setSystemName(e.target.value)} placeholder="เช่น ERP Billing, POS" className="w-full px-2.5 py-2 border border-border rounded-lg focus:outline-none focus:border-brand text-xs" />
           </div>
           <div>
             <label className="block text-xs text-text-secondary font-semibold mb-1">ช่องทางรับเรื่อง</label>
-            <select value={channel} onChange={(e) => setChannel(e.target.value as ChannelType)} className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white">
-              {CHANNELS.map((ch) => (
-                <option key={ch.value} value={ch.value}>{ch.label}</option>
-              ))}
+            <select value={channel} onChange={(e) => setChannel(e.target.value as ChannelType)} className="w-full px-2.5 py-2 border border-border rounded-lg focus:outline-none focus:border-brand bg-white text-xs">
+              {CASE_CHANNEL_OPTIONS.map((ch) => (<option key={ch.value} value={ch.value}>{ch.label}</option>))}
             </select>
           </div>
         </div>
 
+        <CaseFieldServiceInputs values={fieldService} onChange={setFieldService} />
+
         <div>
           <label className="block text-xs text-text-secondary font-semibold mb-1">รายละเอียดเพิ่มเติม</label>
-          <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="ระบุอาการ Error, ช่วงเวลาที่พบปัญหา หรือชื่อผู้ใช้งาน..." className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand resize-none" />
+          <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="ระบุอาการ Error หรือช่วงเวลาที่พบปัญหา..." className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:border-brand resize-none text-xs" />
         </div>
 
         <div>
-          <label className="block text-xs text-text-secondary font-semibold mb-1">เลขอ้างอิง Helpdesk เดิม (ไม่บังคับ · เผื่อ Link Phase 2)</label>
-          <input type="text" value={externalTicketId} onChange={(e) => setExternalTicketId(e.target.value)} placeholder="เช่น HD-90412 หรือ INC-2026-01" className="w-full px-3 py-2 font-mono text-xs border border-border rounded-lg focus:outline-none focus:border-brand" />
+          <label className="block text-xs text-text-secondary font-semibold mb-1">เลขอ้างอิง Helpdesk เดิม (ไม่บังคับ · Phase 2)</label>
+          <input type="text" value={externalTicketId} onChange={(e) => setExternalTicketId(e.target.value)} placeholder="เช่น HD-90412" className="w-full px-3 py-1.5 font-mono text-xs border border-border rounded-lg focus:outline-none focus:border-brand" />
         </div>
       </form>
     </Modal>
