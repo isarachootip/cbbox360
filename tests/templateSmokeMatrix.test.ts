@@ -71,6 +71,29 @@ describe('Phase 5 Multi-Template Smoke Matrix & On-Prem Preload', () => {
       },
       blockedPath: '/api/m/claim/claims',
     },
+    {
+      template: 'support_fix',
+      expectedContactLabel: 'ผู้แจ้ง / ลูกค้า',
+      sampleFields: {
+        company_code: 'ST-SMOKE-01',
+        system_name: 'ERP Billing',
+        ma_status: 'ACTIVE',
+        ma_expiry_date: '2027-06-30',
+        sla_tier: 'PLATINUM',
+      },
+      entitledPath: '/api/cases',
+      entitledPayload: {
+        customerId: 'SMOKE-1',
+        customerName: 'บจก. สยามเทค เอ็นเตอร์ไพรส์',
+        customerTier: 'PLATINUM',
+        title: 'ระบบ ERP ออกใบแจ้งหนี้ขึ้น Error 500',
+        category: 'ระบบล่ม / ใช้งานไม่ได้',
+        systemName: 'ERP Billing',
+        priority: 'Critical',
+        channel: 'LINE',
+      },
+      blockedPath: '/api/m/appointment/appointments',
+    },
   ])(
     'provisions a tenant from "$template" template and passes full HTTP flow & entitlement isolation',
     async (scenario) => {

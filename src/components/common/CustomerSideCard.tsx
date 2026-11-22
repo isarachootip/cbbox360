@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ExternalLink } from 'lucide-react';
-import { ChatMessage, Customer } from '../../types';
+import { ExternalLink } from 'lucide-react';
+import { ChannelType, ChatMessage, Customer } from '../../types';
 import { TierBadge } from './TierBadge';
 import { GradeBadge } from './GradeBadge';
 import { ClickToCallButton } from './ClickToCallButton';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useCustomer } from '../../context/CustomerContext';
 import { AiSummaryCard } from '../inbox/AiSummaryCard';
 import { CustomerSideCardFooter } from './CustomerSideCardFooter';
 import { SideCardCustomFieldsBlock } from './SideCardCustomFieldsBlock';
+import { SideCardActiveActivity } from './SideCardActiveActivity';
+import { NewTicketModal, NewTicketPayload } from '../service/NewTicketModal';
 import { useLabel } from '../../../core/client/hooks/useLabel';
 import { useEntitlement } from '../../../core/client/hooks/useEntitlement';
 import { useContactCustomFields } from '../../../core/client/hooks/useContactCustomFields';
@@ -18,6 +21,7 @@ import { ExtensionSlot } from '../../../core/client/registry/ExtensionSlot';
 interface CustomerSideCardProps {
   customer: Customer;
   conversationId?: string;
+  channel?: ChannelType;
   messages?: ChatMessage[];
   onOpenTask?: () => void;
 }
@@ -25,23 +29,38 @@ interface CustomerSideCardProps {
 export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({
   customer,
   conversationId,
+  channel = 'LINE',
   messages = [],
   onOpenTask,
 }) => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const { showToast } = useToast();
-  const { deals, tickets } = useCustomer();
+  const { customers, deals, tickets, addTicket } = useCustomer();
   const { contactLabel } = useLabel();
   const { isEntitled } = useEntitlement();
   const cf = useContactCustomFields(customer.id);
   const showCommercialStats = isEntitled('module:credit-sales');
 
   const [labels, setLabels] = useState<string[]>([]);
+  const [isCreateCaseOpen, setIsCreateCaseOpen] = useState(false);
 
   const activeDeal = showCommercialStats
     ? deals.find((d) => d.customerId === customer.id && d.stage !== 'Closed Won' && d.stage !== 'Closed Lost')
     : undefined;
-  const activeTicket = tickets.find((t) => t.customerId === customer.id && t.status !== 'Closed');
+  const activeTicket = tickets.find((t) => t.customerId === customer.id && t.status !== 'Closed' && t.status !== 'Resolved');
+  const lastCustomerMsg = [...messages].reverse().find((m) => m.sender === 'customer')?.text || '';
+
+  const handleCreateCase = (payload: NewTicketPayload) => {
+    addTicket({
+      ...payload,
+      slaHoursLeft: payload.priority === 'Critical' ? 2 : payload.priority === 'High' ? 4 : 8,
+      slaStatus: payload.priority === 'Critical' ? 'warning' : 'normal',
+      slaTargetNote: `${payload.priority}: ${payload.slaFormatted}`,
+    });
+    showToast(`เปิด Case จากแชทสำหรับ ${customer.name} เรียบร้อยแล้ว`, 'success');
+    setIsCreateCaseOpen(false);
+  };
 
   const handleAddLabel = (lbl: string) => {
     if (!labels.includes(lbl)) {
@@ -139,48 +158,26 @@ export const CustomerSideCard: React.FC<CustomerSideCardProps> = ({
         <ExtensionSlot name="contact.right_rail.cards" contactId={customer.id} />
       </div>
 
-      {(activeDeal || activeTicket) && (
-        <div className="py-3 border-b border-divider space-y-2">
-          <div className="text-xs font-medium text-text-secondary">Activity ที่กำลังเปิดอยู่</div>
-          {activeDeal && (
-            <div
-              onClick={() => navigate('/pipeline')}
-              className="p-2.5 rounded-lg bg-bg-subtle border border-border hover:border-brand/40 cursor-pointer transition-all flex items-center justify-between text-xs"
-            >
-              <div>
-                <div className="text-text-secondary text-xs">Deal · {activeDeal.title}</div>
-                <div className="tabular-nums font-semibold text-text-primary mt-0.5">
-                  ฿{activeDeal.value.toLocaleString()}
-                </div>
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 text-text-secondary" />
-            </div>
-          )}
-          {activeTicket && (
-            <div
-              onClick={() => navigate('/cases')}
-              className="p-2.5 rounded-lg bg-bg-subtle border border-border hover:border-brand/40 cursor-pointer transition-all flex items-center justify-between text-xs"
-            >
-              <div>
-                <div className="text-text-secondary text-xs">
-                  Case <span className="font-mono font-medium">{activeTicket.id}</span>
-                </div>
-                <div className="inline-flex items-center gap-1.5 font-medium text-amber-600 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                  <span className="tabular-nums">SLA เหลือ {activeTicket.slaFormatted}</span>
-                </div>
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 text-text-secondary" />
-            </div>
-          )}
-        </div>
-      )}
+      <SideCardActiveActivity activeDeal={activeDeal} activeTicket={activeTicket} />
 
       <CustomerSideCardFooter
         customerId={customer.id}
         labels={labels}
         onAddLabel={handleAddLabel}
         onOpenTask={onOpenTask}
+        onOpenCreateCase={() => setIsCreateCaseOpen(true)}
+      />
+
+      <NewTicketModal
+        isOpen={isCreateCaseOpen}
+        customers={customers}
+        initialCustomerId={customer.id}
+        initialChannel={channel}
+        initialTitle={lastCustomerMsg.slice(0, 120)}
+        conversationId={conversationId}
+        defaultAssignee={currentUser?.name || 'ทีม Helpdesk'}
+        onClose={() => setIsCreateCaseOpen(false)}
+        onCreate={handleCreateCase}
       />
     </div>
   );

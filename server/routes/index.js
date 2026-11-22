@@ -10,6 +10,7 @@ import aiRoutes from './aiRoutes.js';
 import authRoutes from './authRoutes.js';
 import userRoutes from './userRoutes.js';
 import customerRoutes from './customerRoutes.js';
+import caseRoutes from './caseRoutes.js';
 import consentRoutes from './consentRoutes.js';
 import industryProfileRoutes from './industryProfileRoutes.js';
 import { requireAuth, requireRole } from '../services/authContainer.js';
@@ -54,6 +55,7 @@ router.use('/audit-logs', requireAuth, bindActor, auditLogRoutes);
 router.use('/ai', requireAuth, bindActor, aiRoutes);
 router.use('/customers', requireAuth, customerRoutes);
 router.use('/customers', requireAuth, industryProfileRoutes);
+router.use('/cases', requireAuth, caseRoutes);
 router.use('/consent', requireAuth, consentRoutes);
 router.use('/', requireAuth, botRoutes);
 

@@ -14,6 +14,8 @@ import { createInMemoryPermissionService } from '../core/server/rbac/permissionS
 import { createInMemoryLabelService } from '../core/server/labels/labelService.js';
 import { createInMemoryCustomFieldService } from '../core/server/custom-fields/customFieldService.js';
 import { createInMemoryCaseConfigService } from '../core/server/cases/caseConfigService.js';
+import { createInMemoryCaseRepository } from '../server/repositories/caseRepository.js';
+import { createCaseController } from '../server/controllers/caseController.js';
 import { createTemplateEngine } from '../core/server/template-engine/templateApplier.js';
 import { createTenantBootstrapRouter } from '../core/server/tenancy/tenantBootstrapRoutes.js';
 import { createCustomFieldRouter } from '../core/server/custom-fields/customFieldRoutes.js';
@@ -35,6 +37,7 @@ export const runTemplateSmokeFlow = async (templateName, customScenario) => {
   const labels = createInMemoryLabelService();
   const customFields = createInMemoryCustomFieldService();
   const caseConfigs = createInMemoryCaseConfigService();
+  const caseRepo = createInMemoryCaseRepository();
 
   const engine = createTemplateEngine({
     tenantRepo,
@@ -43,6 +46,7 @@ export const runTemplateSmokeFlow = async (templateName, customScenario) => {
     labels,
     customFields,
     caseConfigs,
+    caseRepo,
   });
 
   const slug = `smoke-${templateName.replace(/_/g, '-')}`;
@@ -93,6 +97,9 @@ export const runTemplateSmokeFlow = async (templateName, customScenario) => {
     })
   );
   app.use('/api', registry.buildApiRouter());
+  const caseCtrl = createCaseController({ caseRepo });
+  app.get('/api/cases', mockAuth, (req, res) => caseCtrl.listCases(req, res));
+  app.post('/api/cases', mockAuth, (req, res) => caseCtrl.createCase(req, res));
 
   const server = app.listen(0);
   const port = server.address().port;

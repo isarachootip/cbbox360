@@ -18,6 +18,7 @@ import { customFieldService as defaultCustomFields } from '../custom-fields/cust
 import { caseConfigService as defaultCaseConfigs } from '../cases/caseConfigService.js';
 import { customerRepository as defaultCustomerRepo } from '../../../server/repositories/customerRepository.js';
 import { conversationRepository as defaultConvStore } from '../../../server/repositories/conversationRepository.js';
+import { caseRepository as defaultCaseRepo } from '../../../server/repositories/caseRepository.js';
 
 const buildEntitlementMapFromTemplate = (ent = {}) => {
   const out = {};
@@ -37,6 +38,7 @@ export const createTemplateEngine = ({
   caseConfigs = defaultCaseConfigs,
   customerRepo = defaultCustomerRepo,
   convStore = defaultConvStore,
+  caseRepo = defaultCaseRepo,
 } = {}) => {
   const listAvailableTemplates = () => {
     if (!fs.existsSync(templatesDir)) return [];
@@ -124,6 +126,7 @@ export const createTemplateEngine = ({
       customFields,
       customerRepo,
       convStore,
+      caseRepo,
       templatesDir,
     });
 

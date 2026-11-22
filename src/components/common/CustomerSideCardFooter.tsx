@@ -8,6 +8,7 @@ interface CustomerSideCardFooterProps {
   labels: string[];
   onAddLabel: (label: string) => void;
   onOpenTask?: () => void;
+  onOpenCreateCase?: () => void;
 }
 
 export const CustomerSideCardFooter: React.FC<CustomerSideCardFooterProps> = ({
@@ -15,6 +16,7 @@ export const CustomerSideCardFooter: React.FC<CustomerSideCardFooterProps> = ({
   labels,
   onAddLabel,
   onOpenTask,
+  onOpenCreateCase,
 }) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -91,12 +93,16 @@ export const CustomerSideCardFooter: React.FC<CustomerSideCardFooterProps> = ({
           <button
             type="button"
             onClick={() => {
-              navigate('/cases');
-              showToast('เปิดสร้าง Ticket ใหม่สำหรับลูกค้า', 'info');
+              if (onOpenCreateCase) {
+                onOpenCreateCase();
+              } else {
+                navigate('/cases');
+                showToast('เปิดสร้าง Case ใหม่สำหรับลูกค้า', 'info');
+              }
             }}
-            className="py-1.5 text-xs font-medium border border-border bg-white hover:bg-bg-subtle rounded-lg text-text-primary transition-colors"
+            className="py-1.5 text-xs font-medium border border-border bg-white hover:bg-bg-subtle rounded-lg text-text-primary transition-colors cursor-pointer"
           >
-            + Ticket
+            + Case
           </button>
           <button
             type="button"

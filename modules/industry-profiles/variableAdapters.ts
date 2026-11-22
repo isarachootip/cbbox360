@@ -11,6 +11,7 @@ import {
 
 export const KIND_BY_TEMPLATE_MAP: Record<BusinessTemplateId, IndustryKind | null> = {
   contact_center: 'contact_center',
+  support_fix: null,
   hospital: 'hospital',
   auto_service: 'auto_service',
   logistics: 'logistics',

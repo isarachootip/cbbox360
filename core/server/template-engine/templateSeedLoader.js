@@ -90,6 +90,7 @@ export const applyTemplateSeedContacts = async ({
   customFields,
   customerRepo,
   convStore,
+  caseRepo,
   templatesDir,
 }) => {
   const bundle = loadTemplateSeedBundle(templateId, templatesDir);
@@ -120,6 +121,26 @@ export const applyTemplateSeedContacts = async ({
     for (const conv of bundle.conversations) {
       if (conv?.id) {
         await convStore.seedConversation(tenantId, conv);
+      }
+    }
+  }
+
+  if (caseRepo) {
+    for (const ticket of bundle.tickets) {
+      if (!ticket?.id) continue;
+      const existingCase = await caseRepo.findById(String(ticket.id), tenantId);
+      if (!existingCase) {
+        await caseRepo.upsert(
+          {
+            customerTier: 'MEMBER',
+            slaHoursLeft: 4,
+            slaStatus: 'normal',
+            priority: 'Normal',
+            ...ticket,
+            id: String(ticket.id),
+          },
+          tenantId
+        );
       }
     }
   }

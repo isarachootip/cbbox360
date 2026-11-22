@@ -16,6 +16,7 @@ import type {
 } from '../types';
 import { useCustomerDirectoryState } from '../hooks/useCustomerDirectoryState';
 import { useDealsAndTicketsState } from '../hooks/useDealsAndTicketsState';
+import type { CasePatchInput } from '../services/caseApi';
 import { useInboxConversationsState } from '../hooks/useInboxConversationsState';
 import {
   TaskComposerPayload,
@@ -38,6 +39,7 @@ interface CustomerContextType {
   addDeal: (deal: Omit<Deal, 'id' | 'createdDate'>) => void;
   addTicket: (ticket: Omit<Ticket, 'id' | 'createdAt' | 'activityLogs'>) => void;
   updateTicketStatus: (ticketId: string, status: Ticket['status']) => void;
+  updateTicketDetails: (ticketId: string, patch: CasePatchInput) => void;
   addTicketLog: (ticketId: string, text: string, author?: string) => void;
   updateConversationStatus: (convId: string, status: Conversation['status']) => void;
   addMessageToConversation: (
@@ -112,6 +114,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         addDeal: dealsAndTickets.addDeal,
         addTicket: dealsAndTickets.addTicket,
         updateTicketStatus: dealsAndTickets.updateTicketStatus,
+        updateTicketDetails: dealsAndTickets.updateTicketDetails,
         addTicketLog: dealsAndTickets.addTicketLog,
         updateConversationStatus: inbox.updateConversationStatus,
         addMessageToConversation: inbox.addMessageToConversation,

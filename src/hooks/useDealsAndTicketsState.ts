@@ -5,6 +5,7 @@ import { mockTickets } from '../data/tickets';
 import { mockTimelineEvents } from '../data/timeline';
 import { useAuth } from '../context/AuthContext';
 import { useTenantRuntime } from '../../core/client/providers/TenantRuntimeContext';
+import { caseApi, CasePatchInput } from '../services/caseApi';
 
 const STAGE_PROBABILITIES: Record<Deal['stage'], number> = {
   Lead: 10,
@@ -27,28 +28,45 @@ export const useDealsAndTicketsState = () => {
   useEffect(() => {
     if (isDefaultTenant) {
       setDeals(mockDeals);
-      setTickets(mockTickets);
       setTimelineEvents(mockTimelineEvents);
+    } else {
+      setDeals([]);
+      setTickets([]);
+      setTimelineEvents([]);
+    }
+
+    if (!currentUser) {
+      if (isDefaultTenant) setTickets(mockTickets);
       return;
     }
 
-    setDeals([]);
-    setTickets([]);
-    setTimelineEvents([]);
-
-    if (!currentUser) return;
     let cancelled = false;
-    fetch('/api/tenant/seed-workspace', { credentials: 'include' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (cancelled || !data) return;
-        if (Array.isArray(data.deals)) setDeals(data.deals);
-        if (Array.isArray(data.tickets)) setTickets(data.tickets);
-        if (Array.isArray(data.timelineEvents)) setTimelineEvents(data.timelineEvents);
-      })
-      .catch(() => {
-        // Keep clean empty arrays for non-default tenants when offline
-      });
+    const loadWorkspace = async () => {
+      const [caseRes, seedRes] = await Promise.all([
+        caseApi.list(),
+        isDefaultTenant
+          ? Promise.resolve(null)
+          : fetch('/api/tenant/seed-workspace', { credentials: 'include' })
+              .then((r) => (r.ok ? r.json() : null))
+              .catch(() => null),
+      ]);
+      if (cancelled) return;
+
+      if (seedRes) {
+        if (Array.isArray(seedRes.deals)) setDeals(seedRes.deals);
+        if (Array.isArray(seedRes.timelineEvents)) setTimelineEvents(seedRes.timelineEvents);
+      }
+
+      if (caseRes.ok && caseRes.cases.length > 0) {
+        setTickets(caseRes.cases);
+      } else if (!isDefaultTenant && Array.isArray(seedRes?.tickets)) {
+        setTickets(seedRes.tickets);
+      } else if (isDefaultTenant) {
+        setTickets(mockTickets);
+      }
+    };
+
+    void loadWorkspace();
     return () => {
       cancelled = true;
     };
@@ -85,29 +103,71 @@ export const useDealsAndTicketsState = () => {
   };
 
   const addTicket = (ticketData: Omit<Ticket, 'id' | 'createdAt' | 'activityLogs'>) => {
-    const newTicket: Ticket = {
+    const tempId = `CS-${Math.floor(4100 + Math.random() * 899)}`;
+    const optimistic: Ticket = {
       ...ticketData,
-      id: `TK-${Math.floor(2320 + Math.random() * 100)}`,
+      id: tempId,
       createdAt: 'วันนี้',
-      activityLogs: [{ time: 'เพิ่งสร้าง', author: 'ระบบ', text: `สร้างเคสใหม่: ${ticketData.title}`, type: 'system' }],
+      activityLogs: [
+        { time: 'เพิ่งสร้าง', author: currentUser?.name || 'ระบบ', text: `สร้างเคสใหม่: ${ticketData.title}`, type: 'system' },
+      ],
     };
-    setTickets((prev) => [newTicket, ...prev]);
+    setTickets((prev) => [optimistic, ...prev]);
+    void caseApi.create(ticketData).then((res) => {
+      if (res.ok) setTickets((prev) => prev.map((t) => (t.id === tempId ? res.record : t)));
+    });
+    addTimelineEvent({
+      id: `tl-case-${Date.now()}`,
+      customerId: ticketData.customerId,
+      type: 'Ticket',
+      iconCode: 'TK',
+      title: `เปิดเคสใหม่: ${ticketData.title}`,
+      time: 'เมื่อสักครู่',
+      detail: `${ticketData.category}${ticketData.systemName ? ` · ระบบ ${ticketData.systemName}` : ''}`,
+      meta: [ticketData.channel, ticketData.priority || 'Normal'],
+      linkText: 'เปิดดูเคส',
+      linkRoute: `/cases?caseId=${tempId}`,
+      colorScheme: 'blue',
+    });
   };
 
   const updateTicketStatus = (ticketId: string, status: Ticket['status']) => {
     setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status } : t)));
+    void caseApi.update(ticketId, { status }).then((res) => {
+      if (res.ok) setTickets((prev) => prev.map((t) => (t.id === ticketId ? res.record : t)));
+    });
   };
 
-  const addTicketLog = (ticketId: string, text: string, author: string = 'วิภา ส.') => {
+  const updateTicketDetails = (ticketId: string, patch: CasePatchInput) => {
+    setTickets((prev) =>
+      prev.map((t) =>
+        t.id === ticketId
+          ? {
+              ...t,
+              ...patch,
+              externalTicketId: patch.externalTicketId === null ? undefined : (patch.externalTicketId ?? t.externalTicketId),
+              externalSystem: patch.externalSystem === null ? undefined : (patch.externalSystem ?? t.externalSystem),
+              externalUrl: patch.externalUrl === null ? undefined : (patch.externalUrl ?? t.externalUrl),
+            }
+          : t
+      )
+    );
+    void caseApi.update(ticketId, patch).then((res) => {
+      if (res.ok) setTickets((prev) => prev.map((t) => (t.id === ticketId ? res.record : t)));
+    });
+  };
+
+  const addTicketLog = (ticketId: string, text: string, author: string = currentUser?.name || 'วิภา ส.') => {
     const now = new Date();
     const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     setTickets((prev) =>
       prev.map((t) =>
-        t.id === ticketId
-          ? { ...t, activityLogs: [...t.activityLogs, { time: timeStr, author, text, type: 'agent' }] }
-          : t
+        t.id === ticketId ? { ...t, activityLogs: [...t.activityLogs, { time: timeStr, author, text, type: 'agent' }] } : t
       )
     );
+    void caseApi.addLog(ticketId, text, author).then((res) => {
+      if (res.ok) setTickets((prev) => prev.map((t) => (t.id === ticketId ? res.record : t)));
+    });
   };
 
   const cascadeCustomerNameToDealsAndTickets = (customerId: string, newName: string) => {
@@ -124,6 +184,7 @@ export const useDealsAndTicketsState = () => {
     addDeal,
     addTicket,
     updateTicketStatus,
+    updateTicketDetails,
     addTicketLog,
     cascadeCustomerNameToDealsAndTickets,
   };

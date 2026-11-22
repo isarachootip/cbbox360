@@ -235,20 +235,30 @@ export interface TierChangeLog {
   date: string;
 }
 
+export type TicketStatus = 'Open' | 'In Progress' | 'Pending' | 'Waiting' | 'Resolved' | 'Closed';
+export type TicketPriority = 'Critical' | 'High' | 'Normal' | 'Low';
+
 export interface Ticket {
-  id: string; // "TK-2310"
+  id: string; // "TK-2310" or "CS-4001"
   customerId: string;
   customerName: string;
   customerTier: TierType;
   title: string;
-  category: 'Complaint' | 'Inquiry' | 'Claim' | 'Request' | 'Billing' | 'Credit' | 'DSR';
+  description?: string;
+  category: string;
+  systemName?: string;
+  priority?: TicketPriority;
   channel: ChannelType;
-  status: 'Open' | 'Pending' | 'Waiting' | 'Closed';
+  status: TicketStatus;
   slaHoursLeft: number;
   slaFormatted: string; // "3 ชม.", "เกิน 25 นาที", "1 วัน"
   slaStatus: 'normal' | 'warning' | 'danger';
   assignee: string;
   createdAt: string;
+  conversationId?: string;
+  externalTicketId?: string;
+  externalSystem?: string;
+  externalUrl?: string;
   orderRef?: string;
   orderAmount?: number;
   slaTargetNote?: string;
@@ -543,6 +553,7 @@ export interface AuditLogEntry {
 
 export type BusinessTemplateId =
   | 'contact_center'
+  | 'support_fix'
   | 'hospital'
   | 'logistics'
   | 'auto_service'
@@ -565,7 +576,7 @@ export interface BusinessTemplatePreset {
   thaiTitle: string;
   tagline: string;
   description: string;
-  iconName: 'headset' | 'hospital' | 'truck' | 'car' | 'building';
+  iconName: 'headset' | 'wrench' | 'hospital' | 'truck' | 'car' | 'building';
   accentColor: 'cyan' | 'emerald' | 'blue' | 'amber' | 'purple';
   recommendedMenus: string[];
   customVariables: { key: string; label: string; example: string }[];

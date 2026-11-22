@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Headset,
+  Wrench,
   Stethoscope,
   Truck,
   Car,
@@ -39,6 +40,8 @@ export const BusinessTemplateCard: React.FC<BusinessTemplateCardProps> = ({
     switch (iconName) {
       case 'headset':
         return <Headset className="w-5 h-5 text-cyan-600" />;
+      case 'wrench':
+        return <Wrench className="w-5 h-5 text-sky-600" />;
       case 'hospital':
         return <Stethoscope className="w-5 h-5 text-emerald-600" />;
       case 'truck':

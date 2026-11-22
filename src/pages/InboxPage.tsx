@@ -126,6 +126,7 @@ export const InboxPage: React.FC = () => {
           <CustomerSideCard
             customer={ws.currentCustomer}
             conversationId={ws.selectedConv?.id}
+            channel={ws.selectedConv?.channel}
             messages={ws.selectedConv?.messages}
             onOpenTask={() => ws.setComposerMode('task')}
           />

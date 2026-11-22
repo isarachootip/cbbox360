@@ -1,0 +1,214 @@
+contacts:
+  - id: SF001
+    name: "บจก. สยามเทค เอ็นเตอร์ไพรส์"
+    nickname: "คุณธนกฤต (IT Manager)"
+    customerType: "CORPORATE"
+    tier: "PLATINUM"
+    phone: "02-641-9901"
+    email: "it.support@siamtech.co.th"
+    customerSince: "ม.ค. 2024"
+    segments: ["MA Platinum", "ERP + POS"]
+    nextBestAction:
+      description: "ติดตามผลหลังอัปเดตแพตช์ระบบ ERP Billing เวอร์ชัน 4.2"
+      actionLabel: "ติดตามสถานะเคส"
+    customFields:
+      company_code: "ST-2024-001"
+      system_name: "ERP Billing + POS Cloud"
+      ma_status: "ACTIVE"
+      ma_expiry_date: "2027-06-30"
+      sla_tier: "PLATINUM"
+  - id: SF002
+    name: "หจก. เจริญรุ่งเรือง โลจิสติกส์"
+    nickname: "คุณปวีณา (บัญชี)"
+    customerType: "CORPORATE"
+    tier: "GOLD"
+    phone: "089-412-5588"
+    email: "acc@charoen-logis.th"
+    customerSince: "ส.ค. 2023"
+    segments: ["MA หมดอายุ", "WMS"]
+    nextBestAction:
+      description: "แจ้งเตือนต่ออายุสัญญา MA และเสนอราคาตรวจเช็คเครื่องสแกนบาร์โค้ด"
+      actionLabel: "แจ้งต่อสัญญา MA"
+    customFields:
+      company_code: "CR-2023-018"
+      system_name: "WMS คลังสินค้า + เครื่องสแกน Handheld"
+      ma_status: "EXPIRED"
+      ma_expiry_date: "2026-09-30"
+      sla_tier: "GOLD"
+  - id: SF003
+    name: "คลินิกทันตกรรม สไมล์พลัส"
+    nickname: "คุณมินตรา (ผู้จัดการสาขา)"
+    customerType: "CORPORATE"
+    tier: "SILVER"
+    phone: "086-330-7741"
+    email: "admin@smileplusclinic.th"
+    customerSince: "มี.ค. 2025"
+    segments: ["POS หน้าร้าน", "Warranty"]
+    nextBestAction:
+      description: "ส่งคู่มือการตั้งค่าเครื่องพิมพ์ใบเสร็จ Thermal ผ่าน LINE"
+      actionLabel: "ส่งคู่มือตั้งค่า"
+    customFields:
+      company_code: "SP-2025-042"
+      system_name: "Clinic POS + Thermal Printer"
+      ma_status: "WARRANTY"
+      ma_expiry_date: "2027-03-15"
+      sla_tier: "STANDARD"
+
+conversations:
+  - id: sfconv-1
+    customerId: SF001
+    customerName: "บจก. สยามเทค เอ็นเตอร์ไพรส์"
+    customerTier: "PLATINUM"
+    channel: "LINE"
+    channelAccount: "Support & Fix Official"
+    time: "10:15"
+    lastMessagePreview: "ตอนนี้ระบบ ERP ออกใบแจ้งหนี้ไม่ได้ ขึ้น Error 500 รบกวนเช็คด่วนครับ"
+    label: "ระบบล่ม"
+    unreadCount: 1
+    status: "Open"
+    assignedTo: "นพดล (L1)"
+    team: "Tier 2 Emergency"
+    tabGroup: "Mine"
+    messages:
+      - id: sfm-1
+        sender: "customer"
+        text: "สวัสดีครับ จาก สยามเทค (ST-2024-001) ครับ"
+        time: "10:14"
+      - id: sfm-2
+        sender: "customer"
+        text: "ตอนนี้ระบบ ERP ออกใบแจ้งหนี้ไม่ได้ ขึ้น Error 500 รบกวนเช็คด่วนครับ"
+        time: "10:15"
+      - id: sfm-3
+        sender: "note"
+        authorName: "นพดล (L1)"
+        text: "ลูกค้า Platinum SLA 15 นาที เปิดเคส CS-4001 และส่งต่อทีม L2 แล้ว"
+        time: "10:17"
+        isPrivateNote: true
+  - id: sfconv-2
+    customerId: SF002
+    customerName: "หจก. เจริญรุ่งเรือง โลจิสติกส์"
+    customerTier: "GOLD"
+    channel: "LINE"
+    channelAccount: "Support & Fix Official"
+    time: "09:40"
+    lastMessagePreview: "เครื่องสแกน Handheld ซิงก์ยอดเข้าคลังไม่ได้ครับ รบกวนตามงานซ่อมให้หน่อย"
+    label: "แจ้งซ่อมอุปกรณ์"
+    unreadCount: 0
+    status: "Open"
+    assignedTo: "สุชาติ (Field)"
+    team: "Field Technician"
+    tabGroup: "Mine"
+    messages:
+      - id: sfm-201
+        sender: "customer"
+        text: "เครื่องสแกน Handheld ซิงก์ยอดเข้าคลังไม่ได้ครับ รบกวนตามงานซ่อมให้หน่อย"
+        time: "09:40"
+  - id: sfconv-3
+    customerId: SF003
+    customerName: "คลินิกทันตกรรม สไมล์พลัส"
+    customerTier: "SILVER"
+    channel: "Facebook"
+    channelAccount: "Support & Fix Care Page"
+    time: "09:05"
+    lastMessagePreview: "อยากทราบวิธี Export รายงานยอดขายรายเดือนเป็น Excel ค่ะ"
+    label: "สอบถามการใช้งาน"
+    unreadCount: 1
+    status: "Open"
+    assignedTo: "นพดล (L1)"
+    team: "Helpdesk L1"
+    tabGroup: "Unassigned"
+    messages:
+      - id: sfm-301
+        sender: "customer"
+        text: "อยากทราบวิธี Export รายงานยอดขายรายเดือนเป็น Excel ค่ะ"
+        time: "09:05"
+
+tickets:
+  - id: "CS-4001"
+    customerId: "SF001"
+    customerName: "บจก. สยามเทค เอ็นเตอร์ไพรส์"
+    customerTier: "PLATINUM"
+    title: "ระบบ ERP ออกใบแจ้งหนี้ขึ้น Error 500 หลังปิดรอบบัญชี"
+    description: "ผู้ใช้งานฝั่งบัญชีทุกเครื่องกดออกใบแจ้งหนี้แล้วขึ้น HTTP 500 ตั้งแต่เวลา 10:10 น."
+    category: "ระบบล่ม / ใช้งานไม่ได้"
+    systemName: "ERP Billing"
+    priority: "Critical"
+    channel: "LINE"
+    status: "In Progress"
+    assignee: "วิศวกร L2 (กฤษณะ)"
+    conversationId: "sfconv-1"
+    externalTicketId: "HD-90412"
+    externalSystem: "Legacy Helpdesk"
+    slaHoursLeft: 1.5
+    slaFormatted: "1 ชม. 30 นาที"
+    slaStatus: "warning"
+    slaTargetNote: "Critical P1: ตอบใน 15 นาที · แก้ไขใน 2 ชม."
+    createdAt: "วันนี้ 10:16"
+    activityLogs:
+      - time: "10:16"
+        author: "นพดล (L1)"
+        text: "รับแจ้งจาก LINE OA และเปิดเคสด่วนระดับ Critical (MA Active)"
+        type: "system"
+      - time: "10:22"
+        author: "วิศวกร L2 (กฤษณะ)"
+        text: "ตรวจสอบ log พบ connection pool เต็ม กำลังเคลียร์ job ค้างและเชื่อมเลขอ้างอิง HD-90412"
+        type: "agent"
+  - id: "CS-4002"
+    customerId: "SF002"
+    customerName: "หจก. เจริญรุ่งเรือง โลจิสติกส์"
+    customerTier: "GOLD"
+    title: "เครื่องสแกน Handheld ซิงก์ยอดเข้า WMS ไม่ได้"
+    description: "แจ้งตรวจสอบตัวเครื่องและอัปเดตเฟิร์มแวร์ (สถานะสัญญา MA หมดอายุแล้ว แจ้งใบเสนอราคาซ่อมแล้ว)"
+    category: "แจ้งซ่อม / ตรวจเช็คอุปกรณ์"
+    systemName: "WMS Handheld Scanner"
+    priority: "High"
+    channel: "LINE"
+    status: "Waiting"
+    assignee: "สุชาติ (Field)"
+    conversationId: "sfconv-2"
+    slaHoursLeft: 4
+    slaFormatted: "4 ชม."
+    slaStatus: "normal"
+    slaTargetNote: "Out-of-MA: รอลูกค้ายืนยันใบเสนอราคาค่าบริการ"
+    createdAt: "วันนี้ 09:45"
+    activityLogs:
+      - time: "09:45"
+        author: "สุชาติ (Field)"
+        text: "เปิดเคสแจ้งซ่อมอุปกรณ์และแจ้งสถานะ MA หมดอายุให้ลูกค้าทราบ"
+        type: "agent"
+  - id: "CS-4003"
+    customerId: "SF003"
+    customerName: "คลินิกทันตกรรม สไมล์พลัส"
+    customerTier: "SILVER"
+    title: "สอบถามวิธี Export รายงานยอดขายรายเดือนเป็น Excel"
+    description: "ลูกค้าต้องการคู่มือการส่งออกรายงานภาษีขายประจำเดือนจากหน้า Clinic POS"
+    category: "สอบถามการใช้งานระบบ (How-to)"
+    systemName: "Clinic POS"
+    priority: "Normal"
+    channel: "Facebook"
+    status: "Open"
+    assignee: "นพดล (L1)"
+    conversationId: "sfconv-3"
+    slaHoursLeft: 6
+    slaFormatted: "6 ชม."
+    slaStatus: "normal"
+    slaTargetNote: "Standard: ตอบใน 30 นาที · ปิดใน 4 ชม."
+    createdAt: "วันนี้ 09:10"
+    activityLogs:
+      - time: "09:10"
+        author: "ระบบ"
+        text: "สร้างเคสสอบถามการใช้งานจาก Facebook Inbox"
+        type: "system"
+
+timelineEvents:
+  - id: "sftl-1"
+    customerId: "SF001"
+    type: "Ticket"
+    iconCode: "TK"
+    colorScheme: "blue"
+    title: "เปิดเคส CS-4001: ระบบ ERP ออกใบแจ้งหนี้ขึ้น Error 500"
+    time: "10:16"
+    detail: "ระดับ Critical P1 · ทีมวิศวกร L2 กำลังตรวจสอบ log และดำเนินการแก้ไข"
+    meta: ["ERP Billing", "HD-90412", "Critical"]
+    linkText: "เปิดดูเคส"
+    linkRoute: "/cases?caseId=CS-4001"

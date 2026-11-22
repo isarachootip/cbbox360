@@ -3,9 +3,14 @@ import {
   contactCenterCompanyProfile,
   contactCenterKnowledgeItems,
 } from './contactCenterPreset';
+import {
+  supportFixCompanyProfile,
+  supportFixKnowledgeItems,
+} from './supportFixPreset';
 
 export const templateCompanyProfiles: Record<BusinessTemplateId, CompanyProfile> = {
   contact_center: contactCenterCompanyProfile,
+  support_fix: supportFixCompanyProfile,
   b2b_wholesale: {
     companyName: 'บจก. คัสบอกซ์ สามหกศูนย์ (CusBox360)',
     businessType: 'ธุรกิจค้าส่งเครื่องพิมพ์อุตสาหกรรม หมึกพิมพ์แท้ และอุปกรณ์สำนักงานครบวงจร (B2B Wholesale)',
@@ -58,6 +63,7 @@ export const templateCompanyProfiles: Record<BusinessTemplateId, CompanyProfile>
 
 export const templateKnowledgeItems: Record<BusinessTemplateId, KnowledgeItem[]> = {
   contact_center: contactCenterKnowledgeItems,
+  support_fix: supportFixKnowledgeItems,
   b2b_wholesale: [
     {
       id: 'km-b2b-products',

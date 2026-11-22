@@ -1,0 +1,186 @@
+apiVersion: cb360.io/v1
+kind: IndustryTemplate
+metadata:
+  id: support_fix
+  version: 1.0.0
+  industry: support_fix
+  name: Support & Fix (Helpdesk & Maintenance)
+  thaiTitle: ศูนย์บริการรับแจ้งปัญหา ติดตามระบบงาน และซ่อมบำรุง (Helpdesk)
+  description: เทมเพลตมาตรฐานสำหรับงาน IT Helpdesk, Support & Fix ติดตามสอบถามสถานะระบบงาน แจ้งซ่อมอุปกรณ์ บริหาร SLA สัญญา MA และรองรับการเชื่อมเลขอ้างอิงระบบ Helpdesk ภายนอก
+
+entitlements:
+  modules: []
+  connectors: []
+  flags:
+    - ai_copilot
+    - voice_3cx
+    - pdpa_consent
+
+brandingDefaults:
+  primaryColor: "#0284C7"
+  accentColor: "#0369A1"
+
+labels:
+  th:
+    contact.singular: "ผู้แจ้ง / ลูกค้า"
+    contact.plural: "ทะเบียนลูกค้า MA"
+    contact.create_button: "เพิ่มลูกค้าใหม่"
+    contact.code_label: "รหัสลูกค้า (Company Code)"
+    case.singular: "เคสแจ้งปัญหา"
+    case.plural: "รายการเคส Support & Fix"
+    tab.addresses: "สถานที่ติดตั้ง / สาขา"
+
+roles:
+  - key: helpdesk_l1
+    name: "เจ้าหน้าที่ Helpdesk L1"
+    permissions:
+      - "contact:read"
+      - "contact:write"
+      - "case:read"
+      - "case:write"
+      - "inbox:read"
+      - "inbox:write"
+  - key: tech_l2
+    name: "ทีมเทคนิค / ช่างซ่อม (L2 Engineer)"
+    permissions:
+      - "contact:read"
+      - "contact:write"
+      - "contact.pii:read"
+      - "case:read"
+      - "case:write"
+      - "inbox:read"
+      - "inbox:write"
+  - key: support_supervisor
+    name: "หัวหน้าศูนย์ Support & SLA"
+    permissions:
+      - "contact:read"
+      - "contact:write"
+      - "contact.pii:read"
+      - "case:read"
+      - "case:write"
+      - "inbox:read"
+      - "inbox:write"
+
+customFields:
+  contact:
+    - key: company_code
+      label: "รหัสลูกค้า / องค์กร"
+      type: text
+      isIndexed: true
+      validation:
+        required: true
+        unique: true
+        regex: "^[A-Za-z0-9-]{3,24}$"
+        regexError: "รหัสลูกค้าต้องเป็นตัวอักษรหรือตัวเลข 3-24 ตัว"
+      ui:
+        group: "ข้อมูลองค์กรและระบบงาน"
+        order: 1
+        showInList: true
+        variableKey: "company_code"
+    - key: system_name
+      label: "ระบบงาน / อุปกรณ์ที่ดูแล"
+      type: text
+      isIndexed: true
+      ui:
+        group: "ข้อมูลองค์กรและระบบงาน"
+        order: 2
+        showInList: true
+        variableKey: "system_name"
+    - key: ma_status
+      label: "สถานะสัญญา MA / ประกัน"
+      type: select
+      isIndexed: true
+      options:
+        - value: "ACTIVE"
+          label: "อยู่ในสัญญา MA (Active)"
+        - value: "EXPIRING"
+          label: "สัญญา MA ใกล้หมดอายุ"
+        - value: "EXPIRED"
+          label: "หมดสัญญา MA (Out-of-Warranty)"
+        - value: "WARRANTY"
+          label: "อยู่ในระยะรับประกันอุปกรณ์"
+      ui:
+        group: "สัญญาบริการและ SLA"
+        order: 3
+        showInList: true
+        alertBanner:
+          whenEquals: ["EXPIRED", "EXPIRING"]
+          severity: warning
+          prefix: "แจ้งเตือนสัญญา MA:"
+    - key: ma_expiry_date
+      label: "วันหมดอายุสัญญา MA"
+      type: date
+      isIndexed: true
+      ui:
+        group: "สัญญาบริการและ SLA"
+        order: 4
+        showInList: true
+    - key: sla_tier
+      label: "ระดับ SLA"
+      type: select
+      options:
+        - value: "PLATINUM"
+          label: "Platinum (ตอบใน 15 นาที · 24x7)"
+        - value: "GOLD"
+          label: "Gold (ตอบใน 30 นาที · จ.-ส.)"
+        - value: "STANDARD"
+          label: "Standard (ตอบใน 1 ชม. · เวลาทำการ)"
+      ui:
+        group: "สัญญาบริการและ SLA"
+        order: 5
+        showInList: true
+        variableKey: "sla_tier"
+
+slaPolicies:
+  - slug: critical_outage
+    name: "ระบบล่ม / หยุดชะงักเร่งด่วน (Critical P1)"
+    firstResponseMinutes: 15
+    resolutionMinutes: 120
+    escalationMinutesBeforeBreach: 15
+  - slug: support_standard
+    name: "แจ้งบั๊ก สอบถามระบบ และแจ้งซ่อมทั่วไป"
+    firstResponseMinutes: 30
+    resolutionMinutes: 240
+    escalationMinutesBeforeBreach: 30
+
+caseCategories:
+  - slug: system_down
+    name: "ระบบล่ม / ใช้งานไม่ได้"
+    slaPolicySlug: critical_outage
+    defaultQueue: "Tier 2 Emergency"
+    requiredFields: ["company_code"]
+  - slug: bug_error
+    name: "แจ้งปัญหา / Error ระบบงาน"
+    slaPolicySlug: support_standard
+    defaultQueue: "Application Support"
+  - slug: how_to
+    name: "สอบถามการใช้งานระบบ (How-to)"
+    slaPolicySlug: support_standard
+    defaultQueue: "Helpdesk L1"
+  - slug: hardware_fix
+    name: "แจ้งซ่อม / ตรวจเช็คอุปกรณ์"
+    slaPolicySlug: support_standard
+    defaultQueue: "Field Technician"
+  - slug: change_request
+    name: "ขอปรับแต่ง / เพิ่มฟีเจอร์ (CR)"
+    slaPolicySlug: support_standard
+    defaultQueue: "Product & CR"
+
+workflows:
+  - id: wf_sf_outage_urgent
+    name: "ยกระดับความเร่งด่วนทันทีเมื่อลูกค้าแจ้งระบบล่ม"
+    trigger: "case.created"
+    conditions:
+      - field: "category_slug"
+        operator: "eq"
+        value: "system_down"
+    actions:
+      - type: "set_priority"
+        value: "urgent"
+      - type: "notify_role"
+        role: "supervisor"
+        message: "พบเคสระบบล่ม (Critical P1) ต้องตอบกลับภายใน 15 นาที"
+
+omnichannelPresets:
+  ivrGreeting: "สวัสดีครับ ศูนย์บริการ Support & Fix ยินดีให้บริการ กด 1 แจ้งระบบล่มฉุกเฉิน กด 2 ติดตามสถานะงานซ่อมและเคสเดิม กด 3 สอบถามการใช้งานระบบ"
+  agentCallScript: "สวัสดีครับ ขอทราบชื่อผู้แจ้ง รหัสลูกค้า หรือเลขเคสเดิม พร้อมระบุชื่อระบบงานที่พบปัญหาเพื่อตรวจสอบสถานะให้ทันทีครับ"

@@ -15,6 +15,7 @@ const STORAGE_KEY = 'cb360_business_template_state';
 
 const templateIdSchema = z.enum([
   'contact_center',
+  'support_fix',
   'hospital',
   'logistics',
   'auto_service',
@@ -45,6 +46,7 @@ const storedStateSchema = z.object({
   menuOverrides: z
     .object({
       contact_center: menuOverrideEntrySchema.optional(),
+      support_fix: menuOverrideEntrySchema.optional(),
       hospital: menuOverrideEntrySchema.optional(),
       logistics: menuOverrideEntrySchema.optional(),
       auto_service: menuOverrideEntrySchema.optional(),

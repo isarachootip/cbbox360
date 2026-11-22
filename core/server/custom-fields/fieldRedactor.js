@@ -19,6 +19,31 @@ const maskString = (val) => {
   return `${s.slice(0, 2)}••••${s.slice(-2)}`;
 };
 
+const matchesAlertBanner = (bannerCfg, val, hasVal) => {
+  if (!bannerCfg) return false;
+  if (bannerCfg.whenNonEmpty && hasVal) return true;
+  if (bannerCfg.whenEquals !== undefined && hasVal) {
+    const targets = Array.isArray(bannerCfg.whenEquals)
+      ? bannerCfg.whenEquals
+      : [bannerCfg.whenEquals];
+    const current = Array.isArray(val) ? val.map(String) : [String(val)];
+    return targets.some((t) => current.includes(String(t)));
+  }
+  return false;
+};
+
+const resolveBannerText = (def, val, canView) => {
+  if (!canView) {
+    return def.ui.alertBanner.redactedMessage || `มีข้อมูล ${def.label} ที่จำกัดสิทธิ์การเข้าถึง`;
+  }
+  if (def.ui.alertBanner.message) return def.ui.alertBanner.message;
+  if (Array.isArray(def.options)) {
+    const matched = def.options.find((opt) => String(opt.value) === String(val));
+    if (matched?.label) return matched.label;
+  }
+  return formatDisplayValue(val);
+};
+
 /**
  * Redacts custom field values for API responses based on caller permissions and emits declarative alert banners.
  */
@@ -61,14 +86,12 @@ export const redactCustomFields = async ({
       // mode === 'hide' omits the field completely
     }
 
-    if (def.ui?.alertBanner?.whenNonEmpty && hasVal) {
+    if (matchesAlertBanner(def.ui?.alertBanner, val, hasVal)) {
       banners.push({
         fieldKey: def.key,
         severity: def.ui.alertBanner.severity || 'warning',
         prefix: def.ui.alertBanner.prefix || `${def.label}:`,
-        text: canView
-          ? formatDisplayValue(val)
-          : def.ui.alertBanner.redactedMessage || `มีข้อมูล ${def.label} ที่จำกัดสิทธิ์การเข้าถึง`,
+        text: resolveBannerText(def, val, canView),
         redacted: !canView,
       });
     }
