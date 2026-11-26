@@ -10,6 +10,7 @@ import {
 } from '../../src/types/industryProfile';
 
 export const KIND_BY_TEMPLATE_MAP: Record<BusinessTemplateId, IndustryKind | null> = {
+  consumer_finance: null,
   contact_center: 'contact_center',
   support_fix: null,
   hospital: 'hospital',

@@ -561,6 +561,7 @@ export interface AuditLogEntry {
 }
 
 export type BusinessTemplateId =
+  | 'consumer_finance'
   | 'contact_center'
   | 'support_fix'
   | 'hospital'
@@ -585,8 +586,8 @@ export interface BusinessTemplatePreset {
   thaiTitle: string;
   tagline: string;
   description: string;
-  iconName: 'headset' | 'wrench' | 'hospital' | 'truck' | 'car' | 'building';
-  accentColor: 'cyan' | 'emerald' | 'blue' | 'amber' | 'purple';
+  iconName: 'smartphone' | 'headset' | 'wrench' | 'hospital' | 'truck' | 'car' | 'building';
+  accentColor: 'rose' | 'cyan' | 'emerald' | 'blue' | 'amber' | 'purple';
   recommendedMenus: string[];
   customVariables: { key: string; label: string; example: string }[];
   workflowHighlights: string[];

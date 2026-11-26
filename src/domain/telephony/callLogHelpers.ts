@@ -54,20 +54,31 @@ export const formatNowCallTimestamp = (): string => {
   return `วันนี้ ${hh}:${mm}`;
 };
 
-export const loadStoredCallLogs = (): CallLogRecord[] => {
+const storageKeyForTenant = (tenantId = 'default'): string =>
+  tenantId === 'default' ? CALL_LOGS_STORAGE_KEY : `${CALL_LOGS_STORAGE_KEY}__${tenantId}`;
+
+export const parseCallLogRecords = (candidate: unknown): CallLogRecord[] => {
+  const parsed = callLogArraySchema.safeParse(candidate);
+  return parsed.success ? parsed.data : [];
+};
+
+export const loadStoredCallLogs = (
+  tenantId = 'default',
+  fallback: CallLogRecord[] = tenantId === 'default' ? initialCallLogs : []
+): CallLogRecord[] => {
   try {
-    const raw = sessionStorage.getItem(CALL_LOGS_STORAGE_KEY);
-    if (!raw) return initialCallLogs;
+    const raw = sessionStorage.getItem(storageKeyForTenant(tenantId));
+    if (!raw) return fallback;
     const parsed = callLogArraySchema.safeParse(JSON.parse(raw));
-    return parsed.success ? parsed.data : initialCallLogs;
+    return parsed.success ? parsed.data : fallback;
   } catch {
-    return initialCallLogs;
+    return fallback;
   }
 };
 
-export const saveStoredCallLogs = (logs: CallLogRecord[]): void => {
+export const saveStoredCallLogs = (logs: CallLogRecord[], tenantId = 'default'): void => {
   try {
-    sessionStorage.setItem(CALL_LOGS_STORAGE_KEY, JSON.stringify(logs));
+    sessionStorage.setItem(storageKeyForTenant(tenantId), JSON.stringify(logs));
   } catch {
     // Ignore storage quota errors
   }

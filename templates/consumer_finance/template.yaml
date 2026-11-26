@@ -1,0 +1,198 @@
+apiVersion: cb360.io/v1
+kind: IndustryTemplate
+metadata:
+  id: consumer_finance
+  version: 1.0.0
+  industry: consumer_finance
+  name: Hire Purchase & Consumer Finance (SG Finance+)
+  thaiTitle: ธุรกิจเช่าซื้อเครื่องใช้ไฟฟ้า ผ่อนมือถือล็อกเครื่อง และสินเชื่อรายย่อย
+  description: เทมเพลตมาตรฐานสำหรับเครือธุรกิจเช่าซื้อและ Non-Bank (เช่น SINGER & SG Capital) รองรับสินเชื่อผ่อนมือถือล็อกเครื่อง (SG Finance+) ผ่อนเครื่องใช้ไฟฟ้า สินเชื่อรถทำเงิน ติดตามค่างวด (Collection) และแจ้งซ่อมหลังการขาย
+
+entitlements:
+  modules: [credit-sales]
+  connectors: []
+  flags: [ai_copilot, voice_3cx, pdpa_consent]
+
+brandingDefaults:
+  primaryColor: "#E11D48"
+  accentColor: "#BE123C"
+
+labels:
+  th:
+    contact.singular: "ลูกค้าสินเชื่อ"
+    contact.plural: "ทะเบียนผู้เช่าซื้อ / สินเชื่อ"
+    contact.create_button: "เพิ่มลูกค้าสินเชื่อใหม่"
+    contact.code_label: "เลขที่สัญญาเช่าซื้อ"
+    case.singular: "เคสบริการสัญญา / แจ้งซ่อม"
+    case.plural: "รายการเคสสินเชื่อ ปลดล็อกเครื่อง และแจ้งซ่อม"
+    tab.addresses: "ที่อยู่ตามสัญญา / จุดติดตั้งสินค้า"
+
+roles:
+  - key: loan_officer
+    name: "เจ้าหน้าที่สินเชื่อและอนุมัติสัญญา (Loan Origination)"
+    permissions:
+      - "contact:read"
+      - "contact:write"
+      - "contact.pii:read"
+      - "case:read"
+      - "case:write"
+      - "inbox:read"
+      - "inbox:write"
+  - key: collection_agent
+    name: "เจ้าหน้าที่ติดตามค่างวดและบริหารหนี้ (Collection & Dunning)"
+    permissions:
+      - "contact:read"
+      - "contact:write"
+      - "contact.pii:read"
+      - "case:read"
+      - "case:write"
+      - "inbox:read"
+      - "inbox:write"
+  - key: service_care
+    name: "เจ้าหน้าที่บริการหลังการขายและแจ้งซ่อม (SINGER Care)"
+    permissions:
+      - "contact:read"
+      - "case:read"
+      - "case:write"
+      - "inbox:read"
+      - "inbox:write"
+
+customFields:
+  contact:
+    - key: contract_no
+      label: "เลขที่สัญญาเช่าซื้อ / สินเชื่อ"
+      type: text
+      isIndexed: true
+      validation:
+        required: true
+        unique: true
+        regex: "^[A-Za-z0-9-]{4,30}$"
+        regexError: "เลขที่สัญญาต้องเป็นตัวอักษรหรือตัวเลข 4-30 ตัว"
+      ui:
+        group: "ข้อมูลสัญญาและสินเชื่อ"
+        order: 1
+        showInList: true
+        variableKey: "contract_no"
+    - key: loan_product
+      label: "ผลิตภัณฑ์สินเชื่อ / รูปแบบการซื้อ"
+      type: select
+      isIndexed: true
+      options:
+        - value: "SG_FINANCE_PHONE"
+          label: "SG Finance+ ผ่อนมือถือ (Cloud Lock)"
+        - value: "SINGER_APPLIANCE"
+          label: "SINGER เช่าซื้อเครื่องใช้ไฟฟ้า / ตู้แช่"
+        - value: "CAR_FOR_CASH"
+          label: "สินเชื่อรถทำเงิน (จำนำทะเบียนรถ)"
+        - value: "CASH_PURCHASE"
+          label: "ซื้อสินค้าเงินสด / สนใจสมัครสินเชื่อ"
+      ui:
+        group: "ข้อมูลสัญญาและสินเชื่อ"
+        order: 2
+        showInList: true
+    - key: device_or_asset
+      label: "รุ่นมือถือ / สินค้า / ทะเบียนรถหลักประกัน"
+      type: text
+      isIndexed: true
+      ui:
+        group: "ข้อมูลสัญญาและสินเชื่อ"
+        order: 3
+        showInList: true
+        variableKey: "device_model"
+    - key: monthly_installment
+      label: "ค่างวดต่อเดือน (บาท)"
+      type: currency
+      ui:
+        group: "สถานะการผ่อนชำระและติดตามหนี้"
+        order: 4
+        showInList: true
+        variableKey: "installment_amt"
+    - key: dpd_status
+      label: "สถานะค้างชำระ / ล็อกเครื่อง (DPD)"
+      type: select
+      isIndexed: true
+      options:
+        - value: "NORMAL"
+          label: "ปกติ (ผ่อนตรงกำหนด)"
+        - value: "PRE_DUE"
+          label: "ใกล้ครบกำหนดชำระ (Pre-due 3 วัน)"
+        - value: "DPD_1_30"
+          label: "ค้างชำระ 1–30 วัน (เตือนผ่าน LINE/โทร)"
+        - value: "DPD_31_60"
+          label: "ค้างชำระ 31–60 วัน (ติดตามเร่งด่วน)"
+        - value: "LOCKED_60_PLUS"
+          label: "ระงับสัญญาณล็อกเครื่องชั่วคราว / ค้างเกิน 60 วัน"
+      ui:
+        group: "สถานะการผ่อนชำระและติดตามหนี้"
+        order: 5
+        showInList: true
+        alertBanner:
+          whenEquals: ["DPD_31_60", "LOCKED_60_PLUS"]
+          severity: danger
+          prefix: "แจ้งเตือนสถานะสัญญา:"
+    - key: ptp_date
+      label: "วันที่นัดชำระค่างวด (Promise-to-Pay)"
+      type: date
+      ui:
+        group: "สถานะการผ่อนชำระและติดตามหนี้"
+        order: 6
+        showInList: true
+        variableKey: "ptp_date"
+
+slaPolicies:
+  - slug: unlock_fasttrack
+    name: "ปลดล็อกเครื่องมือถือ SG Finance+ หลังรับชำระค่างวด"
+    firstResponseMinutes: 10
+    resolutionMinutes: 60
+    escalationMinutesBeforeBreach: 15
+  - slug: finance_standard
+    name: "สอบถามสมัครสินเชื่อ เช็คยอดปิดบัญชี และนัดชำระค่างวด"
+    firstResponseMinutes: 30
+    resolutionMinutes: 240
+    escalationMinutesBeforeBreach: 30
+  - slug: singer_field_service
+    name: "แจ้งซ่อมเครื่องใช้ไฟฟ้าและตู้แช่เชิงพาณิชย์ SINGER"
+    firstResponseMinutes: 60
+    resolutionMinutes: 480
+    escalationMinutesBeforeBreach: 60
+
+caseCategories:
+  - slug: device_unlock
+    name: "ขอปลดล็อกเครื่องมือถือ (SG Finance+)"
+    slaPolicySlug: unlock_fasttrack
+    defaultQueue: "SG Finance+ Lock Desk"
+    requiredFields: ["contract_no"]
+  - slug: loan_inquiry
+    name: "สมัครสินเชื่อ / เช็คผลอนุมัติ"
+    slaPolicySlug: finance_standard
+    defaultQueue: "Loan Origination Team"
+  - slug: payment_ptp
+    name: "แจ้งชำระค่างวด / นัดชำระ (PTP) / ปิดบัญชี"
+    slaPolicySlug: finance_standard
+    defaultQueue: "Collection & Billing Desk"
+  - slug: appliance_repair
+    name: "แจ้งซ่อมเครื่องใช้ไฟฟ้า / ตู้แช่ SINGER"
+    slaPolicySlug: singer_field_service
+    defaultQueue: "SINGER Field Service"
+  - slug: complaint
+    name: "ร้องเรียนบริการ / ข้อมูลเครดิต"
+    slaPolicySlug: unlock_fasttrack
+    defaultQueue: "Compliance & Debt Act Desk"
+
+workflows:
+  - id: wf_cf_unlock_urgent
+    name: "เร่งด่วนทันทีเมื่อลูกค้าส่งสลิปขอปลดล็อกเครื่องมือถือ"
+    trigger: "case.created"
+    conditions:
+      - field: "category_slug"
+        operator: "eq"
+        value: "device_unlock"
+    actions:
+      - type: "assign_queue"
+        value: "SG Finance+ Lock Desk"
+      - type: "set_priority"
+        value: "urgent"
+
+omnichannelPresets:
+  ivrGreeting: "สวัสดีค่ะ ศูนย์บริการ SINGER และ SG Capital กด 1 สนใจผ่อนมือถือ SG Finance+ และเครื่องใช้ไฟฟ้า กด 2 เช็คยอดค่างวดและปลดล็อกเครื่อง กด 3 สินเชื่อรถทำเงิน กด 4 แจ้งซ่อมสินค้า SINGER"
+  agentCallScript: "สวัสดีค่ะ ศูนย์บริการลูกค้า SINGER และ SG Capital ขออนุญาตทราบชื่อ-นามสกุล หรือเลขที่สัญญาเช่าซื้อเพื่อตรวจสอบข้อมูลให้นะคะ"

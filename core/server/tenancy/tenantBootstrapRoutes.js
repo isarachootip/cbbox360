@@ -120,6 +120,9 @@ export const createTenantBootstrapRouter = ({
       tickets: bundle.tickets,
       timelineEvents: bundle.timelineEvents,
       deals: bundle.deals,
+      creditAccounts: bundle.creditAccounts,
+      creditRequests: bundle.creditRequests,
+      callLogs: bundle.callLogs,
     });
   });
 

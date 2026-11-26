@@ -6,11 +6,13 @@ import {
   createScreenPopCallRecord,
   formatElapsedDuration,
   loadStoredCallLogs,
+  parseCallLogRecords,
   saveStoredCallLogs,
   type CreateOutboundCallInput,
 } from '../domain/telephony/callLogHelpers';
 import { useCustomer } from './CustomerContext';
 import { useAuth } from './AuthContext';
+import { useTenantRuntime } from '../../core/client/providers/TenantRuntimeContext';
 
 export type RegisterOutboundCallInput = CreateOutboundCallInput;
 
@@ -36,10 +38,36 @@ const TelephonyContext = createContext<TelephonyContextType | undefined>(undefin
 export const TelephonyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { addTimelineEvent } = useCustomer();
   const { currentUser } = useAuth();
-  const [callLogs, setCallLogs] = useState<CallLogRecord[]>(loadStoredCallLogs);
+  const { tenantId, isLoaded } = useTenantRuntime();
+  const [callLogs, setCallLogs] = useState<CallLogRecord[]>(() => loadStoredCallLogs('default'));
   const [activeCall, setActiveCall] = useState<CallLogRecord | null>(null);
 
-  useEffect(() => saveStoredCallLogs(callLogs), [callLogs]);
+  useEffect(() => {
+    const local = loadStoredCallLogs(tenantId);
+    setCallLogs(local);
+    if (tenantId === 'default' || !currentUser || local.length > 0) return;
+
+    let cancelled = false;
+    fetch('/api/tenant/seed-workspace', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((payload: { callLogs?: unknown } | null) => {
+        if (cancelled || !payload) return;
+        const seeded = parseCallLogRecords(payload.callLogs);
+        if (seeded.length > 0) {
+          saveStoredCallLogs(seeded, tenantId);
+          setCallLogs(seeded);
+        }
+      })
+      .catch(() => {
+        // Offline graceful fallback
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId, isLoaded, currentUser?.id]);
+
+  useEffect(() => saveStoredCallLogs(callLogs, tenantId), [callLogs, tenantId]);
 
   const agentName = currentUser?.name || 'วิภา ส.';
 

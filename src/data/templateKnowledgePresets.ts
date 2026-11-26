@@ -7,8 +7,13 @@ import {
   supportFixCompanyProfile,
   supportFixKnowledgeItems,
 } from './supportFixPreset';
+import {
+  consumerFinanceCompanyProfile,
+  consumerFinanceKnowledgeItems,
+} from './consumerFinanceKnowledge';
 
 export const templateCompanyProfiles: Record<BusinessTemplateId, CompanyProfile> = {
+  consumer_finance: consumerFinanceCompanyProfile,
   contact_center: contactCenterCompanyProfile,
   support_fix: supportFixCompanyProfile,
   b2b_wholesale: {
@@ -62,6 +67,7 @@ export const templateCompanyProfiles: Record<BusinessTemplateId, CompanyProfile>
 };
 
 export const templateKnowledgeItems: Record<BusinessTemplateId, KnowledgeItem[]> = {
+  consumer_finance: consumerFinanceKnowledgeItems,
   contact_center: contactCenterKnowledgeItems,
   support_fix: supportFixKnowledgeItems,
   b2b_wholesale: [

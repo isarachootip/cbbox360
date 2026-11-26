@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  Smartphone,
   Headset,
   Wrench,
   Stethoscope,
@@ -23,6 +24,8 @@ export const renderBusinessIcon = (
   className = 'w-4 h-4'
 ) => {
   switch (iconName) {
+    case 'smartphone':
+      return <Smartphone className={`${className} text-rose-600`} />;
     case 'headset':
       return <Headset className={`${className} text-cyan-600`} />;
     case 'wrench':

@@ -2,6 +2,7 @@ import { BusinessTemplatePreset } from '../types';
 import { templateCompanyProfiles, templateKnowledgeItems } from './templateKnowledgePresets';
 import { contactCenterPreset } from './contactCenterPreset';
 import { supportFixPreset } from './supportFixPreset';
+import { consumerFinancePreset } from './consumerFinancePreset';
 import {
   hospitalConnectors,
   logisticsConnectors,
@@ -9,6 +10,7 @@ import {
 } from './industryConnectors';
 
 export const businessTemplates: BusinessTemplatePreset[] = [
+  consumerFinancePreset,
   supportFixPreset,
   contactCenterPreset,
   {

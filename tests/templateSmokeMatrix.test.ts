@@ -94,6 +94,21 @@ describe('Phase 5 Multi-Template Smoke Matrix & On-Prem Preload', () => {
       },
       blockedPath: '/api/m/appointment/appointments',
     },
+    {
+      template: 'consumer_finance',
+      expectedContactLabel: 'ลูกค้าสินเชื่อ',
+      sampleFields: {
+        contract_no: 'SGF-SMOKE-01',
+        loan_product: 'SG_FINANCE_PHONE',
+        device_or_asset: 'Samsung Galaxy S26 5G',
+        monthly_installment: 1900,
+        dpd_status: 'NORMAL',
+        ptp_date: '2026-12-05',
+      },
+      entitledPath: '/api/m/credit-sales/accounts',
+      entitledPayload: { contactId: 'SMOKE-1', creditLimit: 25000, creditUsed: 13500 },
+      blockedPath: '/api/m/appointment/appointments',
+    },
   ])(
     'provisions a tenant from "$template" template and passes full HTTP flow & entitlement isolation',
     async (scenario) => {

@@ -24,6 +24,21 @@ export interface KnowledgeItem {
   content: string;
   tags?: string[];
   isActive: boolean;
-  templateId?: 'contact_center' | 'support_fix' | 'hospital' | 'logistics' | 'auto_service' | 'b2b_wholesale';
-  businessScope?: 'common' | 'contact_center' | 'support_fix' | 'hospital' | 'logistics' | 'auto_service' | 'b2b_wholesale';
+  templateId?:
+    | 'consumer_finance'
+    | 'contact_center'
+    | 'support_fix'
+    | 'hospital'
+    | 'logistics'
+    | 'auto_service'
+    | 'b2b_wholesale';
+  businessScope?:
+    | 'common'
+    | 'consumer_finance'
+    | 'contact_center'
+    | 'support_fix'
+    | 'hospital'
+    | 'logistics'
+    | 'auto_service'
+    | 'b2b_wholesale';
 }

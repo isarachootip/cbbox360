@@ -15,6 +15,7 @@ import { query } from './db.js';
 import { runMigrations } from './core/server/db/migrationRunner.js';
 import { createTenantResolverMiddleware } from './core/server/tenancy/tenantResolverMiddleware.js';
 import { bootstrapOnPremContract } from './core/server/template-engine/onPremBootstrap.js';
+import { ensureDefaultDemoTenants } from './core/server/template-engine/demoTenantSeeder.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -53,6 +54,13 @@ ensureDatabaseSchema()
     bootstrapOnPremContract().then((preloaded) => {
       if (preloaded.provisioned) {
         console.log(`🏢 [On-Prem Bootstrap] Preloaded template "${preloaded.template}" for tenant "${preloaded.slug}"`);
+      }
+    })
+  )
+  .then(() =>
+    ensureDefaultDemoTenants().then((seededTenants) => {
+      if (seededTenants.length > 0) {
+        console.log(`🏬 [Demo Tenants] Provisioned: ${seededTenants.map((t) => `${t.slug} (${t.templateId})`).join(', ')}`);
       }
     })
   )

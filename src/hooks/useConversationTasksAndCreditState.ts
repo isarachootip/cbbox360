@@ -1,14 +1,6 @@
-import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import type {
-  Conversation,
-  CreditLimitRequest,
-  Segment,
-  TaskDetails,
-  TimelineEvent,
-} from '../types';
-import { mockCreditLimitRequests } from '../data/credit';
-import { mockSegments } from '../data/segments';
+import type { Conversation, TaskDetails, TimelineEvent } from '../types';
+import { useTenantCreditAndSegments } from './useTenantCreditAndSegments';
 
 export interface TaskComposerPayload {
   title: string;
@@ -31,9 +23,7 @@ export const useConversationTasksAndCreditState = ({
   addTimelineEvent,
   onApproveCustomerCreditLimit,
 }: UseTasksCreditAndSegmentsParams) => {
-  const [creditRequests, setCreditRequests] =
-    useState<CreditLimitRequest[]>(mockCreditLimitRequests);
-  const [segments, setSegments] = useState<Segment[]>(mockSegments);
+  const creditAndSegments = useTenantCreditAndSegments(onApproveCustomerCreditLimit);
 
   const addTaskToConversation = async (convId: string, taskData: TaskComposerPayload) => {
     const now = new Date();
@@ -126,46 +116,9 @@ export const useConversationTasksAndCreditState = ({
     );
   };
 
-  const approveCreditLimit = (requestId: string) => {
-    const req = creditRequests.find((r) => r.id === requestId);
-    if (!req) return;
-    setCreditRequests((prev) =>
-      prev.map((r) => (r.id === requestId ? { ...r, status: 'approved' } : r))
-    );
-    onApproveCustomerCreditLimit(req.customerId, req.requestedLimit);
-  };
-
-  const rejectCreditLimit = (requestId: string) => {
-    setCreditRequests((prev) =>
-      prev.map((r) => (r.id === requestId ? { ...r, status: 'rejected' } : r))
-    );
-  };
-
-  const toggleSegmentWebhook = (segmentId: string) => {
-    setSegments((prev) =>
-      prev.map((s) => (s.id === segmentId ? { ...s, webhookEnabled: !s.webhookEnabled } : s))
-    );
-  };
-
-  const updateSegmentRules = (segmentId: string, rules: Segment['rules']) => {
-    setSegments((prev) => prev.map((s) => (s.id === segmentId ? { ...s, rules } : s)));
-  };
-
-  const cascadeCustomerNameToCredit = (customerId: string, newName: string) => {
-    setCreditRequests((prev) =>
-      prev.map((req) => (req.customerId === customerId ? { ...req, customerName: newName } : req))
-    );
-  };
-
   return {
-    creditRequests,
-    segments,
+    ...creditAndSegments,
     addTaskToConversation,
     updateTaskStatus,
-    approveCreditLimit,
-    rejectCreditLimit,
-    toggleSegmentWebhook,
-    updateSegmentRules,
-    cascadeCustomerNameToCredit,
   };
 };

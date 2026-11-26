@@ -42,6 +42,10 @@ export const replaceTemplateVariables = (
     sla_tier: 'VIP (1 ชม.)',
     assigned_team: 'Tier 2 Escalation & VIP Desk',
     contract_ref: 'SLA-2026-0891',
+    contract_no: 'SGF-690412',
+    device_model: 'Samsung Galaxy S26 5G',
+    installment_amt: '1,900 บาท',
+    ptp_date: '30 พ.ย. 2026',
     ...customVars,
   };
 

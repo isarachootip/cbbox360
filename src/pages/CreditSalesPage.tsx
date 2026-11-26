@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PhoneCall } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -6,23 +6,19 @@ import { KpiTile } from '../components/common/KpiTile';
 import { Modal } from '../components/common/Modal';
 import { CreditAccountsTable } from '../components/credit/CreditAccountsTable';
 import { CreditRightSidebar } from '../components/credit/CreditRightSidebar';
-import { mockCreditAccounts } from '../data/credit';
+import { computeCreditPortfolioSummary } from '../domain/credit/creditKpiHelpers';
 import { useCustomer } from '../context/CustomerContext';
 import { useToast } from '../context/ToastContext';
-
-const AGING_BUCKETS = [
-  { label: 'ยังไม่ครบกำหนด', amount: '฿15.40M', width: '82.8%', color: 'bg-[#3B82F6]' },
-  { label: '1–30 วัน', amount: '฿1.90M', width: '10.2%', color: 'bg-[#06B6D4]' },
-  { label: '31–60 วัน', amount: '฿0.70M', width: '3.8%', color: 'bg-[#F59E0B]' },
-  { label: '61–90 วัน', amount: '฿0.35M', width: '1.9%', color: 'bg-[#EA580C]' },
-  { label: '90+ วัน', amount: '฿0.25M', width: '1.3%', color: 'bg-[#E11D48]' },
-];
+import { useTenantRuntime } from '../../core/client/providers/TenantRuntimeContext';
 
 export const CreditSalesPage: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { tenantId } = useTenantRuntime();
+  const isDefaultTenant = tenantId === 'default';
   const {
     customers,
+    creditAccounts,
     creditRequests,
     approveCreditLimit,
     rejectCreditLimit,
@@ -30,6 +26,16 @@ export const CreditSalesPage: React.FC = () => {
   } = useCustomer();
 
   const [isCallListModalOpen, setIsCallListModalOpen] = useState(false);
+
+  const summary = useMemo(
+    () => computeCreditPortfolioSummary(creditAccounts, isDefaultTenant),
+    [creditAccounts, isDefaultTenant]
+  );
+
+  const overdueAccounts = useMemo(
+    () => creditAccounts.filter((a) => a.overdueAmount > 0),
+    [creditAccounts]
+  );
 
   const handleOpenCustomer = (custId: string) => {
     setSelectedCustomerId(custId);
@@ -46,15 +52,17 @@ export const CreditSalesPage: React.FC = () => {
     showToast(`ปฏิเสธคำขอเพิ่มวงเงินของ "${name}"`, 'warning');
   };
 
+  const callListCount = isDefaultTenant ? 21 : overdueAccounts.length;
+
   const handleCreateCallList = () => {
-    showToast('สร้าง Collection Call List 21 รายการในระบบ 3CX เรียบร้อยแล้ว', 'success');
+    showToast(`สร้าง Collection Call List ${callListCount} รายการในระบบ 3CX เรียบร้อยแล้ว`, 'success');
     setIsCallListModalOpen(false);
   };
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-bg-app select-none">
       <PageHeader
-        title="Credit Sales"
+        title="Credit Sales & Collection"
         actionButton={
           <button
             type="button"
@@ -70,19 +78,24 @@ export const CreditSalesPage: React.FC = () => {
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex flex-col p-5 overflow-y-auto custom-scrollbar gap-4">
           <div className="grid grid-cols-4 gap-4 flex-shrink-0">
-            <KpiTile label="ยอดลูกหนี้รวม" value="฿18.60M" variant="default" />
-            <KpiTile label="เกินกำหนดชำระ" value="฿3.20M" subValue="(17%)" variant="danger" />
-            <KpiTile label="DSO" value="41 วัน" variant="default" />
-            <KpiTile label="ลูกค้า Grade C–D" value="58 ราย" variant="default" />
+            <KpiTile label="ยอดลูกหนี้รวม" value={summary.totalReceivablesText} variant="default" />
+            <KpiTile
+              label="เกินกำหนดชำระ"
+              value={summary.overdueText}
+              subValue={summary.overduePercentText}
+              variant="danger"
+            />
+            <KpiTile label="DSO" value={summary.dsoText} variant="default" />
+            <KpiTile label="ลูกค้า Grade C–D" value={summary.riskCustomerCountText} variant="default" />
           </div>
 
           <div className="bg-white rounded-card border border-border p-4 shadow-card space-y-2.5">
             <div className="flex items-center justify-between text-xs font-bold text-text-primary">
-              <span>Aging ลูกหนี้</span>
-              <span className="font-mono">รวม ฿18.60M</span>
+              <span>Aging ลูกหนี้ / พอร์ตผ่อนชำระ</span>
+              <span className="font-mono">รวม {summary.totalReceivablesText}</span>
             </div>
             <div className="h-3.5 rounded-full overflow-hidden flex bg-divider shadow-inner">
-              {AGING_BUCKETS.map((b) => (
+              {summary.buckets.map((b) => (
                 <div
                   key={b.label}
                   style={{ width: b.width }}
@@ -92,7 +105,7 @@ export const CreditSalesPage: React.FC = () => {
               ))}
             </div>
             <div className="flex flex-wrap items-center justify-between text-[11px] text-text-secondary pt-1">
-              {AGING_BUCKETS.map((b) => (
+              {summary.buckets.map((b) => (
                 <div key={b.label} className="flex items-center gap-1.5">
                   <span className={`w-2.5 h-2.5 rounded-full ${b.color}`} />
                   <span>
@@ -104,7 +117,7 @@ export const CreditSalesPage: React.FC = () => {
           </div>
 
           <CreditAccountsTable
-            accounts={mockCreditAccounts}
+            accounts={creditAccounts}
             customers={customers}
             onOpenCustomer={handleOpenCustomer}
             onViewOverdueSegment={() => navigate('/segments')}
@@ -144,18 +157,15 @@ export const CreditSalesPage: React.FC = () => {
       >
         <div className="space-y-3 text-xs">
           <p className="text-text-secondary">
-            ระบบจะดึงรายชื่อลูกหนี้ที่ครบกำหนดชำระและเกินกำหนด 31–90 วัน (จำนวน 21 ราย)
-            ส่งเข้าไปยังคิวโทรออกของระบบโทรศัพท์ 3CX ของทีมติดตามหนี้
+            ระบบจะดึงรายชื่อสัญญาที่ครบกำหนดและค้างชำระ ({callListCount} รายการ)
+            ส่งเข้าไปยังคิวโทรออกของระบบโทรศัพท์ 3CX ของทีมติดตามค่างวดภายใต้กรอบเวลาตาม พ.ร.บ.ทวงถามหนี้
           </p>
           <div className="p-3 bg-bg-subtle rounded-lg border border-border space-y-1 font-mono">
             <div>
-              ลูกหนี้เกินกำหนด 31–60 วัน: <strong>8 ราย</strong>
+              จำนวนสัญญาที่ต้องโทรติดตาม: <strong>{callListCount} ราย</strong>
             </div>
             <div>
-              ลูกหนี้เกินกำหนด 61–90 วัน: <strong>13 ราย</strong>
-            </div>
-            <div>
-              ยอดค้างชำระรวม: <strong className="text-rose-600">฿1,050,000</strong>
+              ยอดค้างชำระรวม: <strong className="text-rose-600">{summary.overdueText}</strong>
             </div>
           </div>
         </div>

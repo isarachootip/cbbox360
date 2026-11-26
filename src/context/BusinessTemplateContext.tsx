@@ -1,103 +1,17 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { z } from 'zod';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { BusinessTemplateId, DeploymentMode, UserRole } from '../types';
+import { TemplateAddedResources, mergeAddedResources } from '../domain/templates/templateMerge';
+import { toggleBusinessMenuOverride } from '../domain/templates/businessMenuFilter';
 import {
-  EMPTY_ADDED_RESOURCES,
-  TemplateAddedResources,
-  mergeAddedResources,
-} from '../domain/templates/templateMerge';
-import {
-  BusinessMenuOverrides,
-  toggleBusinessMenuOverride,
-} from '../domain/templates/businessMenuFilter';
+  BusinessTemplateState,
+  DEFAULT_BUSINESS_TEMPLATE_STATE,
+  isBusinessTemplateId,
+  loadBusinessTemplateState,
+  saveBusinessTemplateState,
+} from '../domain/templates/businessTemplateStorage';
+import { useTenantRuntime } from '../../core/client/providers/TenantRuntimeContext';
 
-const STORAGE_KEY = 'cb360_business_template_state';
-
-const templateIdSchema = z.enum([
-  'contact_center',
-  'support_fix',
-  'hospital',
-  'logistics',
-  'auto_service',
-  'b2b_wholesale',
-]);
-const roleSchema = z.enum([
-  'sysadmin',
-  'admin',
-  'SF_1',
-  'SF_2',
-  'SF_3',
-  'supervisor',
-  'doctor',
-  'nurse',
-]);
-const deploymentModeSchema = z.enum(['demo', 'production_locked']);
-
-const menuOverrideEntrySchema = z.object({
-  enabled: z.array(z.string()),
-  disabled: z.array(z.string()),
-});
-
-const storedStateSchema = z.object({
-  activeTemplateId: templateIdSchema,
-  deploymentMode: deploymentModeSchema.optional(),
-  appliedTemplateIds: z.array(templateIdSchema),
-  lastAppliedAt: z.string().optional(),
-  menuOverrides: z
-    .object({
-      contact_center: menuOverrideEntrySchema.optional(),
-      support_fix: menuOverrideEntrySchema.optional(),
-      hospital: menuOverrideEntrySchema.optional(),
-      logistics: menuOverrideEntrySchema.optional(),
-      auto_service: menuOverrideEntrySchema.optional(),
-      b2b_wholesale: menuOverrideEntrySchema.optional(),
-    })
-    .optional(),
-  addedResources: z
-    .object({
-      connectorIds: z.array(z.string()),
-      cannedResponseIds: z.array(z.string()),
-      ruleIds: z.array(z.string()),
-      menuGrants: z.array(z.object({ menuId: z.string(), role: roleSchema })),
-      knowledgeItemIds: z.array(z.string()).optional(),
-    })
-    .optional(),
-});
-
-export interface BusinessTemplateState {
-  activeTemplateId: BusinessTemplateId;
-  deploymentMode: DeploymentMode;
-  appliedTemplateIds: BusinessTemplateId[];
-  lastAppliedAt?: string;
-  addedResources: TemplateAddedResources;
-  menuOverrides: BusinessMenuOverrides;
-}
-
-const DEFAULT_STATE: BusinessTemplateState = {
-  activeTemplateId: 'b2b_wholesale',
-  deploymentMode: 'demo',
-  appliedTemplateIds: ['b2b_wholesale'],
-  addedResources: EMPTY_ADDED_RESOURCES,
-  menuOverrides: {},
-};
-
-const loadState = (): BusinessTemplateState => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_STATE;
-    const result = storedStateSchema.safeParse(JSON.parse(raw));
-    if (!result.success) return DEFAULT_STATE;
-    return {
-      ...result.data,
-      deploymentMode: result.data.deploymentMode ?? 'demo',
-      addedResources: result.data.addedResources ?? EMPTY_ADDED_RESOURCES,
-      menuOverrides: result.data.menuOverrides ?? {},
-    };
-  } catch (e) {
-    console.warn('Failed to load business template state', e);
-    return DEFAULT_STATE;
-  }
-};
+export type { BusinessTemplateState };
 
 interface BusinessTemplateContextType {
   state: BusinessTemplateState;
@@ -111,18 +25,38 @@ interface BusinessTemplateContextType {
 const BusinessTemplateContext = createContext<BusinessTemplateContextType | undefined>(undefined);
 
 export const BusinessTemplateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<BusinessTemplateState>(loadState);
+  const { tenantId, templateId: tenantTemplateId } = useTenantRuntime();
+  const [state, setState] = useState<BusinessTemplateState>(loadBusinessTemplateState);
+  const lastSyncedTenantKeyRef = useRef<string>('default::');
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.error('Failed to save business template state', e);
-    }
+    saveBusinessTemplateState(state);
   }, [state]);
 
   const nowTime = () =>
     `วันนี้ ${new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.`;
+
+  useEffect(() => {
+    const syncKey = `${tenantId}::${tenantTemplateId ?? ''}`;
+    if (lastSyncedTenantKeyRef.current === syncKey) return;
+    const prevWasTenant = !lastSyncedTenantKeyRef.current.startsWith('default::');
+    lastSyncedTenantKeyRef.current = syncKey;
+
+    if (tenantId !== 'default' && isBusinessTemplateId(tenantTemplateId)) {
+      setState((prev) => ({
+        ...prev,
+        activeTemplateId: tenantTemplateId,
+        appliedTemplateIds: Array.from(new Set([...prev.appliedTemplateIds, tenantTemplateId])),
+        lastAppliedAt: nowTime(),
+      }));
+    } else if (tenantId === 'default' && prevWasTenant) {
+      setState((prev) => ({
+        ...prev,
+        activeTemplateId: 'b2b_wholesale',
+        lastAppliedAt: nowTime(),
+      }));
+    }
+  }, [tenantId, tenantTemplateId]);
 
   const switchBusiness = (templateId: BusinessTemplateId): boolean => {
     if (state.deploymentMode === 'production_locked') return false;
@@ -165,7 +99,7 @@ export const BusinessTemplateProvider: React.FC<{ children: React.ReactNode }> =
 
   const resetState = () => {
     if (state.deploymentMode === 'production_locked') return;
-    setState(DEFAULT_STATE);
+    setState(DEFAULT_BUSINESS_TEMPLATE_STATE);
   };
 
   return (

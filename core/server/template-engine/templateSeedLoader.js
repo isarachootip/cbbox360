@@ -11,11 +11,29 @@ export const loadTemplateSeedBundle = (
   templatesDir = path.resolve(process.cwd(), 'templates')
 ) => {
   if (!templateId) {
-    return { contacts: [], conversations: [], tickets: [], timelineEvents: [], deals: [] };
+    return {
+      contacts: [],
+      conversations: [],
+      tickets: [],
+      timelineEvents: [],
+      deals: [],
+      creditAccounts: [],
+      creditRequests: [],
+      callLogs: [],
+    };
   }
   const seedPath = path.join(templatesDir, String(templateId), 'seed.yaml');
   if (!fs.existsSync(seedPath)) {
-    return { contacts: [], conversations: [], tickets: [], timelineEvents: [], deals: [] };
+    return {
+      contacts: [],
+      conversations: [],
+      tickets: [],
+      timelineEvents: [],
+      deals: [],
+      creditAccounts: [],
+      creditRequests: [],
+      callLogs: [],
+    };
   }
   try {
     const parsed = parseYaml(fs.readFileSync(seedPath, 'utf8')) || {};
@@ -25,9 +43,21 @@ export const loadTemplateSeedBundle = (
       tickets: Array.isArray(parsed.tickets) ? parsed.tickets : [],
       timelineEvents: Array.isArray(parsed.timelineEvents) ? parsed.timelineEvents : [],
       deals: Array.isArray(parsed.deals) ? parsed.deals : [],
+      creditAccounts: Array.isArray(parsed.creditAccounts) ? parsed.creditAccounts : [],
+      creditRequests: Array.isArray(parsed.creditRequests) ? parsed.creditRequests : [],
+      callLogs: Array.isArray(parsed.callLogs) ? parsed.callLogs : [],
     };
   } catch {
-    return { contacts: [], conversations: [], tickets: [], timelineEvents: [], deals: [] };
+    return {
+      contacts: [],
+      conversations: [],
+      tickets: [],
+      timelineEvents: [],
+      deals: [],
+      creditAccounts: [],
+      creditRequests: [],
+      callLogs: [],
+    };
   }
 };
 
@@ -49,14 +79,14 @@ export const buildSeedCustomerRecord = (c) => {
     addresses: [],
     initials,
     tier: c.tier || 'MEMBER',
-    creditGrade: 'A',
+    creditGrade: c.creditGrade || 'A',
     segments: Array.isArray(c.segments) ? c.segments : ['ทั่วไป'],
-    lifetimeValue: 0,
-    spend12Months: 0,
-    orders12Months: 0,
-    lastOrderDaysAgo: 0,
-    lastOrderCode: '-',
-    lastOrderAmount: 0,
+    lifetimeValue: Number(c.lifetimeValue) || 0,
+    spend12Months: Number(c.spend12Months) || 0,
+    orders12Months: Number(c.orders12Months) || 0,
+    lastOrderDaysAgo: Number(c.lastOrderDaysAgo) || 0,
+    lastOrderCode: c.lastOrderCode || '-',
+    lastOrderAmount: Number(c.lastOrderAmount) || 0,
     tierValidUntil: '31 ธ.ค. 2026',
     tierProgressPercent: 100,
     tierTargetSpend: 0,
@@ -73,10 +103,10 @@ export const buildSeedCustomerRecord = (c) => {
       sensitiveMedical: true,
       consentSource: 'LINE LIFF',
     },
-    creditLimit: 0,
-    creditUsed: 0,
-    creditOverdue: 0,
-    churnRisk: 'ต่ำ',
+    creditLimit: Number(c.creditLimit) || 0,
+    creditUsed: Number(c.creditUsed) || 0,
+    creditOverdue: Number(c.creditOverdue) || 0,
+    churnRisk: c.churnRisk || 'ต่ำ',
     nextBestAction: c.nextBestAction || {
       description: 'ติดตามการให้บริการต่อเนื่อง',
       actionLabel: 'ติดต่อกลับ',

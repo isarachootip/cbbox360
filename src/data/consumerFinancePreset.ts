@@ -1,0 +1,133 @@
+import { BusinessTemplatePreset } from '../types';
+import {
+  consumerFinanceCompanyProfile,
+  consumerFinanceKnowledgeItems,
+} from './consumerFinanceKnowledge';
+
+export const consumerFinancePreset: BusinessTemplatePreset = {
+  id: 'consumer_finance',
+  name: 'Hire Purchase & SG Finance+',
+  thaiTitle: 'สินเชื่อผ่อนมือถือล็อกเครื่อง เช่าซื้อเครื่องใช้ไฟฟ้า และติดตามค่างวด',
+  tagline: 'รับสมัคร SG Finance+ ผ่อนมือถือ, แจ้งยอด QR, ปลดล็อกเครื่อง OTA และโทรติดตามหนี้ 3CX',
+  description:
+    'ชุดตั้งค่ารวมเครือ SINGER & SG Capital ครอบคลุมงานขาเข้า (สอบถามซื้อเงินสด/ผ่อน, สมัคร SG Finance+, ขอปลดล็อกมือถือ, แจ้งซ่อมตู้แช่) และงานขาออก (โทรติดตามค่างวด DPD, บันทึกนัดชำระ PTP และเสนอวงเงินเพิ่มให้ลูกค้าเกรด A)',
+  iconName: 'smartphone',
+  accentColor: 'rose',
+  recommendedMenus: [
+    'menu-customer360',
+    'menu-segments',
+    'menu-pipeline',
+    'menu-inbox',
+    'menu-canned-responses',
+    'menu-cases',
+    'menu-credit',
+    'menu-voice',
+    'menu-consent',
+  ],
+  customVariables: [
+    { key: 'contract_no', label: 'เลขที่สัญญาเช่าซื้อ', example: 'SGF-690412' },
+    { key: 'device_model', label: 'รุ่นมือถือ/สินค้า', example: 'Samsung Galaxy S26 5G' },
+    { key: 'installment_amt', label: 'ค่างวดต่อเดือน', example: '1,900 บาท' },
+    { key: 'ptp_date', label: 'วันที่นัดชำระ (PTP)', example: '30 พ.ย. 2026' },
+  ],
+  workflowHighlights: [
+    'รับแชทสอบถามสมัคร SG Finance+ ผ่อนมือถือบัตรประชาชนใบเดียว พร้อมส่งต่อเข้า Sales Pipeline ทันที',
+    'เปิดเคสด่วนปลดล็อกเครื่องมือถือ (Cloud Lock SLA 60 นาที) เมื่อลูกค้าส่งสลิปชำระค่างวดใน LINE',
+    'บริหารพอร์ตลูกหนี้ค้างชำระ (DPD Bucket) กดโทรออกติดตามค่างวดผ่าน 3CX และบันทึกวันนัดชำระ PTP ตาม พ.ร.บ.',
+  ],
+  connectors: [],
+  companyProfile: consumerFinanceCompanyProfile,
+  knowledgeItems: consumerFinanceKnowledgeItems,
+  cannedResponses: [
+    {
+      id: 'cr-cf-apply',
+      title: 'แนะนำการสมัคร SG Finance+ ผ่อนมือถือบัตรประชาชนใบเดียว',
+      shortcut: '/sg-apply',
+      category: 'answer',
+      content:
+        'สวัสดีค่ะคุณ {customer_name} สนใจผ่อนสมาร์ทโฟนกับ SG Finance+ ใช้เพียงบัตรประชาชนตัวจริงใบเดียว ไม่ต้องใช้บัตรเครดิต ดาวน์เริ่มต้น 10% รู้ผลอนุมัติใน 3 นาทีค่ะ สนใจรุ่นไหนและสะดวกสาขาพื้นที่จังหวัดใด แจ้งแอดมินเช็คร้านใกล้บ้านให้ได้เลยนะคะ',
+      tags: ['SG Finance+', 'ผ่อนมือถือ', 'สมัครสินเชื่อ'],
+      isActive: true,
+      businessScope: 'consumer_finance',
+    },
+    {
+      id: 'cr-cf-unlock',
+      title: 'รับเรื่องตรวจสอบสลิปและปลดล็อกเครื่องมือถือ SG Finance+',
+      shortcut: '/unlock-phone',
+      category: 'answer',
+      content:
+        'รับทราบยอดชำระสัญญา {contract_no} ({device_model}) ของคุณ {customer_name} เรียบร้อยค่ะ เจ้าหน้าที่เปิดเคสด่วน {ticket_id} เพื่อสั่งปลดล็อกเครื่องผ่านระบบแล้ว รบกวนเชื่อมต่อ Wi-Fi หรือเน็ตมือถือและรีสตาร์ทเครื่องในอีก 10-15 นาทีนะคะ',
+      tags: ['ปลดล็อกเครื่อง', 'SG Finance+', 'สลิปค่างวด'],
+      isActive: true,
+      businessScope: 'consumer_finance',
+    },
+    {
+      id: 'cr-cf-pay-qr',
+      title: 'แจ้งยอดค่างวดและช่องทางชำระผ่าน QR / แอปธนาคาร',
+      shortcut: '/pay-qr',
+      category: 'answer',
+      content:
+        'เรียนคุณ {customer_name} สัญญาเลขที่ {contract_no} ({device_model}) มียอดค่างวดรอบนี้ {installment_amt} สามารถสแกนจ่ายผ่าน QR Bill Payment ในแอป SG Finance+ / LINE OA เพื่อตัดยอดแบบ Real-time ได้ทันทีค่ะ',
+      tags: ['แจ้งค่างวด', 'QR Payment', 'เช็คยอด'],
+      isActive: true,
+      businessScope: 'consumer_finance',
+    },
+    {
+      id: 'cr-cf-ptp',
+      title: 'ยืนยันการบันทึกวันนัดชำระค่างวด (Promise-to-Pay)',
+      shortcut: '/ptp-confirm',
+      category: 'answer',
+      content:
+        'ขอขอบคุณคุณ {customer_name} ค่ะ เจ้าหน้าที่บันทึกวันนัดชำระค่างวดสัญญา {contract_no} ยอด {installment_amt} ภายในวันที่ {ptp_date} เรียบร้อยแล้ว เมื่อโอนชำระแล้วสามารถส่งสลิปในแชทนี้ได้เลยนะคะ',
+      tags: ['นัดชำระ', 'PTP', 'ติดตามค่างวด'],
+      isActive: true,
+      businessScope: 'consumer_finance',
+    },
+    {
+      id: 'cr-cf-singer-care',
+      title: 'รับแจ้งซ่อมเครื่องใช้ไฟฟ้าและตู้แช่ SINGER',
+      shortcut: '/singer-care',
+      category: 'question',
+      content:
+        'ศูนย์บริการ SINGER Care ยินดีดูแลค่ะ สำหรับการนัดช่างเข้าตรวจเช็ค {device_model} (สัญญา {contract_no}) รบกวนแจ้ง 1) อาการที่พบ 2) เบอร์ติดต่อหน้าร้าน และ 3) วัน-เวลาที่สะดวกให้ช่างเข้าหน้างานค่ะ',
+      tags: ['SINGER Care', 'แจ้งซ่อม', 'ตู้แช่'],
+      isActive: true,
+      businessScope: 'consumer_finance',
+    },
+  ],
+  botRules: [
+    {
+      id: 'rule-cf-apply',
+      name: '[SG Finance+] สอบถามผ่อนมือถือ / บัตรประชาชนใบเดียว',
+      triggerType: 'keyword',
+      keywords: ['ผ่อนมือถือ', 'บัตรประชาชนใบเดียว', 'sg finance', 'ดาวน์เท่าไหร่', 'สมัครสินเชื่อ'],
+      matchType: 'contains',
+      businessScope: 'consumer_finance',
+      cannedResponseId: 'cr-cf-apply',
+      isActive: true,
+      priority: 1,
+    },
+    {
+      id: 'rule-cf-unlock',
+      name: '[SG Finance+] แจ้งโอนค่างวด / ขอปลดล็อกหน้าจอมือถือ',
+      triggerType: 'keyword',
+      keywords: ['ปลดล็อก', 'เครื่องล็อก', 'หน้าจอล็อก', 'โอนค่างวดแล้ว', 'ส่งสลิป'],
+      matchType: 'contains',
+      businessScope: 'consumer_finance',
+      cannedResponseId: 'cr-cf-unlock',
+      isActive: true,
+      priority: 2,
+    },
+    {
+      id: 'rule-cf-singer-repair',
+      name: '[SINGER Care] แจ้งซ่อมตู้แช่ / เครื่องใช้ไฟฟ้าไม่เย็น',
+      triggerType: 'keyword',
+      keywords: ['ตู้แช่ไม่เย็น', 'แจ้งซ่อม', 'เรียกช่างซิงเกอร์', 'แอร์ไม่เย็น'],
+      matchType: 'contains',
+      businessScope: 'consumer_finance',
+      cannedResponseId: 'cr-cf-singer-care',
+      isActive: true,
+      priority: 3,
+    },
+  ],
+};

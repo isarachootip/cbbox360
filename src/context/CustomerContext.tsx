@@ -3,6 +3,7 @@ import type {
   ContactPerson,
   Conversation,
   CreateCustomerInput,
+  CreditAccount,
   CreditLimitRequest,
   Customer,
   CustomerAddress,
@@ -31,6 +32,7 @@ interface CustomerContextType {
   deals: Deal[];
   tickets: Ticket[];
   conversations: Conversation[];
+  creditAccounts: CreditAccount[];
   creditRequests: CreditLimitRequest[];
   segments: Segment[];
   timelineEvents: TimelineEvent[];
@@ -106,6 +108,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         deals: dealsAndTickets.deals,
         tickets: dealsAndTickets.tickets,
         conversations: inbox.conversations,
+        creditAccounts: tasksAndCredit.creditAccounts,
         creditRequests: tasksAndCredit.creditRequests,
         segments: tasksAndCredit.segments,
         timelineEvents: dealsAndTickets.timelineEvents,

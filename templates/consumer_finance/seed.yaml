@@ -1,0 +1,445 @@
+contacts:
+  - id: SGC001
+    name: "สมศักดิ์ พงษ์เจริญ"
+    nickname: "ศักดิ์"
+    tier: "SILVER"
+    creditGrade: "C"
+    phone: "081-742-8891"
+    email: "somsak.p@customer.th"
+    customerSince: "ก.พ. 2026"
+    segments: ["SG Finance+ ผ่อนมือถือ", "รอดำเนินการปลดล็อกเครื่อง"]
+    lifetimeValue: 24900
+    spend12Months: 11400
+    orders12Months: 6
+    lastOrderCode: "SGF-690412"
+    lastOrderAmount: 1900
+    creditLimit: 25000
+    creditUsed: 13500
+    creditOverdue: 1900
+    churnRisk: "ปานกลาง"
+    nextBestAction:
+      description: "ตรวจสอบยอดโอนค่างวด ฿1,900 และสั่งปลดล็อกเครื่องผ่านระบบ Cloud Lock ทันที"
+      actionLabel: "ปลดล็อกเครื่อง SG Finance+"
+    customFields:
+      contract_no: "SGF-690412"
+      loan_product: "SG_FINANCE_PHONE"
+      device_or_asset: "Samsung Galaxy S26 5G (256GB)"
+      monthly_installment: 1900
+      dpd_status: "LOCKED_60_PLUS"
+      ptp_date: "2026-11-26"
+  - id: SGC002
+    name: "นภัสสร วงศ์สุวรรณ"
+    nickname: "พลอย"
+    tier: "GOLD"
+    creditGrade: "A"
+    phone: "089-231-4405"
+    email: "napassorn.w@customer.th"
+    customerSince: "มิ.ย. 2025"
+    segments: ["SG Finance+ ผ่อนตรง 100%", "Good Payer"]
+    lifetimeValue: 38500
+    spend12Months: 16200
+    orders12Months: 12
+    lastOrderCode: "SGF-680198"
+    lastOrderAmount: 1350
+    creditLimit: 35000
+    creditUsed: 5400
+    creditOverdue: 0
+    churnRisk: "ต่ำ"
+    nextBestAction:
+      description: "ลูกค้าเกรด A ผ่อนครบ 10 งวดตรงเวลา เสนอสิทธิ์ผ่อนมือถือเครื่องที่ 2 ดอกเบี้ยพิเศษ"
+      actionLabel: "เสนอวงเงินเครื่องที่ 2"
+    customFields:
+      contract_no: "SGF-680198"
+      loan_product: "SG_FINANCE_PHONE"
+      device_or_asset: "Vivo V40 5G (256GB)"
+      monthly_installment: 1350
+      dpd_status: "NORMAL"
+      ptp_date: "2026-12-05"
+  - id: SGC003
+    name: "ร้านเจ๊พร มินิมาร์ท"
+    nickname: "คุณพรทิพย์"
+    customerType: "CORPORATE"
+    tier: "GOLD"
+    creditGrade: "C"
+    phone: "086-559-3120"
+    email: "jaeporn.mart@shop.th"
+    customerSince: "ต.ค. 2024"
+    segments: ["SINGER ตู้แช่เชิงพาณิชย์", "DPD 31-60 วัน"]
+    lifetimeValue: 89000
+    spend12Months: 42000
+    orders12Months: 9
+    lastOrderCode: "SGR-671104"
+    lastOrderAmount: 3500
+    creditLimit: 90000
+    creditUsed: 48500
+    creditOverdue: 7000
+    churnRisk: "ปานกลาง"
+    nextBestAction:
+      description: "โทรติดตามค่างวดตู้แช่ 2 งวด (฿7,000) พร้อมประสานช่าง SINGER เช็คพัดลมตู้แช่"
+      actionLabel: "โทรติดตามค่างวด (3CX)"
+    customFields:
+      contract_no: "SGR-671104"
+      loan_product: "SINGER_APPLIANCE"
+      device_or_asset: "ตู้แช่เครื่องดื่ม SINGER 3 ประตู รุ่น SBC-300"
+      monthly_installment: 3500
+      dpd_status: "DPD_31_60"
+      ptp_date: "2026-11-30"
+  - id: SGC004
+    name: "หจก. วีระชัย ขนส่งด่วน"
+    nickname: "เฮียชัย"
+    customerType: "CORPORATE"
+    tier: "PLATINUM"
+    creditGrade: "B"
+    phone: "082-910-6677"
+    email: "weerachai.trans@fleet.th"
+    customerSince: "ม.ค. 2024"
+    segments: ["สินเชื่อรถทำเงิน", "นัดชำระ PTP"]
+    lifetimeValue: 640000
+    spend12Months: 198000
+    orders12Months: 11
+    lastOrderCode: "CFC-670055"
+    lastOrderAmount: 16500
+    creditLimit: 600000
+    creditUsed: 385000
+    creditOverdue: 16500
+    churnRisk: "ต่ำ"
+    nextBestAction:
+      description: "ส่ง QR ชำระค่างวดรถทำเงินตามนัด PTP วันที่ 28 พ.ย. 2026"
+      actionLabel: "ส่ง QR ชำระค่างวด"
+    customFields:
+      contract_no: "CFC-670055"
+      loan_product: "CAR_FOR_CASH"
+      device_or_asset: "รถบรรทุก 6 ล้อ ISUZU ทะเบียน 71-4489 ชลบุรี"
+      monthly_installment: 16500
+      dpd_status: "DPD_1_30"
+      ptp_date: "2026-11-28"
+  - id: SGC005
+    name: "กานดา รุ่งเรือง"
+    nickname: "กานต์"
+    tier: "MEMBER"
+    creditGrade: "A"
+    phone: "094-812-3309"
+    email: "kanda.r@customer.th"
+    customerSince: "พ.ย. 2026"
+    segments: ["ผู้สนใจสมัครใหม่", "SG Finance+ Lead"]
+    lifetimeValue: 0
+    spend12Months: 0
+    orders12Months: 0
+    lastOrderCode: "-"
+    lastOrderAmount: 0
+    creditLimit: 20000
+    creditUsed: 0
+    creditOverdue: 0
+    churnRisk: "ต่ำ"
+    nextBestAction:
+      description: "แนะนำร้านพาร์ทเนอร์ใกล้บ้านเพื่อยื่นบัตรประชาชนสมัคร SG Finance+ รับเครื่องทันที"
+      actionLabel: "ส่งพิกัดร้านและเงื่อนไข"
+    customFields:
+      contract_no: "LEAD-2611-09"
+      loan_product: "CASH_PURCHASE"
+      device_or_asset: "สนใจผ่อน OPPO Reno13 5G (ดาวน์เริ่มต้น 10%)"
+      monthly_installment: 1190
+      dpd_status: "NORMAL"
+
+conversations:
+  - id: cfconv-1
+    customerId: SGC001
+    customerName: "สมศักดิ์ พงษ์เจริญ"
+    customerTier: "SILVER"
+    channel: "LINE"
+    channelAccount: "SG Finance+ Official"
+    time: "10:42"
+    lastMessagePreview: "โอนจ่ายค่างวดที่ค้าง 1,900 บาทแล้วครับ รบกวนปลดล็อกหน้าจอมือถือให้ด่วนครับ"
+    label: "ปลดล็อกเครื่อง"
+    unreadCount: 1
+    status: "Open"
+    assignedTo: "วิภา ส."
+    team: "SG Finance+ Lock Desk"
+    tabGroup: "Mine"
+    messages:
+      - id: cfm-1
+        sender: "customer"
+        text: "สัญญา SGF-690412 โอนจ่ายค่างวดที่ค้าง 1,900 บาทผ่าน QR เรียบร้อยแล้วครับ รบกวนปลดล็อกหน้าจอมือถือ Samsung ให้ด่วนครับ ต้องใช้ทำงาน"
+        time: "10:42"
+  - id: cfconv-2
+    customerId: SGC005
+    customerName: "กานดา รุ่งเรือง"
+    customerTier: "MEMBER"
+    channel: "LINE"
+    channelAccount: "SINGER & SGC Official"
+    time: "10:15"
+    lastMessagePreview: "อยากผ่อนมือถือ OPPO ใช้บัตรประชาชนใบเดียว ไม่ต้องใช้บัตรเครดิต สมัครยังไงคะ?"
+    label: "สมัครสินเชื่อ"
+    unreadCount: 1
+    status: "Open"
+    assignedTo: "วิภา ส."
+    team: "Loan Origination"
+    tabGroup: "Mine"
+    messages:
+      - id: cfm-2
+        sender: "customer"
+        text: "อยากผ่อนมือถือ OPPO ใช้บัตรประชาชนใบเดียว ไม่ต้องใช้บัตรเครดิตของ SG Finance+ ต้องใช้เอกสารอะไรบ้าง และรู้ผลไวไหมคะ?"
+        time: "10:15"
+  - id: cfconv-3
+    customerId: SGC003
+    customerName: "ร้านเจ๊พร มินิมาร์ท"
+    customerTier: "GOLD"
+    channel: "Facebook"
+    channelAccount: "SINGER Thailand Care"
+    time: "09:30"
+    lastMessagePreview: "ตู้แช่ 3 ประตูความเย็นไม่ฉ่ำ แจ้งช่างเข้าดูหน่อยค่ะ ส่วนค่างวดขอจ่ายสิ้นเดือนนะคะ"
+    label: "แจ้งซ่อม / นัดชำระ"
+    unreadCount: 0
+    status: "Open"
+    assignedTo: "สุชาติ (SINGER Care)"
+    team: "SINGER Field Service"
+    tabGroup: "Mine"
+    messages:
+      - id: cfm-3
+        sender: "customer"
+        text: "ตู้แช่ 3 ประตู SGR-671104 ความเย็นไม่ฉ่ำ แจ้งช่างเข้าดูหน่อยค่ะ ส่วนค่างวดที่ค้างขอจ่ายวันที่ 30 พ.ย. นะคะ"
+        time: "09:30"
+
+deals:
+  - id: "SGF-D101"
+    customerId: "SGC005"
+    customerName: "กานดา รุ่งเรือง"
+    title: "สมัคร SG Finance+ ผ่อน OPPO Reno13 5G (24 งวด)"
+    value: 16990
+    stage: "Qualified"
+    probability: 60
+    ownerName: "วิภา ส."
+    ownerInitials: "วส"
+    source: "LINE"
+    daysInStage: 1
+    createdDate: "วันนี้"
+  - id: "SGR-D102"
+    customerId: "SGC003"
+    customerName: "ร้านเจ๊พร มินิมาร์ท"
+    title: "สั่งซื้อตู้แช่แข็งฝาทึบ SINGER เงินสดสาขาใหม่"
+    value: 22500
+    stage: "Proposal"
+    probability: 50
+    ownerName: "สมชาย (Sales)"
+    ownerInitials: "สช"
+    source: "Sales rep"
+    daysInStage: 3
+    createdDate: "23 พ.ย."
+  - id: "SGC-D103"
+    customerId: "SGC002"
+    customerName: "นภัสสร วงศ์สุวรรณ"
+    title: "สิทธิ์ลูกค้าเกรด A ผ่อนแท็บเล็ต Samsung เครื่องที่ 2"
+    value: 19900
+    stage: "Negotiation"
+    probability: 80
+    ownerName: "วิภา ส."
+    ownerInitials: "วส"
+    source: "3CX"
+    daysInStage: 2
+    createdDate: "24 พ.ย."
+
+tickets:
+  - id: "SGC-5001"
+    customerId: "SGC001"
+    customerName: "สมศักดิ์ พงษ์เจริญ"
+    customerTier: "SILVER"
+    title: "ขอปลดล็อกเครื่อง Samsung S26 หลังชำระค่างวด (SGF-690412)"
+    category: "ขอปลดล็อกเครื่องมือถือ (SG Finance+)"
+    systemName: "SG Finance+ Cloud Lock"
+    priority: "Critical"
+    channel: "LINE"
+    status: "In Progress"
+    assignee: "ทีมปลดล็อก SG Finance+"
+    conversationId: "cfconv-1"
+    slaHoursLeft: 0.75
+    slaFormatted: "45 นาที"
+    slaStatus: "warning"
+    createdAt: "วันนี้ 10:43"
+    activityLogs:
+      - time: "10:43"
+        author: "ระบบอัตโนมัติ"
+        text: "รับแจ้งสลิปชำระค่างวด ฿1,900 กำลังซิงก์คำสั่งปลดล็อกเครื่อง OTA"
+        type: "system"
+  - id: "SGR-5002"
+    customerId: "SGC003"
+    customerName: "ร้านเจ๊พร มินิมาร์ท"
+    customerTier: "GOLD"
+    title: "ตรวจเช็คตู้แช่ 3 ประตูความเย็นตก (อยู่ในประกัน SINGER)"
+    category: "แจ้งซ่อมเครื่องใช้ไฟฟ้า / ตู้แช่ SINGER"
+    systemName: "ตู้แช่ SINGER SBC-300"
+    serviceMode: "On-site"
+    priority: "High"
+    channel: "Facebook"
+    status: "Open"
+    assignee: "ช่างศูนย์ SINGER บางนา"
+    conversationId: "cfconv-3"
+    slaHoursLeft: 5
+    slaFormatted: "5 ชม."
+    slaStatus: "normal"
+    createdAt: "วันนี้ 09:35"
+    activityLogs:
+      - time: "09:35"
+        author: "สุชาติ (SINGER Care)"
+        text: "นัดหมายช่างเข้าตรวจเช็คพัดลมคอยล์เย็นหน้าร้านพรุ่งนี้ 10:00 น."
+        type: "agent"
+  - id: "SGC-5003"
+    customerId: "SGC004"
+    customerName: "หจก. วีระชัย ขนส่งด่วน"
+    customerTier: "PLATINUM"
+    title: "ขอตารางยอดปิดบัญชีล่วงหน้า สินเชื่อรถทำเงิน (CFC-670055)"
+    category: "แจ้งชำระค่างวด / นัดชำระ (PTP) / ปิดบัญชี"
+    priority: "Normal"
+    channel: "3CX"
+    status: "Open"
+    assignee: "ฝ่ายบริการสัญญา SGC"
+    slaHoursLeft: 3
+    slaFormatted: "3 ชม."
+    slaStatus: "normal"
+    createdAt: "วันนี้ 09:10"
+    activityLogs:
+      - time: "09:10"
+        author: "วิภา ส."
+        text: "คำนวณส่วนลดดอกเบี้ยปิดบัญชีก่อนกำหนดตามเกณฑ์ สคบ. เพื่อแจ้งลูกค้า"
+        type: "agent"
+
+timelineEvents:
+  - id: "cftl-1"
+    customerId: "SGC001"
+    type: "แชท"
+    iconCode: "LN"
+    colorScheme: "blue"
+    title: "ส่งสลิปชำระค่างวด ฿1,900 ขอปลดล็อกเครื่อง SG Finance+"
+    time: "วันนี้ 10:42"
+    detail: "สัญญา SGF-690412 · เปิดเคสด่วน SGC-5001 (SLA 60 นาที)"
+    meta: ["SG Finance+", "Cloud Lock"]
+    linkText: "เปิดใน Inbox"
+    linkRoute: "/inbox"
+  - id: "cftl-2"
+    customerId: "SGC003"
+    type: "โทร"
+    iconCode: "TL"
+    colorScheme: "amber"
+    title: "โทรออกติดตามค่างวดตู้แช่ (DPD 38 วัน) ผ่าน 3CX"
+    time: "เมื่อวาน 15:20"
+    detail: "คุณพรทิพย์รับสาย นัดชำระ 2 งวดรวม ฿7,000 วันที่ 30 พ.ย. 2026"
+    meta: ["Outbound Collection", "PTP Confirmed"]
+    linkText: "เปิดใน Voice"
+    linkRoute: "/voice"
+
+creditAccounts:
+  - id: "cf-ca-1"
+    customerId: "SGC001"
+    customerName: "สมศักดิ์ พงษ์เจริญ (SG Finance+ S26)"
+    grade: "C"
+    limit: 25000
+    used: 13500
+    usedPercent: 54
+    overdueAmount: 1900
+    aging: "61–90 วัน"
+    nextAction: "ตรวจสอบสลิป · ปลดล็อกเครื่อง OTA"
+  - id: "cf-ca-2"
+    customerId: "SGC003"
+    customerName: "ร้านเจ๊พร มินิมาร์ท (ตู้แช่ SINGER)"
+    grade: "C"
+    limit: 90000
+    used: 48500
+    usedPercent: 54
+    overdueAmount: 7000
+    aging: "31–60 วัน"
+    nextAction: "โทรติดตามค่างวด (3CX) · นัด PTP 30 พ.ย."
+  - id: "cf-ca-3"
+    customerId: "SGC004"
+    customerName: "หจก. วีระชัย ขนส่งด่วน (รถทำเงิน)"
+    grade: "B"
+    limit: 600000
+    used: 385000
+    usedPercent: 64
+    overdueAmount: 16500
+    aging: "1–30 วัน"
+    nextAction: "ส่ง QR เตือนทาง LINE ตามนัด 28 พ.ย."
+  - id: "cf-ca-4"
+    customerId: "SGC002"
+    customerName: "นภัสสร วงศ์สุวรรณ (SG Finance+ Vivo)"
+    grade: "A"
+    limit: 35000
+    used: 5400
+    usedPercent: 15
+    overdueAmount: 0
+    aging: "ปกติ"
+    nextAction: "โทรเสนอสิทธิ์ผ่อนเครื่องที่ 2"
+
+creditRequests:
+  - id: "cf-clr-1"
+    customerId: "SGC002"
+    customerName: "นภัสสร วงศ์สุวรรณ"
+    currentLimit: 35000
+    requestedLimit: 55000
+    sourceNote: "ลูกค้าเกรด A ผ่อนตรง 10 งวด ขอเปิดวงเงิน SG Finance+ เครื่องที่ 2"
+    onTimePaymentRate: 100
+    tier: "GOLD"
+    grade: "A"
+    status: "pending"
+  - id: "cf-clr-2"
+    customerId: "SGC004"
+    customerName: "หจก. วีระชัย ขนส่งด่วน"
+    currentLimit: 600000
+    requestedLimit: 850000
+    sourceNote: "ขอรีไฟแนนซ์เพิ่มวงเงินสินเชื่อรถทำเงิน (รถบรรทุกคันที่ 2)"
+    onTimePaymentRate: 92
+    tier: "PLATINUM"
+    grade: "B"
+    status: "pending"
+
+callLogs:
+  - id: "cf-call-1"
+    callId: "3cx-sgc-901"
+    direction: "inbound"
+    phone: "081-742-8891"
+    normalizedPhone: "0817428891"
+    ext: "101"
+    agentName: "วิภา ส."
+    customerId: "SGC001"
+    customerName: "สมศักดิ์ พงษ์เจริญ"
+    status: "Completed"
+    durationFormatted: "03:18"
+    timestamp: "วันนี้ 10:40"
+    summary: "[Inbound] ลูกค้าโทรแจ้งโอนค่างวด SG Finance+ ฿1,900 ขอปลดล็อกเครื่อง Samsung S26 แนะนำส่งสลิปใน LINE"
+  - id: "cf-call-2"
+    callId: "3cx-sgc-902"
+    direction: "outbound"
+    phone: "086-559-3120"
+    normalizedPhone: "0865593120"
+    ext: "204"
+    agentName: "ธีรภัทร (Collection)"
+    customerId: "SGC003"
+    customerName: "ร้านเจ๊พร มินิมาร์ท"
+    status: "Completed"
+    durationFormatted: "04:45"
+    timestamp: "เมื่อวาน 15:20"
+    summary: "[Outbound Collection] โทรติดตามค่างวดตู้แช่ SINGER (DPD 38 วัน) ลูกค้านัดชำระ PTP ฿7,000 วันที่ 30 พ.ย."
+  - id: "cf-call-3"
+    callId: "3cx-sgc-903"
+    direction: "outbound"
+    phone: "082-910-6677"
+    normalizedPhone: "0829106677"
+    ext: "205"
+    agentName: "ธีรภัทร (Collection)"
+    customerId: "SGC004"
+    customerName: "หจก. วีระชัย ขนส่งด่วน"
+    status: "Completed"
+    durationFormatted: "02:50"
+    timestamp: "เมื่อวาน 11:10"
+    summary: "[Outbound Reminder] โทรแจ้งเตือนค่างวดสินเชื่อรถทำเงิน ฿16,500 นัดโอนวันที่ 28 พ.ย. เวลาทำการตาม พ.ร.บ."
+  - id: "cf-call-4"
+    callId: "3cx-sgc-904"
+    direction: "inbound"
+    phone: "094-812-3309"
+    normalizedPhone: "0948123309"
+    ext: "102"
+    agentName: "วิภา ส."
+    customerId: "SGC005"
+    customerName: "กานดา รุ่งเรือง"
+    status: "Completed"
+    durationFormatted: "05:12"
+    timestamp: "วันนี้ 10:05"
+    summary: "[Inbound Sales] ลูกค้าใหม่โทรสอบถามเงื่อนไขผ่อนมือถือ OPPO ใช้บัตรประชาชนใบเดียว แอด LINE ส่งพิกัดร้านแล้ว"
