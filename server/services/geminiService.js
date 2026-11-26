@@ -4,7 +4,10 @@
  */
 import { formatServerKnowledge } from '../utils/promptBuilder.js';
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+export const getActiveGeminiModel = () => (process.env.GEMINI_MODEL || 'gemini-2.5-flash').trim();
+
+const buildGeminiUrl = (model) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
 /**
  * Builds grounding prompt for Gemini model
@@ -81,46 +84,49 @@ export const generateGeminiReply = async ({
     knowledgeItems,
   });
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 7500); // 7.5s max
+  const primaryModel = getActiveGeminiModel();
+  const candidateModels = primaryModel === 'gemini-2.0-flash'
+    ? [primaryModel]
+    : [primaryModel, 'gemini-2.0-flash'];
 
-  try {
-    const url = `${GEMINI_API_URL}?key=${encodeURIComponent(apiKey.trim())}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: promptContent }] }],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 250,
-        },
-      }),
-      signal: controller.signal,
-    });
+  for (const modelName of candidateModels) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 7500); // 7.5s max
 
-    clearTimeout(timeoutId);
+    try {
+      const url = `${buildGeminiUrl(modelName)}?key=${encodeURIComponent(apiKey.trim())}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptContent }] }],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 250,
+          },
+        }),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      const errText = await response.text().catch(() => '');
-      console.warn(`[Gemini API Error]: HTTP ${response.status} - ${errText.slice(0, 150)}`);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '');
+        console.warn(`[Gemini API Error (${modelName})]: HTTP ${response.status} - ${errText.slice(0, 150)}`);
+        if (response.status === 404) continue; // Try fallback model if retired/unavailable
+        return null;
+      }
+
+      const data = await response.json();
+      const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (!candidateText) return null;
+
+      return { replyText: candidateText, isAi: true };
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.warn(`[Gemini Fetch Error (${modelName})]: ${err.message}`);
       return null;
     }
-
-    const data = await response.json();
-    const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-
-    if (!candidateText) {
-      return null;
-    }
-
-    return {
-      replyText: candidateText,
-      isAi: true,
-    };
-  } catch (err) {
-    clearTimeout(timeoutId);
-    console.warn(`[Gemini Fetch Error]: ${err.message}`);
-    return null;
   }
+  return null;
 };

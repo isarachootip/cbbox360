@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import crypto from 'crypto';
 import { validateLineSignature, verifyLineSignature } from './verifyLineSignature.js';
 import { env } from '../config/env.js';
+import { setLineAccessToken, _resetCachedTokenForTesting } from '../services/lineService.js';
 
 describe('verifyLineSignature - Cryptographic Verification (ISO 27001 / ISO 29100)', () => {
   const testSecret = 'f2030ccfd113a46d89297e3919df39c1';
@@ -120,6 +121,29 @@ describe('verifyLineSignature - Cryptographic Verification (ISO 27001 / ISO 2910
         expect.objectContaining({ code: 'INVALID_LINE_SIGNATURE' })
       );
 
+      env.LINE_CHANNEL_SECRET = originalSecret;
+    });
+
+    it('accepts valid signature verified against DB-cached appSecret even if env.LINE_CHANNEL_SECRET is empty', async () => {
+      const originalSecret = env.LINE_CHANNEL_SECRET;
+      env.LINE_CHANNEL_SECRET = '';
+      _resetCachedTokenForTesting();
+      await setLineAccessToken('tok-test', { appSecret: testSecret });
+
+      const validSig = generateSignature(testBody, testSecret);
+      const req = {
+        headers: { 'x-line-signature': validSig },
+        rawBody: Buffer.from(testBody, 'utf8'),
+        body: JSON.parse(testBody),
+      };
+      const res = { status: vi.fn().mockReturnThis(), json: vi.fn() };
+      const next = vi.fn();
+
+      verifyLineSignature(req, res, next);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(res.status).not.toHaveBeenCalled();
+
+      _resetCachedTokenForTesting();
       env.LINE_CHANNEL_SECRET = originalSecret;
     });
   });

@@ -1,22 +1,43 @@
 import { Router } from 'express';
 import {
   getLineAccessToken,
+  getCachedLineChannelSecret,
+  initLineConfigFromDb,
   setLineAccessToken,
   getLineBotInfo,
   sendLinePush,
 } from '../services/lineService.js';
-import { query } from '../../db.js';
+import { getWebhookDiagnostics } from '../services/lineWebhookDiagnostics.js';
+import { getBotSettings } from '../services/botEngineService.js';
+import { getActiveGeminiModel } from '../services/geminiService.js';
+import { env } from '../config/env.js';
 
 const router = Router();
 
-// GET /api/connectors/line — Get LINE connection status & bot profile
+const buildDiagnosticsPayload = () => {
+  const hasChannelSecret = Boolean(getCachedLineChannelSecret() || env.LINE_CHANNEL_SECRET);
+  const botCfg = getBotSettings();
+  const geminiConfigured = Boolean(botCfg?.geminiApiKey || env.GEMINI_API_KEY || process.env.GEMINI_API_KEY);
+  return {
+    hasChannelSecret,
+    geminiConfigured,
+    geminiModel: getActiveGeminiModel(),
+    webhookDiagnostics: getWebhookDiagnostics(),
+  };
+};
+
+// GET /api/connectors/line — Get LINE connection status, bot profile & live webhook diagnostics
 router.get('/line', async (req, res) => {
+  await initLineConfigFromDb();
   const token = await getLineAccessToken();
+  const diag = buildDiagnosticsPayload();
+
   if (!token) {
     return res.status(200).json({
       status: 'disconnected',
       hasToken: false,
       message: 'LINE_CHANNEL_ACCESS_TOKEN is not configured',
+      ...diag,
     });
   }
 
@@ -27,6 +48,7 @@ router.get('/line', async (req, res) => {
     tokenPreview: `${token.slice(0, 8)}...${token.slice(-6)}`,
     botInfo: botInfo.data || null,
     error: botInfo.error || null,
+    ...diag,
   });
 });
 
@@ -47,7 +69,6 @@ router.post('/line', async (req, res) => {
     return res.status(500).json({ error: 'Failed to save connector configuration' });
   }
 
-  // Live test against LINE API
   const botInfo = await getLineBotInfo();
   return res.status(200).json({
     status: botInfo.success ? 'connected' : 'error',
@@ -55,6 +76,7 @@ router.post('/line', async (req, res) => {
       ? `เชื่อมต่อกับ LINE Official Account "${botInfo.data?.displayName || ''}" สำเร็จ!`
       : 'บันทึกสำเร็จ แต่ Token ตรวจสอบไม่ผ่าน: ' + (botInfo.error || ''),
     botInfo: botInfo.data || null,
+    ...buildDiagnosticsPayload(),
   });
 });
 

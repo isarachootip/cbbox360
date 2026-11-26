@@ -4,8 +4,10 @@ import {
   parseAndValidateSummary,
 } from '../utils/aiSchemaValidator.js';
 
-const GEMINI_JSON_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const getGeminiJsonUrl = () => {
+  const model = (process.env.GEMINI_MODEL || 'gemini-2.5-flash').trim();
+  return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+};
 
 /**
  * Calls Gemini with responseMimeType: "application/json", 15s timeout, and 1 retry on schema failure.
@@ -23,7 +25,7 @@ export const callGeminiStructured = async ({
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const url = `${GEMINI_JSON_URL}?key=${encodeURIComponent(apiKey.trim())}`;
+      const url = `${getGeminiJsonUrl()}?key=${encodeURIComponent(apiKey.trim())}`;
       const fullPrompt = `${systemInstruction}\n\n${userMessage}${
         retryHint ? `\n\n[หมายเหตุแก้ไข JSON ครั้งก่อน: ${retryHint}]` : ''
       }`;

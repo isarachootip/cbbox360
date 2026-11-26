@@ -31,6 +31,7 @@ import { useToast } from '../context/ToastContext';
 import { useCustomer } from '../context/CustomerContext';
 import { ConnectorConfig } from '../types';
 import { ThreeCxConfigPanel } from '../components/connectors/ThreeCxConfigPanel';
+import { LineDiagnosticsBar, LineLiveDiagnostics } from '../components/connectors/LineDiagnosticsBar';
 import { buildScreenPopUrlTemplate } from '../domain/telephony/phoneMatcher';
 
 export const ConnectorsPage: React.FC = () => {
@@ -77,13 +78,15 @@ export const ConnectorsPage: React.FC = () => {
   const [isVerifyingWebhook, setIsVerifyingWebhook] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [lineDiag, setLineDiag] = useState<LineLiveDiagnostics | null>(null);
 
-  // Check live LINE connection on load
-  useEffect(() => {
-    fetch('/api/connectors/line')
+  const loadLineStatus = () => {
+    fetch('/api/connectors/line', { credentials: 'include' })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.hasToken) {
+        if (!data) return;
+        if (data.webhookDiagnostics) setLineDiag(data as LineLiveDiagnostics);
+        if (data.hasToken) {
           setConnectors((prev) =>
             prev.map((c) => {
               if (c.id === 'conn-line') {
@@ -101,6 +104,11 @@ export const ConnectorsPage: React.FC = () => {
         }
       })
       .catch((err) => console.debug('Could not fetch line connector status:', err));
+  };
+
+  // Check live LINE connection on load
+  useEffect(() => {
+    loadLineStatus();
   }, []);
 
   // Simulator state
@@ -424,6 +432,8 @@ export const ConnectorsPage: React.FC = () => {
             variant="default"
           />
         </div>
+
+        <LineDiagnosticsBar diag={lineDiag} onRefresh={loadLineStatus} />
 
         {/* Category Filters Bar - CLEAN */}
         <div className="flex items-center justify-between bg-white rounded-card border border-border p-2.5 shadow-card">

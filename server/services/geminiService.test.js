@@ -97,6 +97,10 @@ describe('geminiService', () => {
     expect(res).not.toBeNull();
     expect(res.replyText).toContain('ขออภัยในความล่าช้า');
     expect(res.isAi).toBe(true);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('gemini-2.5-flash:generateContent'),
+      expect.any(Object)
+    );
   });
 
   it('should handle API failure gracefully and return null', async () => {

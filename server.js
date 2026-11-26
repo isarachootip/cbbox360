@@ -6,6 +6,7 @@ import { env } from './server/config/env.js';
 import apiRoutes from './server/routes/index.js';
 import webhookRoutes from './server/routes/webhookRoutes.js';
 import { initBotSettingsFromDb } from './server/services/botEngineService.js';
+import { initLineConfigFromDb } from './server/services/lineService.js';
 import { ensureDatabaseSchema } from './server/services/dbInitService.js';
 import { ensureAllSeedAccounts, ensureOperatorAccounts } from './server/services/userSeedService.js';
 import { userRepository } from './server/repositories/userRepository.js';
@@ -80,6 +81,7 @@ ensureDatabaseSchema()
   })
   .catch((err) => console.error('❌ [Auth Seed Error]:', err.message));
 initBotSettingsFromDb();
+initLineConfigFromDb();
 
 // Multi-tenant Context & Isolation Resolver
 const tenantResolver = createTenantResolverMiddleware();

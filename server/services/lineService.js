@@ -4,6 +4,23 @@ import fs from 'fs';
 import path from 'path';
 
 let cachedToken = null;
+let cachedChannelSecret = null;
+
+/**
+ * Loads saved LINE accessToken & appSecret (Channel Secret) from DB into memory on boot.
+ */
+export const initLineConfigFromDb = async () => {
+  try {
+    const res = await query(`SELECT config FROM connector_settings WHERE id = 'line' LIMIT 1`);
+    const cfg = res?.rows?.[0]?.config;
+    if (cfg?.accessToken) cachedToken = String(cfg.accessToken).trim();
+    if (cfg?.appSecret) cachedChannelSecret = String(cfg.appSecret).trim();
+  } catch {
+    // DB might not be ready yet; fallbacks to env will still apply
+  }
+};
+
+export const getCachedLineChannelSecret = () => cachedChannelSecret || '';
 
 /**
  * Resolves active LINE Channel Access Token dynamically:
@@ -53,10 +70,14 @@ export const getLineAccessToken = async () => {
 
 export const _resetCachedTokenForTesting = () => {
   cachedToken = null;
+  cachedChannelSecret = null;
 };
 
 export const setLineAccessToken = async (token, extraConfig = {}) => {
   cachedToken = (token || '').trim();
+  if (extraConfig?.appSecret !== undefined) {
+    cachedChannelSecret = String(extraConfig.appSecret || '').trim() || cachedChannelSecret;
+  }
   try {
     const config = { accessToken: cachedToken, ...extraConfig };
     await query(
