@@ -38,9 +38,9 @@ export const KpiTile: React.FC<KpiTileProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`rounded-card border p-4 flex flex-col justify-between shadow-card transition-all ${
+      className={`rounded-card border p-4 flex flex-col justify-between shadow-card transition-all duration-200 ${
         variantStyles[variant]
-      } ${onClick ? 'cursor-pointer hover:border-brand/40 hover:shadow-md' : ''} ${className}`}
+      } ${onClick ? 'cursor-pointer hover:border-brand/40 hover:shadow-md hover:-translate-y-[1px]' : ''} ${className}`}
     >
       <div className="flex items-center justify-between text-xs text-text-secondary font-medium">
         <span>{label}</span>

@@ -68,7 +68,7 @@ export const TenantCardList: React.FC<TenantCardListProps> = ({
                   key={t.id}
                   className={
                     isCurrent
-                      ? 'bg-[#EAF2FC] border-l-[3px] border-l-brand'
+                      ? 'bg-brand-selected border-l-[3px] border-l-brand'
                       : 'hover:bg-bg-subtle transition-colors'
                   }
                 >

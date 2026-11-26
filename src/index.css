@@ -4,16 +4,16 @@
 
 @layer base {
   :root {
-    --cb-brand-rgb: 31 111 209;
-    --cb-brand-hover-rgb: 21 88 176;
-    --cb-brand-deep-rgb: 23 78 140;
-    --cb-brand-tint-rgb: 230 240 253;
-    --cb-brand-selected-rgb: 237 244 253;
+    --cb-brand-rgb: 99 102 241;
+    --cb-brand-hover-rgb: 79 70 229;
+    --cb-brand-deep-rgb: 67 56 202;
+    --cb-brand-tint-rgb: 238 240 255;
+    --cb-brand-selected-rgb: 242 241 255;
   }
 
   :root,
   html[data-font-scale='comfortable'] {
-    --cb-font-scale: 1.05;
+    --cb-font-scale: 1.04;
   }
 
   html[data-font-scale='standard'] {
@@ -21,7 +21,7 @@
   }
 
   html[data-font-scale='large'] {
-    --cb-font-scale: 1.12;
+    --cb-font-scale: 1.11;
   }
 
   html {
@@ -32,20 +32,24 @@
 
   body {
     @apply bg-bg-app text-text-primary font-normal antialiased;
-    font-family: 'IBM Plex Sans', 'IBM Plex Sans Thai', 'Leelawadee UI', 'Thonburi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-size: calc(14px * var(--cb-font-scale, 1.05));
+    font-family: 'Plus Jakarta Sans', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: calc(14px * var(--cb-font-scale, 1.04));
     line-height: 1.62;
     letter-spacing: 0em;
   }
 
+  h1, h2, h3, h4 {
+    letter-spacing: -0.01em;
+  }
+
   code, kbd, samp, pre, .font-mono {
-    font-family: 'IBM Plex Mono', 'IBM Plex Sans Thai', ui-monospace, 'Cascadia Mono', 'Consolas', 'Leelawadee UI', monospace;
+    font-family: 'JetBrains Mono', 'Prompt', ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
     font-variant-numeric: tabular-nums;
   }
 
   ::selection {
-    background-color: #DBEAFE;
-    color: #0F172A;
+    background-color: #E0E7FF;
+    color: #1E1B4B;
   }
 }
 
@@ -55,7 +59,7 @@
   }
 }
 
-/* Custom scrollbars */
+/* Soft Lavender-Slate Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -66,15 +70,15 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: #CBD0E6;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: #9DA6CC;
 }
 
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #CBD5E1 transparent;
+  scrollbar-color: #CBD0E6 transparent;
 }

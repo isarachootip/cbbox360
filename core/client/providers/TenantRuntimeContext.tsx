@@ -28,8 +28,8 @@ const DEFAULT_RUNTIME: TenantRuntimeState = {
     appName: 'CusBox360',
     logoUrl: '/logo-full-transparent.png',
     iconUrl: '/logo-icon-transparent.png',
-    primaryColor: '#1F6FD1',
-    accentColor: '#1558B0',
+    primaryColor: '#6366F1',
+    accentColor: '#4F46E5',
   },
   entitlements: { 'flag:ai_copilot': true, 'flag:voice_3cx': true, 'flag:pdpa_consent': true },
   labels: {},
@@ -39,19 +39,22 @@ const DEFAULT_RUNTIME: TenantRuntimeState = {
   isLoaded: false,
 };
 
-const hexToRgbTriplet = (hex: string): string | null => {
-  const clean = hex.trim().replace(/^#/, '');
-  if (!/^[0-9a-fA-F]{6}$/.test(clean)) return null;
-  return `${parseInt(clean.slice(0, 2), 16)} ${parseInt(clean.slice(2, 4), 16)} ${parseInt(clean.slice(4, 6), 16)}`;
+const UNIFIED_BRAND_TOKENS = {
+  brand: '99 102 241',
+  hover: '79 70 229',
+  deep: '67 56 202',
+  tint: '238 240 255',
+  selected: '242 241 255',
 };
 
 const applyCssBrandTokens = (branding: TenantBranding) => {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
-  const primaryRgb = hexToRgbTriplet(branding.primaryColor);
-  if (primaryRgb) root.style.setProperty('--cb-brand-rgb', primaryRgb);
-  const hoverRgb = branding.accentColor ? hexToRgbTriplet(branding.accentColor) : primaryRgb;
-  if (hoverRgb) root.style.setProperty('--cb-brand-hover-rgb', hoverRgb);
+  root.style.setProperty('--cb-brand-rgb', UNIFIED_BRAND_TOKENS.brand);
+  root.style.setProperty('--cb-brand-hover-rgb', UNIFIED_BRAND_TOKENS.hover);
+  root.style.setProperty('--cb-brand-deep-rgb', UNIFIED_BRAND_TOKENS.deep);
+  root.style.setProperty('--cb-brand-tint-rgb', UNIFIED_BRAND_TOKENS.tint);
+  root.style.setProperty('--cb-brand-selected-rgb', UNIFIED_BRAND_TOKENS.selected);
   if (branding.appName) document.title = `${branding.appName} - Omnichannel CRM & Contact Center`;
 };
 

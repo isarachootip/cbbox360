@@ -20,7 +20,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const { toggleMobileSidebar } = useLayout();
 
   return (
-    <header className="h-[58px] sm:h-[62px] flex-shrink-0 bg-white border-b border-border px-4 sm:px-6 flex items-center justify-between gap-3 sm:gap-4 z-20">
+    <header className="h-[58px] sm:h-[62px] flex-shrink-0 bg-white/85 backdrop-blur-md border-b border-border/80 shadow-[0_1px_12px_rgba(99,102,241,0.04)] px-4 sm:px-6 flex items-center justify-between gap-3 sm:gap-4 z-20">
       {/* Left side: Mobile Hamburger + Breadcrumb or Title */}
       <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
         <button
