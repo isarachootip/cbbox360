@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useLayout } from '../context/LayoutContext';
 import { CustomerSideCard } from '../components/common/CustomerSideCard';
@@ -14,6 +14,11 @@ export const InboxPage: React.FC = () => {
   const { toggleMobileSidebar, isInboxRightPanelOpen, toggleInboxRightPanel } = useLayout();
   const { contactLabel } = useLabel();
   const ws = useInboxWorkspace();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+  }, [ws.selectedConv?.id, ws.selectedConv?.messages?.length]);
 
   return (
     <div className="flex-1 flex h-full overflow-hidden bg-white">
@@ -82,6 +87,7 @@ export const InboxPage: React.FC = () => {
               }}
             />
           ))}
+          <div ref={messagesEndRef} />
         </div>
 
         <InboxComposer
@@ -95,10 +101,7 @@ export const InboxPage: React.FC = () => {
           onAttachFile={() => ws.showToast('แนบไฟล์หรือรูปภาพสินค้า', 'info')}
           onToggleBot={async (next) => {
             await ws.toggleBotStatus(ws.selectedConv.id, next);
-            ws.showToast(
-              next ? 'เปิดการทำงานของ Bot ในห้องแชทนี้แล้ว' : 'หยุดการทำงานของ Bot ในห้องแชทนี้แล้ว',
-              'info'
-            );
+            ws.showToast(next ? 'เปิดการทำงานของ Bot ในห้องแชทนี้แล้ว' : 'หยุดการทำงานของ Bot ในห้องแชทนี้แล้ว', 'info');
           }}
           textareaRef={ws.textareaRef}
           selectedCannedGroup={ws.selectedCannedGroup}
@@ -145,10 +148,7 @@ export const InboxPage: React.FC = () => {
           currentLineUserId={ws.selectedConv.lineUserId}
           onSave={async (newId) => {
             const ok = await ws.updateConversationLineUserId(ws.selectedConv.id, newId);
-            ws.showToast(
-              ok ? 'บันทึกและผูก LINE User ID สำเร็จ' : 'เกิดข้อผิดพลาดในการบันทึก LINE User ID',
-              ok ? 'success' : 'error'
-            );
+            ws.showToast(ok ? 'บันทึกและผูก LINE User ID สำเร็จ' : 'เกิดข้อผิดพลาดในการบันทึก LINE User ID', ok ? 'success' : 'error');
             return ok;
           }}
         />

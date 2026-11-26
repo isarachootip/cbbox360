@@ -12,6 +12,7 @@ vi.mock('../services/lineService.js', () => ({
 
 import { query } from '../../db.js';
 import { sendLinePush } from '../services/lineService.js';
+import { updateBotSettings } from '../services/botEngineService.js';
 import { sendMessage, toggleBotStatus, updateLineUserId } from './conversationController.js';
 
 describe('conversationController', () => {
@@ -148,6 +149,31 @@ describe('conversationController', () => {
           }),
         })
       );
+    });
+
+    it('should keep bot active on agent reply when Always-On AI (pauseBotOnAgentReply: false) is enabled', async () => {
+      await updateBotSettings({ pauseBotOnAgentReply: false });
+      const req = {
+        params: { id: 'conv-1' },
+        body: { text: 'แอดมินเสริมข้อมูลเพิ่มเติมครับ', isPrivate: false, authorName: 'วิภา ส.' },
+      };
+      const res = { status: vi.fn().mockReturnThis(), json: vi.fn() };
+
+      query.mockResolvedValueOnce({
+        rows: [{ id: 'conv-1', channel: 'LINE', line_user_id: 'U123456789', is_bot_active: true }],
+      });
+      sendLinePush.mockResolvedValueOnce({ success: true });
+      query.mockResolvedValueOnce({ rows: [] }); // insert message
+      query.mockResolvedValueOnce({ rows: [] }); // update conv without disabling bot
+
+      await sendMessage(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ isBotActive: true }));
+      const updateSql = query.mock.calls[2][0];
+      expect(updateSql).not.toMatch(/is_bot_active\s*=\s*FALSE/i);
+
+      await updateBotSettings({ pauseBotOnAgentReply: true });
     });
   });
 });

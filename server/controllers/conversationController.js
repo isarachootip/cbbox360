@@ -1,6 +1,7 @@
 import { query } from '../../db.js';
 import { getThaiTime } from '../utils/formatters.js';
 import { sendLinePush, sendLineReply } from '../services/lineService.js';
+import { getBotSettings } from '../services/botEngineService.js';
 import { getCurrentTenantId } from '../../core/server/tenancy/tenantContext.js';
 import { conversationRepository, createInMemoryConversationStore } from '../repositories/conversationRepository.js';
 import { applyTemplateSeedContacts } from '../../core/server/template-engine/templateSeedLoader.js';
@@ -93,11 +94,25 @@ export const sendMessage = async (req, res) => {
       [tenantId, newMsgId, id, sender, author, text.trim(), timeStr, !!isPrivate, deliveryStatus, failureReason]
     );
 
+    const shouldPauseBot = getBotSettings()?.pauseBotOnAgentReply !== false;
+    const nextBotActive = isPrivate
+      ? conv.is_bot_active !== false
+      : shouldPauseBot
+      ? false
+      : conv.is_bot_active !== false;
+
     if (!isPrivate) {
-      await query(
-        `UPDATE conversations SET last_message_preview=$1, time=$2, is_bot_active=FALSE, updated_at=NOW() WHERE tenant_id=$3 AND id=$4`,
-        [text.trim(), timeStr, tenantId, id]
-      );
+      if (shouldPauseBot) {
+        await query(
+          `UPDATE conversations SET last_message_preview=$1, time=$2, is_bot_active=FALSE, updated_at=NOW() WHERE tenant_id=$3 AND id=$4`,
+          [text.trim(), timeStr, tenantId, id]
+        );
+      } else {
+        await query(
+          `UPDATE conversations SET last_message_preview=$1, time=$2, updated_at=NOW() WHERE tenant_id=$3 AND id=$4`,
+          [text.trim(), timeStr, tenantId, id]
+        );
+      }
     }
 
     return res.status(200).json({
@@ -113,7 +128,7 @@ export const sendMessage = async (req, res) => {
         failureReason,
       },
       lineDelivery,
-      isBotActive: false,
+      isBotActive: nextBotActive,
     });
   } catch (err) {
     console.error('[POST messages Error]:', err.message);

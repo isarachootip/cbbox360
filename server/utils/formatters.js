@@ -3,9 +3,19 @@
  */
 
 export const getThaiTime = (date = new Date()) => {
-  const hours = date.getHours().toString().padStart(2, '0');
-  const mins = date.getMinutes().toString().padStart(2, '0');
-  return `${hours}:${mins}`;
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Bangkok',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(date);
+  } catch {
+    const bangkok = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+    const hours = bangkok.getUTCHours().toString().padStart(2, '0');
+    const mins = bangkok.getUTCMinutes().toString().padStart(2, '0');
+    return `${hours}:${mins}`;
+  }
 };
 
 /** Convert DB row (snake_case) → frontend object (camelCase) */

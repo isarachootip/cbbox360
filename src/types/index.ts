@@ -487,6 +487,7 @@ export interface BotSettings {
   knowledgeItems?: import('./knowledge').KnowledgeItem[];
   aiSuggestReplyEnabled?: boolean;
   aiSummaryEnabled?: boolean;
+  pauseBotOnAgentReply?: boolean;
   autoReplyTimeoutSeconds?: number;
   pbxConfig?: import('./telephony').PbxClickToCallConfig;
   rules: BotAutoReplyRule[];

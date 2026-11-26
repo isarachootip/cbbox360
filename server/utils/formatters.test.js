@@ -2,9 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { getThaiTime, rowToConversation, rowToMessage } from './formatters.js';
 
 describe('Server Formatters Utility', () => {
-  it('should format time as HH:mm', () => {
-    const testDate = new Date(2026, 8, 30, 9, 5);
-    expect(getThaiTime(testDate)).toBe('09:05');
+  it('should format time as HH:mm in Asia/Bangkok (+07:00) regardless of server UTC timezone', () => {
+    const utcDate = new Date('2026-11-26T10:17:00Z');
+    expect(getThaiTime(utcDate)).toBe('17:17');
+    const midnightUtc = new Date('2026-11-26T17:05:00Z');
+    expect(getThaiTime(midnightUtc)).toBe('00:05');
   });
 
   it('should map DB row to conversation object', () => {

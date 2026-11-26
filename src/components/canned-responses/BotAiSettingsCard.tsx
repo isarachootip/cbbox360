@@ -82,7 +82,7 @@ export const BotAiSettingsCard: React.FC<BotAiSettingsCardProps> = ({
         <button
           type="button"
           onClick={handleSaveKey}
-          className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-2xs ${
+          className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer ${
             isSaved
               ? 'bg-emerald-600 text-white'
               : 'bg-brand hover:bg-brand-hover text-white'
@@ -90,6 +90,41 @@ export const BotAiSettingsCard: React.FC<BotAiSettingsCardProps> = ({
         >
           {isSaved ? <Check className="w-3.5 h-3.5" /> : null}
           <span>{isSaved ? 'บันทึกแล้ว' : 'บันทึก API Key'}</span>
+        </button>
+      </div>
+
+      <div className="mt-3.5 pt-3 border-t border-divider flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <div className="text-xs font-semibold text-text-primary">
+            โหมดการทำงานร่วมกับแอดมิน (AI vs Human Reply)
+          </div>
+          <p className="text-[11px] text-text-secondary mt-0.5">
+            {botSettings.pauseBotOnAgentReply === false
+              ? 'โหมด AI ตอบตลอด: แม้แอดมินพิมพ์เสริม AI ก็ยังตอบต่อได้ (สลับหยุดรายห้องได้ในหน้า Inbox)'
+              : 'โหมดพักอัตโนมัติ: ทันทีที่แอดมินพิมพ์ตอบ ระบบจะพัก AI ในห้องนั้นให้คนคุยต่อ'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() =>
+            updateBotSettings({ pauseBotOnAgentReply: botSettings.pauseBotOnAgentReply === false })
+          }
+          className="shrink-0 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-white hover:bg-bg-subtle text-xs font-semibold cursor-pointer"
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
+              botSettings.pauseBotOnAgentReply === false ? 'bg-emerald-500' : 'bg-amber-500'
+            }`}
+          />
+          <span
+            className={
+              botSettings.pauseBotOnAgentReply === false ? 'text-emerald-600' : 'text-amber-600'
+            }
+          >
+            {botSettings.pauseBotOnAgentReply === false
+              ? 'AI ตอบตลอด (Always-On)'
+              : 'พัก AI เมื่อแอดมินตอบ'}
+          </span>
         </button>
       </div>
     </div>

@@ -78,6 +78,7 @@ export const defaultBotSettings = {
   ],
   aiSuggestReplyEnabled: true,
   aiSummaryEnabled: true,
+  pauseBotOnAgentReply: true,
   pbxConfig: {
     enabled: true,
     phoneUrl: 'https://pbx01.cb360.online:5001/phone/index.html',
