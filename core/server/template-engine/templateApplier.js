@@ -19,6 +19,9 @@ import { caseConfigService as defaultCaseConfigs } from '../cases/caseConfigServ
 import { customerRepository as defaultCustomerRepo } from '../../../server/repositories/customerRepository.js';
 import { conversationRepository as defaultConvStore } from '../../../server/repositories/conversationRepository.js';
 import { caseRepository as defaultCaseRepo } from '../../../server/repositories/caseRepository.js';
+import { userRepository as defaultUserRepo } from '../../../server/repositories/userRepository.js';
+import { hashPassword as defaultHashPassword } from '../../../server/utils/cryptoUtils.js';
+import { seedUsersForTenant as defaultSeedTenantUsers } from '../../../server/services/tenantUserSeedService.js';
 
 const buildEntitlementMapFromTemplate = (ent = {}) => {
   const out = {};
@@ -39,6 +42,9 @@ export const createTemplateEngine = ({
   customerRepo = defaultCustomerRepo,
   convStore = defaultConvStore,
   caseRepo = defaultCaseRepo,
+  userRepo = defaultUserRepo,
+  hashPassword = defaultHashPassword,
+  seedTenantUsers = defaultSeedTenantUsers,
 } = {}) => {
   const listAvailableTemplates = () => {
     if (!fs.existsSync(templatesDir)) return [];
@@ -133,6 +139,13 @@ export const createTemplateEngine = ({
     await caseConfigs.applyTemplateCaseConfigs(tenantId, {
       slaPolicies: tpl.slaPolicies,
       caseCategories: tpl.caseCategories,
+    });
+    await seedTenantUsers({
+      tenantId,
+      templateId: tpl.metadata.id,
+      userRepo,
+      hashPassword,
+      templatesDir,
     });
 
     return {

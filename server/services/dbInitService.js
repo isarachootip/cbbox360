@@ -6,8 +6,12 @@ import { query } from '../../db.js';
 export const ensureUserAgentColumns = async () => {
   try {
     await query(`
+      ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS tenant_id TEXT NOT NULL DEFAULT 'default';
       ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS skills JSONB NOT NULL DEFAULT '[]'::jsonb;
       ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS extension TEXT NOT NULL DEFAULT '';
+      ALTER TABLE IF EXISTS users DROP CONSTRAINT IF EXISTS users_username_key;
+      DROP INDEX IF EXISTS idx_users_username;
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_users_tenant_username ON users (tenant_id, LOWER(username));
     `);
     return true;
   } catch (err) {
@@ -80,7 +84,8 @@ export const ensureDatabaseSchema = async () => {
 
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
-        username TEXT UNIQUE NOT NULL,
+        tenant_id TEXT NOT NULL DEFAULT 'default',
+        username TEXT NOT NULL,
         email TEXT,
         display_name TEXT NOT NULL,
         role TEXT NOT NULL,

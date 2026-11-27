@@ -70,7 +70,7 @@ interface TenantRuntimeContextValue extends TenantRuntimeState {
 const TenantRuntimeContext = createContext<TenantRuntimeContextValue | undefined>(undefined);
 
 export const TenantRuntimeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, refreshUsers } = useAuth();
   const [activeOverrideSlug, setActiveOverrideSlug] = useState<string | null>(() => getTenantSlugOverride());
   const [runtime, setRuntime] = useState<TenantRuntimeState>(() => ({
     ...DEFAULT_RUNTIME,
@@ -124,6 +124,7 @@ export const TenantRuntimeProvider: React.FC<{ children: React.ReactNode }> = ({
             caseCategories: boot.caseCategories || [],
             isLoaded: true,
           }));
+          void refreshUsers();
           return;
         }
       }

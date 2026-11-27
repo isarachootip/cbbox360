@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, ArrowRight, FileSpreadsheet, RefreshCw } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -14,10 +14,12 @@ import { useAuth } from '../context/AuthContext';
 import { useAuditLog } from '../context/AuditLogContext';
 import { useToast } from '../context/ToastContext';
 import { useUserManagementModals } from '../hooks/useUserManagementModals';
+import { useTenantRuntime } from '../../core/client/providers/TenantRuntimeContext';
 
 export const UserManagementPage: React.FC = () => {
   const navigate = useNavigate();
-  const { authMode, users, currentUser, isAdmin, isSysAdmin, toggleTwoFactor, switchUser, syncDefaultUsers } = useAuth();
+  const { authMode, users, currentUser, isAdmin, isSysAdmin, toggleTwoFactor, switchUser, syncDefaultUsers, refreshUsers } = useAuth();
+  const { tenantId } = useTenantRuntime();
   const { showToast } = useToast();
   const { logAction } = useAuditLog();
   const modals = useUserManagementModals();
@@ -28,6 +30,10 @@ export const UserManagementPage: React.FC = () => {
   const [skillFilter, setSkillFilter] = useState('ทั้งหมด');
   const [statusFilter, setStatusFilter] = useState('ทั้งหมด');
   const [isSyncing, setIsSyncing] = useState(false);
+
+  useEffect(() => {
+    void refreshUsers();
+  }, [refreshUsers, tenantId]);
 
   const handleSyncDefaultUsers = async () => {
     setIsSyncing(true);

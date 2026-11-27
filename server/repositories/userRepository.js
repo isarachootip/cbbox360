@@ -19,6 +19,7 @@ export const createPgUserRepository = ({
 } = {}) => {
   const mem = createInMemoryUserRepository({ deploymentMode });
   const tryDb = async (sql, params) => {
+    if (query === defaultDbQuery && !process.env.DATABASE_URL) return null;
     try { return await query(sql, params); } catch { return null; }
   };
 
@@ -102,7 +103,7 @@ export const createPgUserRepository = ({
       const m = await mem.insert(u, tid);
       const r = await tryDb(
         `INSERT INTO users (id, tenant_id, username, email, display_name, role, department, skills, extension, initials, avatar_bg, password_hash, must_change_password, is_active)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13,$14) ON CONFLICT (id) DO NOTHING RETURNING ${COLUMNS}`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13,$14) ON CONFLICT DO NOTHING RETURNING ${COLUMNS}`,
         [u.id, tid, u.username, u.email ?? '', u.displayName, u.role, u.department ?? '', JSON.stringify(u.skills ?? []), u.extension ?? '', u.initials, u.avatarBg ?? '#CFE2F8', u.passwordHash, Boolean(u.mustChangePassword), u.isActive !== false]
       );
       return r?.rows[0] ?? m;

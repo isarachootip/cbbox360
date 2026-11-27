@@ -1,3 +1,35 @@
+users:
+  - id: usr-hosp-admin
+    username: hosp_admin
+    displayName: "ศิริพร บริหารโรงพยาบาล"
+    email: "siriporn.admin@hospital.th"
+    role: admin
+    department: "Hospital IT & Patient Experience"
+    initials: "ศพ"
+    avatarBg: "#D1FAE5"
+    skills: ["telephone", "line_chat_shop"]
+    extension: "300"
+  - id: usr-hosp-doc1
+    username: dr_kittiphong
+    displayName: "นพ. กิตติพงศ์ วงศ์เวช"
+    email: "kittiphong.md@hospital.th"
+    role: doctor
+    department: "ศูนย์อายุรกรรมหัวใจ"
+    initials: "กพ"
+    avatarBg: "#E3F5EC"
+    skills: ["telephone"]
+    extension: "301"
+  - id: usr-hosp-nurse1
+    username: rn_rapeeporn
+    displayName: "พว. รพีพร ใจงาม"
+    email: "rapeeporn.rn@hospital.th"
+    role: nurse
+    department: "แผนกคัดกรองและประสานงานนัดหมาย OPD"
+    initials: "รพ"
+    avatarBg: "#FBEFF3"
+    skills: ["telephone", "line_chat_shop"]
+    extension: "302"
+
 contacts:
   - id: HN001
     name: "กานดา สุขสวัสดิ์"

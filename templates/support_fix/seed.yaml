@@ -1,3 +1,25 @@
+users:
+  - id: usr-sf-admin
+    username: sf_admin
+    displayName: "ธนกฤต ผู้จัดการฝ่ายบริการเทคนิค"
+    email: "thanakrit.admin@supportfix.th"
+    role: admin
+    department: "Technical Support & MA Operations"
+    initials: "ธก"
+    avatarBg: "#DBEAFE"
+    skills: ["telephone", "line_chat_shop"]
+    extension: "400"
+  - id: usr-sf-sup
+    username: sf_dispatcher
+    displayName: "วิภาวี หัวหน้าจัดคิวช่าง (Dispatcher)"
+    email: "wipawee.sup@supportfix.th"
+    role: supervisor
+    department: "Helpdesk & Field Service Dispatch"
+    initials: "วภ"
+    avatarBg: "#E0E7FF"
+    skills: ["telephone", "line_chat_shop"]
+    extension: "401"
+
 contacts:
   - id: SF001
     name: "บจก. สยามเทค เอ็นเตอร์ไพรส์"

@@ -4,6 +4,10 @@
  */
 import { generateTemporaryPassword } from '../utils/cryptoUtils.js';
 import { OPERATOR_SEED_DEFINITIONS } from '../../shared/agentSkills.js';
+import { getCurrentTenantId, DEFAULT_TENANT_ID } from '../../core/server/tenancy/tenantContext.js';
+
+export const buildTenantScopedUserId = (baseId, tenantId) =>
+  !tenantId || tenantId === DEFAULT_TENANT_ID ? baseId : `${tenantId}__${baseId}`;
 
 export const SEED_USERS = [
   { id: 'usr-1', username: 'sysadmin', displayName: 'สมศักดิ์ บริหารระบบ', email: 'sysadmin@cb360.co.th', role: 'sysadmin', department: 'IT & Security Infrastructure', initials: 'SA', avatarBg: '#E9E7F5' },
@@ -85,14 +89,18 @@ export const OPERATOR_ACCOUNTS = OPERATOR_SEED_DEFINITIONS;
  * without forcing a first-login password reset. Existing accounts are left untouched so edits made
  * via User Management persist across server restarts.
  */
-export const ensureOperatorAccounts = async ({ userRepo, hashPassword }) => {
+export const ensureOperatorAccounts = async ({ userRepo, hashPassword, tenantId }) => {
+  const tid = tenantId || getCurrentTenantId();
+  const isDefaultTenant = !tid || tid === DEFAULT_TENANT_ID;
   const created = [];
   for (const op of OPERATOR_ACCOUNTS) {
-    const existing = await userRepo.findByUsername(op.username);
+    const existing = isDefaultTenant
+      ? await userRepo.findByUsername(op.username)
+      : await userRepo.findByUsername(op.username, tid);
     if (existing) continue;
     const passwordHash = await hashPassword(op.initialPassword);
-    await userRepo.insert({
-      id: op.id,
+    const record = {
+      id: buildTenantScopedUserId(op.id, tid),
       username: op.username,
       displayName: op.displayName,
       email: op.email,
@@ -105,7 +113,9 @@ export const ensureOperatorAccounts = async ({ userRepo, hashPassword }) => {
       passwordHash,
       mustChangePassword: false,
       isActive: true,
-    });
+    };
+    if (isDefaultTenant) await userRepo.insert(record);
+    else await userRepo.insert(record, tid);
     created.push({ username: op.username, action: 'inserted' });
   }
   return created;

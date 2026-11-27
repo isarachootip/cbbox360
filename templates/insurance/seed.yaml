@@ -1,3 +1,25 @@
+users:
+  - id: usr-ins-admin
+    username: ins_admin
+    displayName: "วรัญญา ผู้จัดการศูนย์บริการผู้เอาประกัน"
+    email: "waranya.admin@insured.th"
+    role: admin
+    department: "Policyholder Operations & Claims"
+    initials: "วร"
+    avatarBg: "#DBEAFE"
+    skills: ["telephone", "line_chat_shop"]
+    extension: "500"
+  - id: usr-ins-claim1
+    username: ins_claim1
+    displayName: "ธนากร เจ้าหน้าที่สินไหมทดแทน"
+    email: "thanakorn.claim@insured.th"
+    role: SF_2
+    department: "Motor & Health Claims Center"
+    initials: "ธน"
+    avatarBg: "#E0F2FE"
+    skills: ["telephone", "line_chat_shop"]
+    extension: "501"
+
 contacts:
   - id: INS001
     name: "วิชัย มั่นคง"

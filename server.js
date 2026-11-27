@@ -16,6 +16,8 @@ import { runMigrations } from './core/server/db/migrationRunner.js';
 import { createTenantResolverMiddleware } from './core/server/tenancy/tenantResolverMiddleware.js';
 import { bootstrapOnPremContract } from './core/server/template-engine/onPremBootstrap.js';
 import { ensureDefaultDemoTenants } from './core/server/template-engine/demoTenantSeeder.js';
+import { tenantRepository } from './core/server/tenancy/tenantRepository.js';
+import { ensureAllTenantsSeedUsers } from './server/services/tenantUserSeedService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,6 +87,20 @@ ensureDatabaseSchema()
   .then((createdOps) => {
     if (createdOps.length > 0) {
       console.log(`👤 [Auth] Provisioned operator/agent accounts: ${createdOps.map((c) => c.username).join(', ')}`);
+    }
+  })
+  .then(() =>
+    ensureAllTenantsSeedUsers({
+      tenantRepo: tenantRepository,
+      userRepo: userRepository,
+      hashPassword,
+    })
+  )
+  .then((tenantSeeds) => {
+    if (tenantSeeds.length > 0) {
+      console.log(
+        `🏢 [Auth] Provisioned tenant user accounts: ${tenantSeeds.map((t) => `${t.slug} (${t.createdUsernames.length})`).join(', ')}`
+      );
     }
   })
   .catch((err) => console.error('❌ [Auth Seed Error]:', err.message));

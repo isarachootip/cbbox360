@@ -1,3 +1,55 @@
+users:
+  - id: usr-sgc-admin
+    username: sgc_admin
+    displayName: "กิตติภูมิ ผู้จัดการระบบสินเชื่อ"
+    email: "kittipoom.admin@singer-sgc.co.th"
+    role: admin
+    department: "SINGER & SG Capital · IT & Operations"
+    initials: "กภ"
+    avatarBg: "#FFE4E6"
+    skills: ["telephone", "line_chat_shop"]
+    extension: "200"
+  - id: usr-sgc-sup
+    username: sgc_supervisor
+    displayName: "ปนัดดา หัวหน้าศูนย์บริการสินเชื่อ"
+    email: "panadda.sup@singer-sgc.co.th"
+    role: supervisor
+    department: "SG Finance+ · Contact Center Supervision"
+    initials: "ปน"
+    avatarBg: "#FCE7F3"
+    skills: ["telephone", "line_chat_shop"]
+    extension: "201"
+  - id: usr-sgc-loan1
+    username: sgc_loan1
+    displayName: "ธีรภัทร อนุมัติไว (Loan Officer)"
+    email: "teerapat.loan@singer-sgc.co.th"
+    role: SF_1
+    department: "SG Finance+ · สินเชื่อเช่าซื้อและอนุมัติสัญญา"
+    initials: "ธภ"
+    avatarBg: "#DBEAFE"
+    skills: ["line_chat_shop", "telephone"]
+    extension: "202"
+  - id: usr-sgc-collect1
+    username: sgc_collect1
+    displayName: "อภิชาติ ติดตามค่างวด (Collection)"
+    email: "apichat.col@singer-sgc.co.th"
+    role: SF_3
+    department: "SG Capital · บริหารหนี้และปลดล็อก Cloud Lock"
+    initials: "อช"
+    avatarBg: "#FEF3C7"
+    skills: ["telephone"]
+    extension: "203"
+  - id: usr-sgc-care1
+    username: sgc_care1
+    displayName: "สุนิสา บริการหลังการขาย (SINGER Care)"
+    email: "sunisa.care@singer-sgc.co.th"
+    role: SF_2
+    department: "SINGER Care · แจ้งซ่อมและประสานทีมช่าง"
+    initials: "สน"
+    avatarBg: "#DCFCE7"
+    skills: ["line_chat_shop", "telephone"]
+    extension: "204"
+
 contacts:
   - id: SGC001
     name: "สมศักดิ์ พงษ์เจริญ"
